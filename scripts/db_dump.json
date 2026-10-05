@@ -1,0 +1,2524 @@
+{
+  "heroSlides": [
+    {
+      "id": "slide-1",
+      "title": "Send Love Home ❤️",
+      "subtitle": "Thoughtful care, beautifully delivered. Helping families living overseas care for their parents back home.",
+      "badge": "Care Across Miles",
+      "ctaText": "Explore Hampers",
+      "ctaUrl": "/hampers",
+      "desktopImage": "https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=1920&q=85",
+      "mobileImage": "https://images.unsplash.com/photo-1607920592519-bab4d7db727d?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "displayOrder": 1,
+      "status": "ACTIVE",
+      "createdAt": "2026-09-25T13:14:29.530Z",
+      "updatedAt": "2026-10-05T13:53:47.398Z"
+    },
+    {
+      "id": "slide-2",
+      "title": "Care for Mum & Dad",
+      "subtitle": "Send comfort, essentials and a little piece of home directly to their doorstep.",
+      "badge": "Elderly & Parent Care",
+      "ctaText": "Shop Care",
+      "ctaUrl": "/category/medical-care",
+      "desktopImage": "https://plus.unsplash.com/premium_photo-1729038881971-aac0e05a9036?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "mobileImage": "https://images.unsplash.com/photo-1764267703547-406c41eb9b28?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "displayOrder": 2,
+      "status": "ACTIVE",
+      "createdAt": "2026-09-25T13:14:30.195Z",
+      "updatedAt": "2026-10-05T13:48:14.159Z"
+    },
+    {
+      "id": "slide-3",
+      "title": "Celebrate Together",
+      "subtitle": "Make anniversaries and special family milestones feel closer, even across continents.",
+      "badge": "Anniversaries & Celebrations",
+      "ctaText": "Explore Celebrations",
+      "ctaUrl": "/category/anniversary",
+      "desktopImage": "https://plus.unsplash.com/premium_photo-1661550036915-085c14d572dc?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "mobileImage": "https://images.unsplash.com/photo-1671721193817-7ff6784e94c6?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "displayOrder": 3,
+      "status": "ACTIVE",
+      "createdAt": "2026-09-25T13:14:30.509Z",
+      "updatedAt": "2026-10-05T13:49:32.420Z"
+    },
+    {
+      "id": "slide-4",
+      "title": "Build Your Own",
+      "subtitle": "Choose the gifts, medical monitors, traditional Kerala attire and care essentials they’ll love.",
+      "badge": "Tailored By You",
+      "ctaText": "Build Your Own",
+      "ctaUrl": "/custom-hamper",
+      "desktopImage": "https://images.unsplash.com/photo-1618914241432-5043b1b4acf5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "mobileImage": "https://images.unsplash.com/photo-1734779203507-55fd09c679f1?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "displayOrder": 4,
+      "status": "ACTIVE",
+      "createdAt": "2026-09-25T13:14:30.909Z",
+      "updatedAt": "2026-10-05T13:51:24.827Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-diabetes-care",
+      "name": "Diabetes Care",
+      "slug": "diabetes-care",
+      "description": "Digital glucometers, painless twist lancets, and test strips.",
+      "image": "https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=600&q=80",
+      "icon": "Activity",
+      "type": "CARE",
+      "parentCategoryId": "cat-medical-care",
+      "status": "ACTIVE",
+      "sortOrder": 1,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:09.229Z",
+      "updatedAt": "2026-09-25T19:08:07.179Z"
+    },
+    {
+      "id": "cat-medical-care",
+      "name": "Medical Care",
+      "slug": "medical-care",
+      "description": "Practical clinical monitors, mobility aids, and daily elder health essentials.",
+      "image": "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80",
+      "icon": "Activity",
+      "type": "CARE",
+      "parentCategoryId": null,
+      "status": "ACTIVE",
+      "sortOrder": 1,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:08.639Z",
+      "updatedAt": "2026-09-25T19:08:06.249Z"
+    },
+    {
+      "id": "cat-for-mum",
+      "name": "For Mum",
+      "slug": "for-mum",
+      "description": "Nurturing hampers, wellness treats, Ayurvedic soaps, and thoughtful keepsakes.",
+      "image": "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=600&q=80",
+      "icon": "Heart",
+      "type": "RECIPIENT",
+      "parentCategoryId": null,
+      "status": "ACTIVE",
+      "sortOrder": 2,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:11.814Z",
+      "updatedAt": "2026-09-25T19:08:08.782Z"
+    },
+    {
+      "id": "cat-bp-care",
+      "name": "Blood Pressure Care",
+      "slug": "blood-pressure-care",
+      "description": "Automatic upper-arm and wrist BP monitors.",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80",
+      "icon": "Heart",
+      "type": "CARE",
+      "parentCategoryId": "cat-medical-care",
+      "status": "ACTIVE",
+      "sortOrder": 2,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:09.849Z",
+      "updatedAt": "2026-09-25T19:08:07.799Z"
+    },
+    {
+      "id": "cat-for-dad",
+      "name": "For Dad",
+      "slug": "for-dad",
+      "description": "Health check monitors, Kasavu Mundu, artisanal coffee, and daily comfort aids.",
+      "image": "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=600&q=80",
+      "icon": "UserCheck",
+      "type": "RECIPIENT",
+      "parentCategoryId": null,
+      "status": "ACTIVE",
+      "sortOrder": 3,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:12.412Z",
+      "updatedAt": "2026-09-25T19:08:09.611Z"
+    },
+    {
+      "id": "cat-mobility",
+      "name": "Mobility & Support",
+      "slug": "mobility",
+      "description": "Quad walking sticks, foldable zimmer frames, and grabbers.",
+      "image": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=600&q=80",
+      "icon": "Shield",
+      "type": "CARE",
+      "parentCategoryId": "cat-medical-care",
+      "status": "ACTIVE",
+      "sortOrder": 3,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:10.156Z",
+      "updatedAt": "2026-09-25T19:08:08.112Z"
+    },
+    {
+      "id": "cat-personal-care",
+      "name": "Personal & Elder Care",
+      "slug": "personal-care",
+      "description": "Adult pull-up diapers, underpads, and therapeutic hot water bags.",
+      "image": "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=600&q=80",
+      "icon": "UserCheck",
+      "type": "CARE",
+      "parentCategoryId": "cat-medical-care",
+      "status": "ACTIVE",
+      "sortOrder": 4,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:11.502Z",
+      "updatedAt": "2026-09-25T19:08:08.437Z"
+    },
+    {
+      "id": "cat-wedding",
+      "name": "Wedding",
+      "slug": "wedding",
+      "description": "Grand traditional gifting, set sarees, mundu sets, and heirloom brass decor.",
+      "image": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80",
+      "icon": "Sparkles",
+      "type": "OCCASION",
+      "parentCategoryId": null,
+      "status": "ACTIVE",
+      "sortOrder": 4,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:12.711Z",
+      "updatedAt": "2026-09-25T19:08:09.920Z"
+    },
+    {
+      "id": "cat-anniversary",
+      "name": "Anniversary",
+      "slug": "anniversary",
+      "description": "Celebrate mum & dad or your favourite couple with romantic hampers & personalised video.",
+      "image": "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80",
+      "icon": "HeartHandshake",
+      "type": "OCCASION",
+      "parentCategoryId": null,
+      "status": "ACTIVE",
+      "sortOrder": 5,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:13.011Z",
+      "updatedAt": "2026-09-25T19:08:10.230Z"
+    },
+    {
+      "id": "cat-new-mum-baby",
+      "name": "New Mum & Baby",
+      "slug": "new-mum-baby",
+      "description": "Postpartum recovery care, organic swaddles, and comforting nutritional treats.",
+      "image": "https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=600&q=80",
+      "icon": "Baby",
+      "type": "OCCASION",
+      "parentCategoryId": null,
+      "status": "ACTIVE",
+      "sortOrder": 6,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:13.311Z",
+      "updatedAt": "2026-09-25T19:08:10.539Z"
+    },
+    {
+      "id": "cat-celebrations",
+      "name": "Celebrations",
+      "slug": "celebrations",
+      "description": "Birthdays, family reunions, festive Onam/Vishu gifting, and joyful milestones.",
+      "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+      "icon": "PartyPopper",
+      "type": "OCCASION",
+      "parentCategoryId": null,
+      "status": "ACTIVE",
+      "sortOrder": 7,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:13.608Z",
+      "updatedAt": "2026-09-25T19:08:11.372Z"
+    },
+    {
+      "id": "cat-build-your-own",
+      "name": "Build Your Own",
+      "slug": "build-your-own",
+      "description": "Mix and match medical devices, apparel, florals, treats, and a personalised message.",
+      "image": "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=600&q=80",
+      "icon": "Gift",
+      "type": "CARE",
+      "parentCategoryId": null,
+      "status": "ACTIVE",
+      "sortOrder": 8,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:13.906Z",
+      "updatedAt": "2026-09-25T19:08:11.680Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-omron-bp-monitor",
+      "name": "Omron Smart Automatic Upper Arm BP Monitor",
+      "slug": "omron-smart-automatic-upper-arm-bp-monitor",
+      "sku": "NCC-BP-001",
+      "description": "Clinically validated Intellisense automatic upper-arm blood pressure monitor with irregular heartbeat detection and one-touch operation.",
+      "shortDescription": "One-touch clinical grade BP monitor with memory recall.",
+      "images": [
+        "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 2299,
+      "compareAtPriceINR": 2850,
+      "stock": 146,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-bp-care",
+      "brand": "Omron",
+      "unit": "1 Device Kit",
+      "weight": 0.45,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": true,
+      "isAddOn": true,
+      "addOnCategory": "MEDICAL_MOBILITY",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "bp",
+        "hypertension",
+        "medical",
+        "essential"
+      ],
+      "specifications": {
+        "Power": "4 AA Batteries included",
+        "Warranty": "3 Years",
+        "Cuff Size": "22 - 32 cm Medium-Large",
+        "Measurement Method": "Oscillometric"
+      },
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:14.205Z",
+      "updatedAt": "2026-10-02T05:05:03.783Z",
+      "countryPrices": [
+        {
+          "id": "f82516f9-d0f7-40cc-9643-1c7d0c74a4ad",
+          "productId": "prod-omron-bp-monitor",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 99,
+          "createdAt": "2026-09-25T13:12:14.833Z",
+          "updatedAt": "2026-09-25T19:08:13.520Z"
+        },
+        {
+          "id": "48519d5d-739b-41bd-b223-61af01ec4a87",
+          "productId": "prod-omron-bp-monitor",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 29.99,
+          "createdAt": "2026-09-25T13:12:15.448Z",
+          "updatedAt": "2026-09-25T19:08:14.139Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-infrared-thermometer",
+      "name": "AccuTemp Non-Contact Infrared Digital Thermometer",
+      "slug": "accutemp-non-contact-infrared-digital-thermometer",
+      "sku": "NCC-THERM-001",
+      "description": "Instant 1-second body & ambient temperature scanner with color-coded fever warning display and silent mode for sleeping elders/babies.",
+      "shortDescription": "1-second hygienic non-contact fever detection.",
+      "images": [
+        "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 1199,
+      "compareAtPriceINR": 1599,
+      "stock": 197,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-medical-care",
+      "brand": "AccuTemp",
+      "unit": "1 Device",
+      "weight": 0.15,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "MEDICAL_MOBILITY",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "thermometer",
+        "fever",
+        "medical"
+      ],
+      "specifications": {
+        "Accuracy": "±0.2°C (±0.4°F)",
+        "Distance": "1 - 5 cm",
+        "Measurement Time": "1 Second"
+      },
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:15.748Z",
+      "updatedAt": "2026-10-02T05:05:04.154Z",
+      "countryPrices": [
+        {
+          "id": "c83fb3eb-7cfe-41df-84e5-182d9056c397",
+          "productId": "prod-infrared-thermometer",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 55,
+          "createdAt": "2026-09-25T13:12:16.065Z",
+          "updatedAt": "2026-09-25T19:08:14.750Z"
+        },
+        {
+          "id": "5c3be5ca-5bb3-4b0f-b1f7-8a4f99d6c23d",
+          "productId": "prod-infrared-thermometer",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 16.99,
+          "createdAt": "2026-09-25T13:12:16.366Z",
+          "updatedAt": "2026-09-25T19:08:15.060Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-accucheck-glucometer",
+      "name": "AccuCheck Instant Glucometer with 100 Test Strips Kit",
+      "slug": "accucheck-instant-glucometer-100-test-strips-kit",
+      "sku": "NCC-GLU-100",
+      "description": "High-precision blood glucose monitor kit bundled with 100 test strips and softclix painless lancing device. Target range indicator for easy reading.",
+      "shortDescription": "Glucometer bundled with 100 test strips & lancets.",
+      "images": [
+        "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 2199,
+      "compareAtPriceINR": 2699,
+      "stock": 177,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-diabetes-care",
+      "brand": "AccuCheck",
+      "unit": "1 Meter + 100 Strips + Lancing Pen",
+      "weight": 0.35,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": true,
+      "isAddOn": true,
+      "addOnCategory": "MEDICAL_MOBILITY",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "diabetes",
+        "sugar test",
+        "strips",
+        "essential"
+      ],
+      "specifications": {
+        "Memory": "720 test results",
+        "Test Time": "4 seconds",
+        "Included Strips": "100 Test Strips (2 x 50 Vials)"
+      },
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:16.689Z",
+      "updatedAt": "2026-10-02T05:05:03.169Z",
+      "countryPrices": [
+        {
+          "id": "7776a163-3f99-4231-ad2a-41b0b97ee388",
+          "productId": "prod-accucheck-glucometer",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 95,
+          "createdAt": "2026-09-25T13:12:16.990Z",
+          "updatedAt": "2026-09-25T19:08:15.683Z"
+        },
+        {
+          "id": "d7948a92-850d-42d0-b5f5-d67cd0340cb7",
+          "productId": "prod-accucheck-glucometer",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 28.5,
+          "createdAt": "2026-09-25T13:12:17.290Z",
+          "updatedAt": "2026-09-25T19:08:15.993Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-pill-organiser-7day",
+      "name": "NestCare 7-Day AM/PM Pill Organiser Box",
+      "slug": "nestcare-7-day-am-pm-pill-organiser-box",
+      "sku": "NCC-PILL-007",
+      "description": "Large compartment daily medicine dispenser with clear braille & visual day/night markers. Moisture-proof snap locks prevent accidental spills.",
+      "shortDescription": "Weekly 14-compartment moisture-tight pill organizer.",
+      "images": [
+        "https://images.unsplash.com/photo-1703564202694-b102aa465666?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "basePriceINR": 399,
+      "compareAtPriceINR": 550,
+      "stock": 346,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-medical-care",
+      "brand": "NestCare",
+      "unit": "1 Unit (14 Compartments)",
+      "weight": 0.12,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "MEDICAL_MOBILITY",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "pill organizer",
+        "medicine",
+        "elderly"
+      ],
+      "specifications": {
+        "Material": "BPA-free Food Grade Plastic",
+        "Compartments": "14 (7 Days Morning + Night)"
+      },
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:17.585Z",
+      "updatedAt": "2026-10-05T13:23:52.658Z",
+      "countryPrices": [
+        {
+          "id": "5de3e648-d37d-42b1-a7a5-2e153a218052",
+          "productId": "prod-pill-organiser-7day",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 18,
+          "createdAt": "2026-09-25T13:12:17.928Z",
+          "updatedAt": "2026-10-05T13:23:59.843Z"
+        },
+        {
+          "id": "db68df35-f4be-4a14-a3ee-023d665ea7a3",
+          "productId": "prod-pill-organiser-7day",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 5.99,
+          "createdAt": "2026-09-25T13:12:18.221Z",
+          "updatedAt": "2026-10-05T13:24:00.151Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-quad-walking-stick",
+      "name": "Ergonomic Four-Legged Quad Walking Stick",
+      "slug": "ergonomic-four-legged-quad-walking-stick",
+      "sku": "NCC-MOB-001",
+      "description": "Height-adjustable lightweight aluminum walking cane with wide pyramid base and anti-skid rubber ferrules for superior balance and independence.",
+      "shortDescription": "Self-standing 4-leg adjustable walking cane.",
+      "images": [
+        "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 1199,
+      "compareAtPriceINR": 1499,
+      "stock": 90,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-mobility",
+      "brand": "NestCare Mobility",
+      "unit": "1 Piece",
+      "weight": 0.75,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "MEDICAL_MOBILITY",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "mobility",
+        "walking stick",
+        "elderly aid"
+      ],
+      "specifications": {
+        "Height Range": "72 cm - 95 cm (10 levels)",
+        "Weight Capacity": "Up to 110 kg"
+      },
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:18.505Z",
+      "updatedAt": "2026-09-25T19:08:17.228Z",
+      "countryPrices": [
+        {
+          "id": "0b0ef8c2-6106-472e-847c-ef9f194bf894",
+          "productId": "prod-quad-walking-stick",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 55,
+          "createdAt": "2026-09-25T13:12:18.827Z",
+          "updatedAt": "2026-09-25T19:08:17.538Z"
+        },
+        {
+          "id": "3acc21fc-c897-4ba5-96d3-9a893f421c92",
+          "productId": "prod-quad-walking-stick",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 16.99,
+          "createdAt": "2026-09-25T13:12:19.112Z",
+          "updatedAt": "2026-09-25T19:08:17.848Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-zimmer-frame",
+      "name": "Foldable Lightweight Zimmer Mobility Frame",
+      "slug": "foldable-lightweight-zimmer-mobility-frame",
+      "sku": "NCC-MOB-002",
+      "description": "Sturdy reciprocal aluminum walking frame that folds flat at the touch of a button. Comfortable foam grips provide secure elder mobility.",
+      "shortDescription": "One-button foldable aluminum walking walker.",
+      "images": [
+        "https://images.unsplash.com/photo-1728034261662-460ca4fbecd7?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "basePriceINR": 2399,
+      "compareAtPriceINR": 2999,
+      "stock": 50,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-mobility",
+      "brand": "NestCare Mobility",
+      "unit": "1 Frame",
+      "weight": 2.3,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "MEDICAL_MOBILITY",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "mobility",
+        "walker",
+        "zimmer frame"
+      ],
+      "specifications": {
+        "Frame": "Anodized Aluminum Alloy",
+        "Weight Limit": "130 kg"
+      },
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:19.441Z",
+      "updatedAt": "2026-10-05T13:20:35.740Z",
+      "countryPrices": [
+        {
+          "id": "f989e3db-c9a4-4bd2-b9e1-6f1c38414edd",
+          "productId": "prod-zimmer-frame",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 110,
+          "createdAt": "2026-09-25T13:12:19.748Z",
+          "updatedAt": "2026-10-05T13:20:42.873Z"
+        },
+        {
+          "id": "2e54e39c-8b53-4e53-8ea5-fe9bbfbf7556",
+          "productId": "prod-zimmer-frame",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 32.99,
+          "createdAt": "2026-09-25T13:12:20.036Z",
+          "updatedAt": "2026-10-05T13:20:43.439Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-ayurvedic-soap-luxury",
+      "name": "Handcrafted Sandalwood & Coconut Milk Luxury Soap",
+      "slug": "handcrafted-sandalwood-coconut-milk-luxury-soap",
+      "sku": "NCC-SOAP-001",
+      "description": "Cold-pressed moisturizing Ayurvedic bath bar with pure Mysore sandalwood oil, rich coconut milk, and vitamin E for sensitive, mature skin.",
+      "shortDescription": "Gentle Ayurvedic cold-pressed botanical soap bar.",
+      "images": [
+        "https://images.unsplash.com/photo-1607006314144-8e104e17e089?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 299,
+      "compareAtPriceINR": 399,
+      "stock": 397,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-personal-care",
+      "brand": "Nest Wellness",
+      "unit": "125g Bar",
+      "weight": 0.13,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "PERSONAL_CARE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "soap",
+        "ayurvedic",
+        "skincare",
+        "organic"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:20.331Z",
+      "updatedAt": "2026-10-02T05:05:05.352Z",
+      "countryPrices": [
+        {
+          "id": "293591f3-c9ed-469d-977e-a5ccbe0d1144",
+          "productId": "prod-ayurvedic-soap-luxury",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 14,
+          "createdAt": "2026-09-25T13:12:20.982Z",
+          "updatedAt": "2026-09-25T19:08:19.704Z"
+        },
+        {
+          "id": "441c5cdf-de66-4446-9c42-4f6133adebf1",
+          "productId": "prod-ayurvedic-soap-luxury",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 4.5,
+          "createdAt": "2026-09-25T13:12:21.284Z",
+          "updatedAt": "2026-09-25T19:08:20.013Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-adult-diapers-l",
+      "name": "NestCare Ultra Absorb Adult Diaper Pants (Size L - 10 Count)",
+      "slug": "nestcare-ultra-absorb-adult-diaper-pants-large",
+      "sku": "NCC-DIA-010-L",
+      "description": "Pull-up style breathable diaper pants with wetness indicator, anti-odor core, and gentle leak guards offering up to 10 hours of overnight comfort.",
+      "shortDescription": "10-count breathable elder diaper pull-ups.",
+      "images": [
+        "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 649,
+      "compareAtPriceINR": 799,
+      "stock": 300,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-personal-care",
+      "brand": "NestCare",
+      "unit": "Pack of 10",
+      "weight": 0.85,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": true,
+      "isAddOn": true,
+      "addOnCategory": "PERSONAL_CARE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "diapers",
+        "elderly care",
+        "incontinence"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:21.595Z",
+      "updatedAt": "2026-09-25T19:08:20.358Z",
+      "countryPrices": [
+        {
+          "id": "13ae507a-162e-42d0-b650-b951e697c561",
+          "productId": "prod-adult-diapers-l",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 30,
+          "createdAt": "2026-09-25T13:12:21.895Z",
+          "updatedAt": "2026-09-25T19:08:20.669Z"
+        },
+        {
+          "id": "c8a9ac00-72e7-4c34-a96f-9a927d11e65a",
+          "productId": "prod-adult-diapers-l",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 9.5,
+          "createdAt": "2026-09-25T13:12:22.196Z",
+          "updatedAt": "2026-09-25T19:08:20.978Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-bed-protectors-underpads",
+      "name": "NestCare Waterproof Absorbent Bed Underpads (10 Pack)",
+      "slug": "nestcare-waterproof-absorbent-bed-underpads-10-pack",
+      "sku": "NCC-PAD-010",
+      "description": "Disposable large 60x90cm underpads with diamond embossed core that locks liquid and protects mattresses and furniture.",
+      "shortDescription": "Large 60x90cm waterproof bed protectors (10 Pack).",
+      "images": [
+        "https://images.unsplash.com/photo-1688384452844-8364c3e2fc28?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "basePriceINR": 499,
+      "compareAtPriceINR": 650,
+      "stock": 220,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-personal-care",
+      "brand": "NestCare",
+      "unit": "Pack of 10 (60x90 cm)",
+      "weight": 0.7,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "PERSONAL_CARE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "underpads",
+        "bed protector",
+        "hygiene"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:22.513Z",
+      "updatedAt": "2026-10-05T13:24:54.444Z",
+      "countryPrices": [
+        {
+          "id": "336cefba-7b88-4f2b-aea2-28dd00b12b46",
+          "productId": "prod-bed-protectors-underpads",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 24,
+          "createdAt": "2026-09-25T13:12:22.798Z",
+          "updatedAt": "2026-10-05T13:25:00.293Z"
+        },
+        {
+          "id": "90b4dde0-667c-423d-8c2a-0234fbe622e0",
+          "productId": "prod-bed-protectors-underpads",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 7.5,
+          "createdAt": "2026-09-25T13:12:23.083Z",
+          "updatedAt": "2026-10-05T13:25:00.561Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-hot-water-bag",
+      "name": "Therapeutic Soft-Cover Hot Water Bag",
+      "slug": "therapeutic-soft-cover-hot-water-bag",
+      "sku": "NCC-HWB-001",
+      "description": "Durable leak-proof natural rubber hot water bottle with plush washable velvet fleece cover for soothing joint pain, cramps, and warming bed.",
+      "shortDescription": "Plush velvet-wrapped soothing hot water bag.",
+      "images": [
+        "https://images.unsplash.com/photo-1703564202694-b102aa465666?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "basePriceINR": 449,
+      "compareAtPriceINR": 599,
+      "stock": 250,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-personal-care",
+      "brand": "Nest Wellness",
+      "unit": "2 Liter Bottle with Cover",
+      "weight": 0.35,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "PERSONAL_CARE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "pain relief",
+        "hot water bag",
+        "warmth"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:23.368Z",
+      "updatedAt": "2026-10-05T13:27:56.049Z",
+      "countryPrices": [
+        {
+          "id": "24a79973-8f85-4d58-be6b-82d937e8ca54",
+          "productId": "prod-hot-water-bag",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 6.5,
+          "createdAt": "2026-09-25T13:12:24.038Z",
+          "updatedAt": "2026-10-05T13:27:59.029Z"
+        },
+        {
+          "id": "2c264467-dba0-4bf9-af9d-276baacb149e",
+          "productId": "prod-hot-water-bag",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 20,
+          "createdAt": "2026-09-25T13:12:23.745Z",
+          "updatedAt": "2026-10-05T13:27:58.740Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-adaptive-cutlery",
+      "name": "Easy-Grip Adaptive Weighted Cutlery Set",
+      "slug": "easy-grip-adaptive-weighted-cutlery-set",
+      "sku": "NCC-CUT-004",
+      "description": "Ergonomic wide non-slip ribbed silicone handles designed for seniors with arthritis, tremors, or weak grip. Includes fork, knife, table spoon, and tea spoon.",
+      "shortDescription": "4-piece non-slip ergonomic cutlery set for seniors.",
+      "images": [
+        "https://images.unsplash.com/photo-1678097338862-7f682d54a421?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "basePriceINR": 899,
+      "compareAtPriceINR": 1199,
+      "stock": 110,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-medical-care",
+      "brand": "NestCare Aids",
+      "unit": "4-Piece Set",
+      "weight": 0.4,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "MEDICAL_MOBILITY",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "cutlery",
+        "adaptive",
+        "arthritis aid"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:24.434Z",
+      "updatedAt": "2026-10-05T13:27:01.206Z",
+      "countryPrices": [
+        {
+          "id": "89c686a2-2e67-425e-915e-5c75c6e333fc",
+          "productId": "prod-adaptive-cutlery",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 42,
+          "createdAt": "2026-09-25T13:12:24.769Z",
+          "updatedAt": "2026-10-05T13:27:10.475Z"
+        },
+        {
+          "id": "01c197d3-9074-4747-a8d5-2b7ca7319b81",
+          "productId": "prod-adaptive-cutlery",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 12.99,
+          "createdAt": "2026-09-25T13:12:25.052Z",
+          "updatedAt": "2026-10-05T13:27:11.069Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-easy-grip-cup",
+      "name": "Anti-Spill Two-Handled Elderly Drinking Mug",
+      "slug": "anti-spill-two-handled-elderly-drinking-mug",
+      "sku": "NCC-CUP-001",
+      "description": "Lightweight dual-handle ergonomic thermal cup with splash-proof silicone sip lid. Easy to hold without shaking or dropping hot beverages.",
+      "shortDescription": "Dual-handle spill-resistant senior drinking mug.",
+      "images": [
+        "https://images.unsplash.com/photo-1650959858546-d09833d5317b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "basePriceINR": 499,
+      "compareAtPriceINR": 650,
+      "stock": 140,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-medical-care",
+      "brand": "NestCare Aids",
+      "unit": "300ml Cup with Lid",
+      "weight": 0.2,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "MEDICAL_MOBILITY",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "cup",
+        "senior drinking",
+        "anti-spill"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:25.346Z",
+      "updatedAt": "2026-10-05T13:18:57.814Z",
+      "countryPrices": [
+        {
+          "id": "a17bbce9-0d63-418d-99a6-b47514c8bfae",
+          "productId": "prod-easy-grip-cup",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 24,
+          "createdAt": "2026-09-25T13:12:25.653Z",
+          "updatedAt": "2026-10-05T13:19:09.934Z"
+        },
+        {
+          "id": "a9fa1eb4-86e6-4c08-b0ca-2e1b5eb72fa9",
+          "productId": "prod-easy-grip-cup",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 7.5,
+          "createdAt": "2026-09-25T13:12:26.082Z",
+          "updatedAt": "2026-10-05T13:19:10.511Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-kasavu-mundu",
+      "name": "Handwoven Kerala Gold Kasavu Single Mundu (Double Zari)",
+      "slug": "handwoven-kerala-gold-kasavu-single-mundu",
+      "sku": "NCC-MUNDU-001",
+      "description": "Traditional authentic fine cotton Kerala Kasavu Mundu with shimmering golden zari border, perfect for celebratory wear, temple visits, and family festivities.",
+      "shortDescription": "Traditional fine cotton double zari Kerala Kasavu Mundu.",
+      "images": [
+        "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 899,
+      "compareAtPriceINR": 1199,
+      "stock": 159,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-for-dad",
+      "brand": "Nest Traditions",
+      "unit": "4 Meters Pure Cotton Mundu",
+      "weight": 0.35,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": true,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "kasavu mundu",
+        "kerala traditional",
+        "dad gift",
+        "clothing"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:26.404Z",
+      "updatedAt": "2026-09-28T04:34:29.415Z",
+      "countryPrices": [
+        {
+          "id": "06703438-0c18-4660-9d94-d6aa4b1d78ef",
+          "productId": "prod-kasavu-mundu",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 12.99,
+          "createdAt": "2026-09-25T13:12:27.022Z",
+          "updatedAt": "2026-09-25T19:08:25.943Z"
+        },
+        {
+          "id": "057dbc00-aa2b-4a9f-832c-4575766201ba",
+          "productId": "prod-kasavu-mundu",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 42,
+          "createdAt": "2026-09-25T13:12:26.715Z",
+          "updatedAt": "2026-09-25T19:08:25.622Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-kasavu-set-saree",
+      "name": "Authentic Kerala Kasavu Set Saree with Gold Border",
+      "slug": "authentic-kerala-kasavu-set-saree-gold-border",
+      "sku": "NCC-SAREE-001",
+      "description": "Exquisite handloom off-white cotton Set Saree with authentic golden Kasavu border. An essential cultural treasure for mothers and auspicious celebrations.",
+      "shortDescription": "Classic Kerala handloom Kasavu cotton set saree.",
+      "images": [
+        "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 1699,
+      "compareAtPriceINR": 2200,
+      "stock": 119,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-for-mum",
+      "brand": "Nest Traditions",
+      "unit": "Set Saree with Blouse Piece",
+      "weight": 0.6,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": true,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "kasavu saree",
+        "mum gift",
+        "traditional",
+        "clothing"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:27.317Z",
+      "updatedAt": "2026-09-28T04:34:29.723Z",
+      "countryPrices": [
+        {
+          "id": "241ddaa1-0cf2-4624-a1fd-f72068a325ca",
+          "productId": "prod-kasavu-set-saree",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 78,
+          "createdAt": "2026-09-25T13:12:27.997Z",
+          "updatedAt": "2026-09-25T19:08:27.082Z"
+        },
+        {
+          "id": "aca561a7-cae5-4039-bbf6-0ccfa182ecba",
+          "productId": "prod-kasavu-set-saree",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 23.5,
+          "createdAt": "2026-09-25T13:12:28.286Z",
+          "updatedAt": "2026-09-25T19:08:27.436Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-brass-diya-velakku",
+      "name": "Handcrafted Kerala Brass Peacock Diya / Nilavilakku (Small)",
+      "slug": "handcrafted-kerala-brass-peacock-diya-nilavilakku",
+      "sku": "NCC-DIYA-001",
+      "description": "Polished solid brass traditional Kerala Nilavilakku with auspicious peacock finial. Radiates warmth, peace, and spiritual blessing to home.",
+      "shortDescription": "Solid brass auspicious Kerala Nilavilakku lamp.",
+      "images": [
+        "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 799,
+      "compareAtPriceINR": 999,
+      "stock": 139,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-anniversary",
+      "brand": "Nest Traditions",
+      "unit": "1 Brass Diya (15 cm)",
+      "weight": 0.45,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "diya",
+        "brass lamp",
+        "velakku",
+        "traditional gift"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:28.581Z",
+      "updatedAt": "2026-09-28T04:34:32.093Z",
+      "countryPrices": [
+        {
+          "id": "dc35b09b-5fd0-4b13-bdc3-f24b2b44891b",
+          "productId": "prod-brass-diya-velakku",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 38,
+          "createdAt": "2026-09-25T13:12:28.865Z",
+          "updatedAt": "2026-09-25T19:08:28.269Z"
+        },
+        {
+          "id": "e7ee0085-cb2a-4725-8537-d59fcf723d17",
+          "productId": "prod-brass-diya-velakku",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 11.5,
+          "createdAt": "2026-09-25T13:12:29.172Z",
+          "updatedAt": "2026-09-25T19:08:28.581Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-kerala-arabica-coffee",
+      "name": "NestCare Artisanal Wayanad Arabica Roast Coffee (Glass Jar)",
+      "slug": "nestcare-artisanal-wayanad-arabica-roast-coffee-jar",
+      "sku": "NCC-COF-002",
+      "description": "Single-estate shade-grown Wayanad medium roast coffee packed in an airtight glass keepsake jar. Rich aromatic notes of cocoa and cardamom.",
+      "shortDescription": "Single-estate Wayanad Arabica coffee in glass jar (200g).",
+      "images": [
+        "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 549,
+      "compareAtPriceINR": 699,
+      "stock": 276,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-for-mum",
+      "brand": "Nest Wellness",
+      "unit": "200g Glass Jar",
+      "weight": 0.45,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": true,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "coffee",
+        "gourmet",
+        "wayanad",
+        "beverage"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:29.465Z",
+      "updatedAt": "2026-10-02T05:05:05.658Z",
+      "countryPrices": [
+        {
+          "id": "abc9c870-16d3-4f30-8384-6af9ea963eac",
+          "productId": "prod-kerala-arabica-coffee",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 26,
+          "createdAt": "2026-09-25T13:12:29.787Z",
+          "updatedAt": "2026-09-25T19:08:29.202Z"
+        },
+        {
+          "id": "2a586a4f-5f0c-4f6f-a91e-a121215f37d5",
+          "productId": "prod-kerala-arabica-coffee",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 7.99,
+          "createdAt": "2026-09-25T13:12:30.078Z",
+          "updatedAt": "2026-09-25T19:08:29.517Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-premium-roasted-cashews",
+      "name": "Gourmet Kerala Jumbo Roasted & Salted Cashews",
+      "slug": "gourmet-kerala-jumbo-roasted-salted-cashews-250g",
+      "sku": "NCC-NUT-001",
+      "description": "Crispy, buttery W180 grade Jumbo whole cashew nuts roasted in pure Himalayan pink salt. Packed with healthy fats and protein.",
+      "shortDescription": "Jumbo whole roasted cashews in airtight canister (250g).",
+      "images": [
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 599,
+      "compareAtPriceINR": 750,
+      "stock": 315,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-for-dad",
+      "brand": "Nest Wellness",
+      "unit": "250g Sealed Canister",
+      "weight": 0.3,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": true,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "cashews",
+        "dry fruits",
+        "healthy treats",
+        "gourmet"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:30.372Z",
+      "updatedAt": "2026-10-02T05:05:05.974Z",
+      "countryPrices": [
+        {
+          "id": "5a56c914-25cf-4558-9455-359694b0e099",
+          "productId": "prod-premium-roasted-cashews",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 28,
+          "createdAt": "2026-09-25T13:12:30.657Z",
+          "updatedAt": "2026-09-25T19:08:30.781Z"
+        },
+        {
+          "id": "3905a4d7-cda9-48e3-9935-abc43467454a",
+          "productId": "prod-premium-roasted-cashews",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 8.99,
+          "createdAt": "2026-09-25T13:12:30.963Z",
+          "updatedAt": "2026-09-25T19:08:31.095Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-couple-ceramic-mugs",
+      "name": "Artisanal Handcrafted Couple Coffee Mugs (Set of 2)",
+      "slug": "artisanal-handcrafted-couple-coffee-mugs-set-of-2",
+      "sku": "NCC-MUG-002",
+      "description": "Set of two matte ceramic mugs with soft ergonomic handles and heartwarming minimalist embossed emblems. Perfect for mum & dad’s morning brew.",
+      "shortDescription": "Set of 2 matte ceramic artisanal couple mugs.",
+      "images": [
+        "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 699,
+      "compareAtPriceINR": 899,
+      "stock": 178,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-anniversary",
+      "brand": "Nest Living",
+      "unit": "Set of 2 (350ml each)",
+      "weight": 0.7,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "mugs",
+        "couple gift",
+        "anniversary"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:31.260Z",
+      "updatedAt": "2026-09-28T04:38:22.258Z",
+      "countryPrices": [
+        {
+          "id": "e55ecc09-eb7a-4def-bb9e-c15510e3c454",
+          "productId": "prod-couple-ceramic-mugs",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 32,
+          "createdAt": "2026-09-25T13:12:31.545Z",
+          "updatedAt": "2026-09-25T19:08:31.750Z"
+        },
+        {
+          "id": "220628bb-ad25-4853-93cb-69a252a64151",
+          "productId": "prod-couple-ceramic-mugs",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 9.99,
+          "createdAt": "2026-09-25T13:12:31.831Z",
+          "updatedAt": "2026-09-25T19:08:32.058Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-thermal-tumbler",
+      "name": "Double-Wall Insulated Stainless Steel Thermal Tumbler",
+      "slug": "double-wall-insulated-stainless-steel-thermal-tumbler",
+      "sku": "NCC-TUMB-001",
+      "description": "Premium vacuum insulated travel tumbler that keeps beverages piping hot for 8 hours or iced cold for 16 hours. Spill-safe slide lid.",
+      "shortDescription": "500ml double-wall thermal tumbler with slide lid.",
+      "images": [
+        "https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 849,
+      "compareAtPriceINR": 1100,
+      "stock": 149,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-for-dad",
+      "brand": "Nest Living",
+      "unit": "500ml Tumbler",
+      "weight": 0.35,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "tumbler",
+        "thermal flask",
+        "travel mug"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:32.125Z",
+      "updatedAt": "2026-09-28T04:34:31.208Z",
+      "countryPrices": [
+        {
+          "id": "7f691d45-e3ac-43f0-82af-d383d7d631b9",
+          "productId": "prod-thermal-tumbler",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 11.99,
+          "createdAt": "2026-09-25T13:12:32.752Z",
+          "updatedAt": "2026-09-25T19:08:33.600Z"
+        },
+        {
+          "id": "b8063178-927a-40c4-af1d-19d0ccf1b420",
+          "productId": "prod-thermal-tumbler",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 40,
+          "createdAt": "2026-09-25T13:12:32.446Z",
+          "updatedAt": "2026-09-25T19:08:33.287Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-luxury-bath-towel",
+      "name": "100% Egyptian Cotton Luxury Bath Towel (Plush 600 GSM)",
+      "slug": "100-egyptian-cotton-luxury-bath-towel-600gsm",
+      "sku": "NCC-TWL-001",
+      "description": "Ultra-absorbent, quick-drying organic long-staple cotton bath towel with velvety softness that feels comforting against gentle skin.",
+      "shortDescription": "Plush 600 GSM organic cotton luxury bath towel.",
+      "images": [
+        "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 799,
+      "compareAtPriceINR": 999,
+      "stock": 198,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-for-mum",
+      "brand": "Nest Living",
+      "unit": "1 Large Bath Sheet (70x140 cm)",
+      "weight": 0.55,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "towel",
+        "bath luxury",
+        "cotton"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:33.036Z",
+      "updatedAt": "2026-09-28T04:43:45.631Z",
+      "countryPrices": [
+        {
+          "id": "12efa466-b002-4848-bfb2-0d16fcbf001b",
+          "productId": "prod-luxury-bath-towel",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 38,
+          "createdAt": "2026-09-25T13:12:33.330Z",
+          "updatedAt": "2026-09-25T19:08:34.241Z"
+        },
+        {
+          "id": "9573fbd3-ea4f-417f-bbb5-649eb3dbf5fe",
+          "productId": "prod-luxury-bath-towel",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 11.5,
+          "createdAt": "2026-09-25T13:12:33.686Z",
+          "updatedAt": "2026-09-25T19:08:34.550Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-floral-arrangement",
+      "name": "Fresh Keepsake Floral Posy & Rose Arrangement",
+      "slug": "fresh-keepsake-floral-posy-rose-arrangement",
+      "sku": "NCC-FLOR-001",
+      "description": "Delicately curated bouquet of fresh roses, baby’s breath, and eucalyptus tied in silk ribbon to brighten any room upon arrival.",
+      "shortDescription": "Delicate fresh floral arrangement in silk ribbon.",
+      "images": [
+        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 499,
+      "compareAtPriceINR": 650,
+      "stock": 118,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-celebrations",
+      "brand": "Nest Blooms",
+      "unit": "1 Floral Arrangement",
+      "weight": 0.25,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "flowers",
+        "bouquet",
+        "gifting",
+        "celebration"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:33.985Z",
+      "updatedAt": "2026-09-28T04:43:46.859Z",
+      "countryPrices": [
+        {
+          "id": "fe64c1c8-8381-4f44-82b0-a6e73fb9495b",
+          "productId": "prod-floral-arrangement",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 24,
+          "createdAt": "2026-09-25T13:12:34.294Z",
+          "updatedAt": "2026-09-25T19:08:35.157Z"
+        },
+        {
+          "id": "675c7b82-f87c-425b-86c8-e4eda086236a",
+          "productId": "prod-floral-arrangement",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 7.5,
+          "createdAt": "2026-09-25T13:12:34.580Z",
+          "updatedAt": "2026-09-25T19:08:35.450Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-family-photo-frame",
+      "name": "Handcrafted Teakwood Keepsake Family Photo Frame",
+      "slug": "handcrafted-teakwood-keepsake-family-photo-frame",
+      "sku": "NCC-FRM-001",
+      "description": "Polished solid natural teakwood tabletop frame with custom printout of your uploaded family photograph ready to display on parents’ bedside table.",
+      "shortDescription": "Teakwood photo frame with your printed family picture.",
+      "images": [
+        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"
+      ],
+      "basePriceINR": 699,
+      "compareAtPriceINR": 899,
+      "stock": 148,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-anniversary",
+      "brand": "Nest Living",
+      "unit": "1 Frame (5x7 inch with Photo)",
+      "weight": 0.35,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": true,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "photo frame",
+        "memory",
+        "personal gift"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:34.872Z",
+      "updatedAt": "2026-09-28T04:38:21.961Z",
+      "countryPrices": [
+        {
+          "id": "b4ed8d47-3380-4f1c-b579-7dfc56ae13fa",
+          "productId": "prod-family-photo-frame",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 32,
+          "createdAt": "2026-09-25T13:12:35.227Z",
+          "updatedAt": "2026-09-25T19:08:36.603Z"
+        },
+        {
+          "id": "171689d7-bf20-4d70-95ad-b5746a463d5b",
+          "productId": "prod-family-photo-frame",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 9.99,
+          "createdAt": "2026-09-25T13:12:35.532Z",
+          "updatedAt": "2026-09-25T19:08:36.924Z"
+        }
+      ]
+    },
+    {
+      "id": "prod-baby-swaddle-gift-set",
+      "name": "NestCare Organic Muslin Baby Swaddle & Wooden Rattle Set",
+      "slug": "nestcare-organic-muslin-baby-swaddle-wooden-rattle-set",
+      "sku": "NCC-BABY-001",
+      "description": "Breathable organic muslin cotton swaddle blanket paired with non-toxic polished beechwood teething rattle. Gentle, eco-conscious newborn luxury.",
+      "shortDescription": "Organic muslin swaddle with beechwood rattle gift box.",
+      "images": [
+        "https://plus.unsplash.com/premium_photo-1676049342411-c118fe1570b2?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "basePriceINR": 899,
+      "compareAtPriceINR": 1199,
+      "stock": 124,
+      "reservedStock": 0,
+      "lowStockThreshold": 5,
+      "categoryId": "cat-new-mum-baby",
+      "brand": "Nest Baby",
+      "unit": "1 Swaddle (120x120cm) + 1 Rattle",
+      "weight": 0.3,
+      "dimensions": null,
+      "packageSize": null,
+      "packageLength": null,
+      "packageWidth": null,
+      "packageHeight": null,
+      "packageWeight": null,
+      "packageVolume": null,
+      "status": "ACTIVE",
+      "featured": false,
+      "isAddOn": true,
+      "addOnCategory": "GIFT_LIFESTYLE",
+      "isCustomHamperEligible": true,
+      "tags": [
+        "baby",
+        "swaddle",
+        "new mum",
+        "gift set"
+      ],
+      "specifications": null,
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:35.833Z",
+      "updatedAt": "2026-10-05T07:42:25.552Z",
+      "countryPrices": [
+        {
+          "id": "8c95e7cc-f2c2-4a68-84b1-851e0e0a9fe7",
+          "productId": "prod-baby-swaddle-gift-set",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 42,
+          "createdAt": "2026-09-25T13:12:36.136Z",
+          "updatedAt": "2026-10-05T07:42:26.119Z"
+        },
+        {
+          "id": "3fbaf1ab-bbb4-4b9e-9f38-0fb5f666b14b",
+          "productId": "prod-baby-swaddle-gift-set",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 12.99,
+          "createdAt": "2026-09-25T13:12:36.443Z",
+          "updatedAt": "2026-10-05T07:42:26.696Z"
+        }
+      ]
+    }
+  ],
+  "hampers": [
+    {
+      "id": "hamper-essential-care",
+      "name": "Essential Care Hamper",
+      "slug": "essential-care-hamper",
+      "hamperType": "NORMAL",
+      "recipientType": "PARENTS",
+      "occasion": "MEDICAL_CARE",
+      "recipientVariant": "ELDERLY_PARENTS",
+      "description": "Updated comprehensive elderly care package with diagnostic checks.",
+      "shortDescription": "BP monitor, glucometer with 100 strips, thermometer, pill box, tea/coffee & cashews.",
+      "images": [
+        "https://images.unsplash.com/photo-1508899203029-1c9eb493c9bd?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "pricingType": "FIXED",
+      "fixedPriceINR": 4999,
+      "startingPriceINR": 4999,
+      "stock": 75,
+      "status": "ACTIVE",
+      "featured": true,
+      "allowCustomMessage": true,
+      "allowPhotos": true,
+      "allowPhotoUpload": true,
+      "maxPhotos": 5,
+      "photoRequired": false,
+      "photoInstructions": "Upload up to 5 special family photos for keepsake card.",
+      "photoCardEnabled": true,
+      "allowVideoQR": true,
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:36.763Z",
+      "updatedAt": "2026-10-05T09:02:18.141Z",
+      "items": [
+        {
+          "id": "f0d5225f-b9a2-4ade-9070-c5db1f4ca559",
+          "hamperId": "hamper-essential-care",
+          "productId": "prod-pill-organiser-7day",
+          "quantity": 1,
+          "createdAt": "2026-10-05T08:42:26.609Z",
+          "updatedAt": "2026-10-05T08:42:26.609Z"
+        },
+        {
+          "id": "d0f7d3d0-04d9-43cf-9653-8f5fb77dbe05",
+          "hamperId": "hamper-essential-care",
+          "productId": "prod-accucheck-glucometer",
+          "quantity": 1,
+          "createdAt": "2026-10-05T08:42:26.814Z",
+          "updatedAt": "2026-10-05T08:42:26.814Z"
+        },
+        {
+          "id": "4e5b81c8-1788-4250-ba4a-3b694c404a88",
+          "hamperId": "hamper-essential-care",
+          "productId": "prod-ayurvedic-soap-luxury",
+          "quantity": 1,
+          "createdAt": "2026-10-05T08:42:26.876Z",
+          "updatedAt": "2026-10-05T08:42:26.876Z"
+        },
+        {
+          "id": "cf861ce3-9061-43b0-afff-b88a2b048dbe",
+          "hamperId": "hamper-essential-care",
+          "productId": "prod-premium-roasted-cashews",
+          "quantity": 1,
+          "createdAt": "2026-10-05T08:42:27.093Z",
+          "updatedAt": "2026-10-05T08:42:27.093Z"
+        },
+        {
+          "id": "1c6c7de6-c03a-482e-8768-f04248eb2b01",
+          "hamperId": "hamper-essential-care",
+          "productId": "prod-kerala-arabica-coffee",
+          "quantity": 1,
+          "createdAt": "2026-10-05T08:42:27.157Z",
+          "updatedAt": "2026-10-05T08:42:27.157Z"
+        },
+        {
+          "id": "7690b471-783b-45e5-90e0-f51791d20621",
+          "hamperId": "hamper-essential-care",
+          "productId": "prod-omron-bp-monitor",
+          "quantity": 1,
+          "createdAt": "2026-10-05T08:42:27.383Z",
+          "updatedAt": "2026-10-05T08:42:27.383Z"
+        },
+        {
+          "id": "5a71f004-69f9-4a22-8ee2-bc1382cdd472",
+          "hamperId": "hamper-essential-care",
+          "productId": "prod-infrared-thermometer",
+          "quantity": 1,
+          "createdAt": "2026-10-05T08:42:27.667Z",
+          "updatedAt": "2026-10-05T08:42:27.667Z"
+        }
+      ],
+      "countryPrices": [
+        {
+          "id": "b1258798-1d60-43cb-9113-7240d82c587d",
+          "hamperId": "hamper-essential-care",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 225,
+          "createdAt": "2026-10-05T08:52:18.131Z",
+          "updatedAt": "2026-10-05T08:52:18.131Z"
+        },
+        {
+          "id": "2602c098-b6c8-4f29-b0b9-1df28eeac6fa",
+          "hamperId": "hamper-essential-care",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 69,
+          "createdAt": "2026-10-05T08:52:18.131Z",
+          "updatedAt": "2026-10-05T08:52:18.131Z"
+        }
+      ]
+    },
+    {
+      "id": "hamper-premium-care",
+      "name": "Premium Care Hamper",
+      "slug": "premium-care-hamper",
+      "hamperType": "PREMIUM",
+      "recipientType": "PARENTS",
+      "occasion": "ANNIVERSARY",
+      "recipientVariant": "ELDERLY_PARENTS",
+      "description": "A more luxurious version of our Essential Care Hamper. Packed in a signature magnetic closure keepsake gift box with luxury towel, floral posy, and personalized family video QR greeting card.",
+      "shortDescription": "Full diagnostic suite + Egyptian towel, floral posy, treats & Video QR greeting.",
+      "images": [
+        "https://images.unsplash.com/photo-1658198430813-c9f783ec2572?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "pricingType": "FIXED",
+      "fixedPriceINR": 7499,
+      "startingPriceINR": 7499,
+      "stock": 50,
+      "status": "ACTIVE",
+      "featured": true,
+      "allowCustomMessage": true,
+      "allowPhotos": true,
+      "allowPhotoUpload": true,
+      "maxPhotos": 5,
+      "photoRequired": false,
+      "photoInstructions": "Upload up to 5 special family photos for keepsake card.",
+      "photoCardEnabled": true,
+      "allowVideoQR": true,
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:12:40.590Z",
+      "updatedAt": "2026-10-05T09:02:40.583Z",
+      "items": [
+        {
+          "id": "8c8f90f8-730d-4846-b0ad-a562ee98dd01",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-omron-bp-monitor",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        },
+        {
+          "id": "53cf4ffd-3ed8-4f54-b6cd-effa7e502c3e",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-accucheck-glucometer",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        },
+        {
+          "id": "5e09b256-0df7-4945-b579-da94b142ed70",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-infrared-thermometer",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        },
+        {
+          "id": "f52839f8-4cee-4a4d-b936-97ff0fff2be9",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-pill-organiser-7day",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        },
+        {
+          "id": "9c698088-f309-443c-9c28-f15066aec26d",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-luxury-bath-towel",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        },
+        {
+          "id": "f5080363-1c89-41f7-bc69-efb3ab5643a6",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-premium-roasted-cashews",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        },
+        {
+          "id": "ca022dfe-2fb3-4b88-9335-3b8e640bafc6",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-floral-arrangement",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        },
+        {
+          "id": "c67345f2-7eff-4d9a-9a37-2d4cb854ea04",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-ayurvedic-soap-luxury",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        },
+        {
+          "id": "2a90a792-1500-4160-9cec-17ad64c862de",
+          "hamperId": "hamper-premium-care",
+          "productId": "prod-kerala-arabica-coffee",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:01:09.360Z",
+          "updatedAt": "2026-10-05T09:01:09.360Z"
+        }
+      ],
+      "countryPrices": [
+        {
+          "id": "a53babdb-57de-4944-b66f-94366fb42f9b",
+          "hamperId": "hamper-premium-care",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 330,
+          "createdAt": "2026-10-05T09:01:09.942Z",
+          "updatedAt": "2026-10-05T09:01:09.942Z"
+        },
+        {
+          "id": "778708d5-08fb-4c4e-8e4d-1ec39e7364c6",
+          "hamperId": "hamper-premium-care",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 99,
+          "createdAt": "2026-10-05T09:01:09.942Z",
+          "updatedAt": "2026-10-05T09:01:09.942Z"
+        }
+      ]
+    },
+    {
+      "id": "hamper-anniversary",
+      "name": "Anniversary Hamper",
+      "slug": "anniversary-hamper",
+      "hamperType": "ANNIVERSARY",
+      "recipientType": "PARENTS",
+      "occasion": "ANNIVERSARY",
+      "recipientVariant": null,
+      "description": "A simple, elegant celebration gift for parents or couples. Features artisanal coffee, roasted cashews, handcrafted couple mugs, fresh florals, and a heartfelt message card.",
+      "shortDescription": "Floral posy, artisanal couple mugs, Wayanad coffee, jumbo cashews & greeting card.",
+      "images": [
+        "https://images.unsplash.com/photo-1608755728617-aefab37d2edd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "pricingType": "FIXED",
+      "fixedPriceINR": 2999,
+      "startingPriceINR": 2999,
+      "stock": 65,
+      "status": "ACTIVE",
+      "featured": true,
+      "allowCustomMessage": true,
+      "allowPhotos": true,
+      "allowPhotoUpload": true,
+      "maxPhotos": 5,
+      "photoRequired": false,
+      "photoInstructions": "Upload up to 5 special family photos for keepsake card.",
+      "photoCardEnabled": true,
+      "allowVideoQR": true,
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:14:18.442Z",
+      "updatedAt": "2026-10-05T09:03:21.208Z",
+      "items": [
+        {
+          "id": "2a7977b4-d2b2-46e0-a56e-5e38dda0dec5",
+          "hamperId": "hamper-anniversary",
+          "productId": "prod-kerala-arabica-coffee",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:03:21.751Z",
+          "updatedAt": "2026-10-05T09:03:21.751Z"
+        },
+        {
+          "id": "6cb7f108-b2a9-4b60-902b-e70a5d245958",
+          "hamperId": "hamper-anniversary",
+          "productId": "prod-premium-roasted-cashews",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:03:21.751Z",
+          "updatedAt": "2026-10-05T09:03:21.751Z"
+        },
+        {
+          "id": "a15e252a-3522-45db-9c14-85c7018e5743",
+          "hamperId": "hamper-anniversary",
+          "productId": "prod-ayurvedic-soap-luxury",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:03:21.751Z",
+          "updatedAt": "2026-10-05T09:03:21.751Z"
+        },
+        {
+          "id": "824eeb4d-482b-4527-88f1-aaaeb81b527a",
+          "hamperId": "hamper-anniversary",
+          "productId": "prod-floral-arrangement",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:03:21.751Z",
+          "updatedAt": "2026-10-05T09:03:21.751Z"
+        },
+        {
+          "id": "96d24ada-bc6c-497f-81ec-f308663c5564",
+          "hamperId": "hamper-anniversary",
+          "productId": "prod-couple-ceramic-mugs",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:03:21.751Z",
+          "updatedAt": "2026-10-05T09:03:21.751Z"
+        }
+      ],
+      "countryPrices": [
+        {
+          "id": "868391df-9331-4e5a-9cd4-7fbcdbe4891a",
+          "hamperId": "hamper-anniversary",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 135,
+          "createdAt": "2026-10-05T09:03:22.294Z",
+          "updatedAt": "2026-10-05T09:03:22.294Z"
+        },
+        {
+          "id": "bbbf1290-0108-4056-a72d-0403ca992a27",
+          "hamperId": "hamper-anniversary",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 39.99,
+          "createdAt": "2026-10-05T09:03:22.294Z",
+          "updatedAt": "2026-10-05T09:03:22.294Z"
+        }
+      ]
+    },
+    {
+      "id": "hamper-anniversary-premium",
+      "name": "Anniversary Premium Hamper",
+      "slug": "anniversary-premium-hamper",
+      "hamperType": "ANNIVERSARY_PREMIUM",
+      "recipientType": "COUPLE",
+      "occasion": "ANNIVERSARY",
+      "recipientVariant": null,
+      "description": "A more luxurious and personalised anniversary gift. Encased in a magnetic keepsake box with brass diya, double thermal tumblers, premium coffee jar, cashews, posy, and printed family photo card.",
+      "shortDescription": "Brass Diya, thermal tumblers, Wayanad coffee, florals, cashews & photo print.",
+      "images": [
+        "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"
+      ],
+      "pricingType": "FIXED",
+      "fixedPriceINR": 4499,
+      "startingPriceINR": 4499,
+      "stock": 45,
+      "status": "ACTIVE",
+      "featured": true,
+      "allowCustomMessage": true,
+      "allowPhotos": true,
+      "allowPhotoUpload": true,
+      "maxPhotos": 5,
+      "photoRequired": false,
+      "photoInstructions": "Upload up to 5 special family photos for keepsake card.",
+      "photoCardEnabled": true,
+      "allowVideoQR": true,
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:14:20.686Z",
+      "updatedAt": "2026-10-05T09:03:17.828Z",
+      "items": [
+        {
+          "id": "c3f2a563-fca0-4af4-ae06-bff2c8a65cfb",
+          "hamperId": "hamper-anniversary-premium",
+          "productId": "prod-brass-diya-velakku",
+          "quantity": 1,
+          "createdAt": "2026-09-25T13:14:20.993Z",
+          "updatedAt": "2026-09-25T19:08:55.408Z"
+        },
+        {
+          "id": "cb993607-e314-4ddb-97c5-12fc220d3623",
+          "hamperId": "hamper-anniversary-premium",
+          "productId": "prod-thermal-tumbler",
+          "quantity": 2,
+          "createdAt": "2026-09-25T13:14:21.281Z",
+          "updatedAt": "2026-09-25T19:08:55.714Z"
+        },
+        {
+          "id": "63276a0e-aae0-4e71-ba9a-8515f95ccd0a",
+          "hamperId": "hamper-anniversary-premium",
+          "productId": "prod-kerala-arabica-coffee",
+          "quantity": 1,
+          "createdAt": "2026-09-25T13:14:21.561Z",
+          "updatedAt": "2026-09-25T19:08:56.008Z"
+        },
+        {
+          "id": "501e1166-b891-4569-b5d4-89e6a0ea1915",
+          "hamperId": "hamper-anniversary-premium",
+          "productId": "prod-premium-roasted-cashews",
+          "quantity": 1,
+          "createdAt": "2026-09-25T13:14:21.849Z",
+          "updatedAt": "2026-09-25T19:08:56.324Z"
+        },
+        {
+          "id": "e6e91536-b31b-4bf4-a8f5-c64923b345c5",
+          "hamperId": "hamper-anniversary-premium",
+          "productId": "prod-ayurvedic-soap-luxury",
+          "quantity": 1,
+          "createdAt": "2026-09-25T13:14:22.134Z",
+          "updatedAt": "2026-09-25T19:08:56.633Z"
+        },
+        {
+          "id": "c35964ff-5689-4eeb-b131-78946362dfa8",
+          "hamperId": "hamper-anniversary-premium",
+          "productId": "prod-floral-arrangement",
+          "quantity": 1,
+          "createdAt": "2026-09-25T13:14:22.430Z",
+          "updatedAt": "2026-09-25T19:08:56.942Z"
+        }
+      ],
+      "countryPrices": [
+        {
+          "id": "60a94f74-489c-40dd-8a10-43c96a988ac5",
+          "hamperId": "hamper-anniversary-premium",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 199,
+          "createdAt": "2026-09-25T13:14:23.012Z",
+          "updatedAt": "2026-09-25T19:08:57.253Z"
+        },
+        {
+          "id": "3efb27b1-08ce-47f9-a118-a11af0b967a3",
+          "hamperId": "hamper-anniversary-premium",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 59.99,
+          "createdAt": "2026-09-25T13:14:23.301Z",
+          "updatedAt": "2026-09-25T19:08:57.563Z"
+        }
+      ]
+    },
+    {
+      "id": "hamper-signature-anniversary",
+      "name": "NESTCARE SIGNATURE ANNIVERSARY",
+      "slug": "nestcare-signature-anniversary",
+      "hamperType": "SIGNATURE_ANNIVERSARY",
+      "recipientType": "PARENTS",
+      "occasion": "ANNIVERSARY",
+      "recipientVariant": null,
+      "description": "Our ultimate cultural & sentimental anniversary celebration. Includes handwoven Kerala Kasavu Mundu & Set Saree, teakwood photo frame, thermal tumbler, couple mugs, luxury towel, cashews, coffee, rose arrangement, and personal family video QR card.",
+      "shortDescription": "Kasavu Saree & Mundu, teak frame, mugs, tumbler, luxury towel, video QR & florals.",
+      "images": [
+        "https://plus.unsplash.com/premium_photo-1681830031100-dabcc54a7427?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      ],
+      "pricingType": "FIXED",
+      "fixedPriceINR": 9999,
+      "startingPriceINR": 9999,
+      "stock": 29,
+      "status": "ACTIVE",
+      "featured": true,
+      "allowCustomMessage": true,
+      "allowPhotos": true,
+      "allowPhotoUpload": true,
+      "maxPhotos": 5,
+      "photoRequired": false,
+      "photoInstructions": "Upload up to 5 special family photos for keepsake card.",
+      "photoCardEnabled": true,
+      "allowVideoQR": true,
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "seoTitle": null,
+      "seoDescription": null,
+      "createdAt": "2026-09-25T13:14:23.586Z",
+      "updatedAt": "2026-10-05T09:04:28.736Z",
+      "items": [
+        {
+          "id": "ceef9214-5403-4a27-b0bb-34b4964d920d",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-kasavu-mundu",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "ed7b00ac-dc6b-4507-b3e1-13edb29d3dc7",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-kasavu-set-saree",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "12582bc8-6982-456a-8e6c-03eb1b6cbe14",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-luxury-bath-towel",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "116e7a0d-b551-4b70-ac8d-580bd815a299",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-kerala-arabica-coffee",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "480cace8-c6ee-4cf5-8dd7-12ecdb6cb35c",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-premium-roasted-cashews",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "04c8b483-cdae-4ce0-91e1-39878cdaa5ba",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-couple-ceramic-mugs",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "fb43766e-0e96-41fc-b793-a50dbeb24193",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-thermal-tumbler",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "6518a8ff-7492-4559-b9d7-1c35badbea53",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-floral-arrangement",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "21f20ef4-27cc-4a1d-b60c-f8f19d0d8a7b",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-family-photo-frame",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        },
+        {
+          "id": "cb26277c-cf45-4c76-b574-ab8107c0f897",
+          "hamperId": "hamper-signature-anniversary",
+          "productId": "prod-brass-diya-velakku",
+          "quantity": 1,
+          "createdAt": "2026-10-05T09:04:29.274Z",
+          "updatedAt": "2026-10-05T09:04:29.274Z"
+        }
+      ],
+      "countryPrices": [
+        {
+          "id": "44531eb9-cc34-4594-980f-0262da8226de",
+          "hamperId": "hamper-signature-anniversary",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 440,
+          "createdAt": "2026-10-05T09:04:30.083Z",
+          "updatedAt": "2026-10-05T09:04:30.083Z"
+        },
+        {
+          "id": "a664bb51-10fc-4034-a1ba-69cfcd7e9615",
+          "hamperId": "hamper-signature-anniversary",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 129.99,
+          "createdAt": "2026-10-05T09:04:30.083Z",
+          "updatedAt": "2026-10-05T09:04:30.083Z"
+        }
+      ]
+    }
+  ],
+  "boxes": [
+    {
+      "id": "box-classic-green",
+      "name": "Classic Green Box",
+      "slug": "classic-green-box",
+      "description": "Eco-friendly rigid kraft box with signature Forest Green Nest Care ribbon and protective cushioning.",
+      "size": "Small",
+      "color": "Forest Green",
+      "material": "Eco-Friendly Rigid Kraft Board",
+      "dimensions": "22 × 16 × 10 cm",
+      "length": 22,
+      "width": 16,
+      "height": 10,
+      "capacity": 5,
+      "maxWeight": 2,
+      "basePriceINR": 199,
+      "compareAtPriceINR": 299,
+      "stock": 49,
+      "status": "ACTIVE",
+      "sortOrder": 1,
+      "isRecommended": false,
+      "images": [
+        "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&w=800&q=80"
+      ],
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "createdAt": "2026-09-25T19:09:07.512Z",
+      "updatedAt": "2026-09-28T04:38:21.369Z",
+      "countryPrices": [
+        {
+          "id": "7aaad5d8-2baf-445a-8935-205c8bae3af1",
+          "boxId": "box-classic-green",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 10,
+          "createdAt": "2026-09-25T19:09:08.136Z",
+          "updatedAt": "2026-09-25T19:09:08.136Z"
+        },
+        {
+          "id": "cfe55193-61c7-411a-9e7b-64a14f5834e4",
+          "boxId": "box-classic-green",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 3,
+          "createdAt": "2026-09-25T19:09:08.824Z",
+          "updatedAt": "2026-09-25T19:09:08.824Z"
+        }
+      ]
+    },
+    {
+      "id": "box-premium-white",
+      "name": "Premium White Keepsake Box",
+      "slug": "premium-white-keepsake-box",
+      "description": "Matte white embossed gift box with dual silk pull-ribbons and custom velvet-lined compartment.",
+      "size": "Medium",
+      "color": "Pure White & Gold",
+      "material": "Reinforced Matte Rigid Board",
+      "dimensions": "28 × 22 × 12 cm",
+      "length": 28,
+      "width": 22,
+      "height": 12,
+      "capacity": 10,
+      "maxWeight": 4.5,
+      "basePriceINR": 399,
+      "compareAtPriceINR": 549,
+      "stock": 45,
+      "status": "ACTIVE",
+      "sortOrder": 2,
+      "isRecommended": false,
+      "images": [
+        "https://images.unsplash.com/photo-1512909006721-3d6018887383?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"
+      ],
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "createdAt": "2026-09-25T19:09:09.439Z",
+      "updatedAt": "2026-09-25T19:09:09.439Z",
+      "countryPrices": [
+        {
+          "id": "50c621b2-431e-4abb-aad8-2ab2525b93c7",
+          "boxId": "box-premium-white",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 20,
+          "createdAt": "2026-09-25T19:09:09.756Z",
+          "updatedAt": "2026-09-25T19:09:09.756Z"
+        },
+        {
+          "id": "926e4858-1b56-416b-9a67-d853c5c3fa23",
+          "boxId": "box-premium-white",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 5,
+          "createdAt": "2026-09-25T19:09:10.079Z",
+          "updatedAt": "2026-09-25T19:09:10.079Z"
+        }
+      ]
+    },
+    {
+      "id": "box-premium-magnetic",
+      "name": "Premium Magnetic Luxury Box",
+      "slug": "premium-magnetic-luxury-box",
+      "description": "Luxury magnetic snap-closure rigid gift box with satin lining, gold-foil insignia, and QR card holder.",
+      "size": "Large",
+      "color": "Light Sage Green",
+      "material": "Luxury Magnetic Rigid Box",
+      "dimensions": "34 × 26 × 14 cm",
+      "length": 34,
+      "width": 26,
+      "height": 14,
+      "capacity": 15,
+      "maxWeight": 7,
+      "basePriceINR": 799,
+      "compareAtPriceINR": 999,
+      "stock": 35,
+      "status": "ACTIVE",
+      "sortOrder": 3,
+      "isRecommended": true,
+      "images": [
+        "https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1512909006721-3d6018887383?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80"
+      ],
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "createdAt": "2026-09-25T19:09:10.934Z",
+      "updatedAt": "2026-09-25T19:09:10.934Z",
+      "countryPrices": [
+        {
+          "id": "ec0430a8-a5d3-4e5d-9043-8ff557dba8ac",
+          "boxId": "box-premium-magnetic",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 39,
+          "createdAt": "2026-09-25T19:09:11.794Z",
+          "updatedAt": "2026-09-25T19:09:11.794Z"
+        },
+        {
+          "id": "4d589bca-41b7-4395-8641-fda47bd1c8f8",
+          "boxId": "box-premium-magnetic",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 10,
+          "createdAt": "2026-09-25T19:09:12.101Z",
+          "updatedAt": "2026-09-25T19:09:12.101Z"
+        }
+      ]
+    },
+    {
+      "id": "box-signature-teak",
+      "name": "Signature Heritage Gift Box",
+      "slug": "signature-heritage-gift-box",
+      "description": "Handcrafted polished Kerala teakwood-finish box with brass latch, traditional motifs, and velvet lining.",
+      "size": "Extra Large",
+      "color": "Warm Cream & Gold",
+      "material": "Handcrafted Teak Finish & Heavy Rigid Board",
+      "dimensions": "40 × 30 × 16 cm",
+      "length": 40,
+      "width": 30,
+      "height": 16,
+      "capacity": 20,
+      "maxWeight": 10,
+      "basePriceINR": 999,
+      "compareAtPriceINR": 1399,
+      "stock": 25,
+      "status": "ACTIVE",
+      "sortOrder": 4,
+      "isRecommended": false,
+      "images": [
+        "https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1512909006721-3d6018887383?auto=format&fit=crop&w=800&q=80"
+      ],
+      "countryAvailability": [
+        "IN",
+        "AE",
+        "US"
+      ],
+      "createdAt": "2026-09-25T19:09:12.411Z",
+      "updatedAt": "2026-09-25T19:09:12.411Z",
+      "countryPrices": [
+        {
+          "id": "24196d7c-e51d-4e1b-8b37-0fba1a52b0ae",
+          "boxId": "box-signature-teak",
+          "country": "AE",
+          "currency": "AED",
+          "fixedPrice": 49,
+          "createdAt": "2026-09-25T19:09:13.323Z",
+          "updatedAt": "2026-09-25T19:09:13.323Z"
+        },
+        {
+          "id": "97d7f0b1-51d9-4f1d-99a4-514e98a4accc",
+          "boxId": "box-signature-teak",
+          "country": "US",
+          "currency": "USD",
+          "fixedPrice": 12,
+          "createdAt": "2026-09-25T19:09:13.668Z",
+          "updatedAt": "2026-09-25T19:09:13.668Z"
+        }
+      ]
+    }
+  ]
+}
