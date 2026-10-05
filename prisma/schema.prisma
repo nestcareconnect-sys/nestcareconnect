@@ -1,0 +1,675 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum CountryCode {
+  IN
+  AE
+  US
+}
+
+enum CurrencyCode {
+  INR
+  AED
+  USD
+}
+
+enum HamperType {
+  NORMAL
+  PREMIUM
+  PREMIUM_PLUS
+  ANNIVERSARY
+  ANNIVERSARY_PREMIUM
+  SIGNATURE_ANNIVERSARY
+}
+
+enum PricingType {
+  FIXED
+  CALCULATED
+}
+
+enum ItemType {
+  PRODUCT
+  HAMPER
+  CUSTOM_HAMPER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  STRIPE
+  COD
+  DEMO
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role          @default(CUSTOMER)
+  status       Status        @default(ACTIVE)
+  addresses    Address[]
+  orders       Order[]
+  reviews      Review[]
+  wishlist     WishlistItem[]
+  cart         Cart?
+  couponUsages CouponUsage[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+model Address {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         String      @default("SHIPPING") // SHIPPING, BILLING
+  name         String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String?     // For India & USA
+  emirate      String?     // For UAE
+  postalCode   String      // PIN / ZIP / Postal code
+  country      CountryCode @default(IN)
+  isDefault    Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model Category {
+  id               String      @id @default(uuid())
+  name             String
+  slug             String      @unique
+  description      String?
+  image            String?
+  icon             String?
+  type             String?
+  parentCategoryId String?
+  parent           Category?   @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  children         Category[]  @relation("CategoryHierarchy")
+  products         Product[]
+  status           Status      @default(ACTIVE)
+  sortOrder        Int         @default(0)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([slug])
+  @@index([parentCategoryId])
+  @@index([status])
+}
+
+model Product {
+  id                     String                 @id @default(uuid())
+  name                   String
+  slug                   String                 @unique
+  sku                    String                 @unique
+  description            String
+  shortDescription       String?
+  images                 String[]               @default([])
+  basePriceINR           Float
+  compareAtPriceINR      Float?
+  stock                  Int                    @default(0)
+  reservedStock          Int                    @default(0)
+  lowStockThreshold      Int                    @default(5)
+  categoryId             String?
+  category               Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  brand                  String?
+  unit                   String?                // e.g. "Pack of 50", "1 Device", "100g"
+  weight                 Float?                 // in grams or kg
+  dimensions             String?
+  packageSize            String?                // e.g. "Small", "Medium", "Large"
+  packageLength          Float?                 // in cm
+  packageWidth           Float?                 // in cm
+  packageHeight          Float?                 // in cm
+  packageWeight          Float?                 // in kg
+  packageVolume          Float?                 // in cm3
+  status                 Status                 @default(ACTIVE)
+  featured               Boolean                @default(false)
+  isAddOn                Boolean                @default(false)
+  addOnCategory          String?
+  isCustomHamperEligible Boolean                @default(true)
+  tags                   String[]               @default([])
+  specifications         Json?                  // Key-value pairs or structured specs
+  countryPrices          ProductCountryPrice[]
+  hamperItems            HamperItem[]
+  orderItems             OrderItem[]
+  reviews                Review[]
+  wishlistItems          WishlistItem[]
+  seoTitle               String?
+  seoDescription         String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+
+  @@index([slug])
+  @@index([sku])
+  @@index([categoryId])
+  @@index([status])
+  @@index([featured])
+  @@index([brand])
+  @@index([isAddOn])
+  @@index([isCustomHamperEligible])
+}
+
+model ProductCountryPrice {
+  id         String       @id @default(uuid())
+  productId  String
+  product    Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  country    CountryCode
+  currency   CurrencyCode
+  fixedPrice Float
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([productId, country])
+  @@index([productId])
+  @@index([country])
+}
+
+model Hamper {
+  id                  String               @id @default(uuid())
+  name                String
+  slug                String               @unique
+  hamperType          HamperType           @default(NORMAL)
+  recipientType       String?              // e.g. "PARENTS", "MUM", "DAD", "COUPLE", "NEW_MUM"
+  occasion            String?              // e.g. "MEDICAL_CARE", "ANNIVERSARY", "CELEBRATIONS", "NEW_MUM_BABY"
+  recipientVariant    String?
+  description         String
+  shortDescription    String?
+  images              String[]             @default([])
+  pricingType         PricingType          @default(FIXED)
+  fixedPriceINR       Float?
+  startingPriceINR    Float?
+  stock               Int                  @default(50)
+  status              Status               @default(ACTIVE)
+  featured            Boolean              @default(false)
+  allowCustomMessage  Boolean                      @default(true)
+  allowPhotos         Boolean                      @default(true)
+  allowPhotoUpload    Boolean                      @default(true)
+  maxPhotos           Int                          @default(3)
+  photoRequired       Boolean                      @default(false)
+  photoInstructions   String?                      @default("Add a special photo of your family to make your gift even more meaningful.")
+  photoCardEnabled    Boolean                      @default(true)
+  allowVideoQR        Boolean                      @default(false)
+  countryAvailability CountryCode[]                @default([IN, AE, US])
+  items               HamperItem[]
+  countryPrices       HamperCountryPrice[]
+  orderItems          OrderItem[]
+  personalizationPhotos HamperPersonalizationPhoto[]
+  seoTitle            String?
+  seoDescription      String?
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+
+  @@index([slug])
+  @@index([hamperType])
+  @@index([status])
+  @@index([featured])
+  @@index([recipientType])
+  @@index([occasion])
+}
+
+model HamperItem {
+  id        String   @id @default(uuid())
+  hamperId  String
+  hamper    Hamper   @relation(fields: [hamperId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hamperId, productId])
+  @@index([hamperId])
+  @@index([productId])
+}
+
+model HamperCountryPrice {
+  id         String       @id @default(uuid())
+  hamperId   String
+  hamper     Hamper       @relation(fields: [hamperId], references: [id], onDelete: Cascade)
+  country    CountryCode
+  currency   CurrencyCode
+  fixedPrice Float
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([hamperId, country])
+  @@index([hamperId])
+}
+
+model HamperBox {
+  id                  String                  @id @default(uuid())
+  name                String
+  slug                String                  @unique
+  description         String?
+  size                String                  @default("Medium") // "Small", "Medium", "Large", "Extra Large"
+  color               String                  @default("Green")  // "Green", "White", "Light Green", "Cream", "Brown"
+  material            String                  @default("Rigid Cardboard") // "Cardboard", "Magnetic Luxury Box", "Wood", "Premium Paper"
+  dimensions          String?                 // e.g. "30 x 20 x 12 cm"
+  length              Float?                  // in cm
+  width               Float?                  // in cm
+  height              Float?                  // in cm
+  capacity            Int                     @default(10) // Maximum total items allowed
+  maxWeight           Float?                  // in kg
+  basePriceINR        Float
+  compareAtPriceINR   Float?
+  stock               Int                     @default(50)
+  status              Status                  @default(ACTIVE)
+  sortOrder           Int                     @default(0)
+  isRecommended       Boolean                 @default(false)
+  images              String[]                @default([])
+  countryAvailability CountryCode[]           @default([IN, AE, US])
+  countryPrices       HamperBoxCountryPrice[]
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([capacity])
+}
+
+model HamperBoxCountryPrice {
+  id         String       @id @default(uuid())
+  boxId      String
+  box        HamperBox    @relation(fields: [boxId], references: [id], onDelete: Cascade)
+  country    CountryCode
+  currency   CurrencyCode
+  fixedPrice Float
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([boxId, country])
+  @@index([boxId])
+  @@index([country])
+}
+
+model CustomHamperConfig {
+  id                 String        @id @default(uuid())
+  title              String        @default("Build Your Own Healthcare Hamper")
+  description        String?
+  minItems           Int           @default(1)
+  maxItems           Int           @default(20)
+  minPriceINR        Float         @default(200)
+  maxPriceINR        Float?
+  allowedCategoryIds String[]      @default([])
+  allowedProductIds  String[]      @default([])
+  allowedCountries   CountryCode[] @default([IN, AE, US])
+  active             Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestId   String?    @unique
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([guestId])
+}
+
+model CartItem {
+  id                    String                       @id @default(uuid())
+  cartId                String
+  cart                  Cart                         @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  itemType              ItemType                     @default(PRODUCT)
+  productId             String?
+  hamperId              String?
+  customHamperData      Json?                        // Array of { productId, quantity } and title/occasion / personalization
+  personalization       Json?                        // Structured personalization object
+  quantity              Int                          @default(1)
+  personalizationPhotos HamperPersonalizationPhoto[]
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  @@index([cartId])
+  @@index([productId])
+  @@index([hamperId])
+  @@index([cartId, productId])
+  @@index([cartId, hamperId])
+}
+
+model Order {
+  id              String          @id @default(uuid())
+  orderNumber     String          @unique
+  userId          String?
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestEmail      String?
+  guestName       String?
+  guestPhone      String?
+  country         CountryCode     @default(IN)
+  currency        CurrencyCode    @default(INR)
+  subtotal        Float
+  discount        Float           @default(0)
+  shippingFee     Float           @default(0)
+  tax             Float           @default(0)
+  total           Float
+  paymentStatus   PaymentStatus   @default(PENDING)
+  orderStatus     OrderStatus     @default(PENDING)
+  paymentProvider PaymentProvider @default(RAZORPAY)
+  paymentId       String?
+  transactionId   String?
+  shippingAddress Json            // Snapshot of complete shipping address
+  billingAddress  Json?           // Snapshot of complete billing address
+  couponCode      String?
+  trackingNumber  String?
+  notes           String?
+  items           OrderItem[]
+  payments        Payment[]
+  shipment        Shipment?
+  timeline        OrderTimeline[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([orderNumber])
+  @@index([userId])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id                    String                       @id @default(uuid())
+  orderId               String
+  order                 Order                        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemType              ItemType                     @default(PRODUCT)
+  productId             String?
+  product               Product?                     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  hamperId              String?
+  hamper                Hamper?                      @relation(fields: [hamperId], references: [id], onDelete: SetNull)
+  name                  String
+  sku                   String?
+  unitPrice             Float
+  quantity              Int
+  totalPrice            Float
+  snapshot              Json                         // Full snapshot of details (including custom hamper breakdown if custom, photos, message)
+  personalizationPhotos HamperPersonalizationPhoto[]
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([hamperId])
+}
+
+model HamperPersonalizationPhoto {
+  id           String     @id @default(uuid())
+  orderItemId  String?
+  orderItem    OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  cartItemId   String?
+  cartItem     CartItem?  @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+  hamperId     String?
+  hamper       Hamper?    @relation(fields: [hamperId], references: [id], onDelete: SetNull)
+  url          String
+  storageKey   String?
+  originalName String?
+  mimeType     String?
+  fileSize     Int?
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  @@index([orderItemId])
+  @@index([cartItemId])
+  @@index([hamperId])
+}
+
+model OrderTimeline {
+  id          String      @id @default(uuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status      OrderStatus
+  title       String
+  description String?
+  createdAt   DateTime    @default(now())
+
+  @@index([orderId])
+}
+
+model Payment {
+  id                String          @id @default(uuid())
+  orderId           String
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          PaymentProvider
+  providerPaymentId String?
+  providerOrderId   String?
+  amount            Float
+  currency          CurrencyCode
+  status            PaymentStatus   @default(PENDING)
+  signatureVerified Boolean         @default(false)
+  rawResponse       Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([orderId])
+  @@index([providerPaymentId])
+}
+
+model Shipment {
+  id                String   @id @default(uuid())
+  orderId           String   @unique
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          String   @default("NIMBUSPOST")
+  providerOrderId   String?
+  awbNumber         String?
+  courierName       String?
+  courierId         Int?
+  shipmentStatus    String   @default("PENDING")
+  trackingUrl       String?
+  labelUrl          String?
+  manifestUrl       String?
+  estimatedDelivery String?
+  weightKg          Float?   @default(1.0)
+  pickupPincode     String?
+  deliveryPincode   String?
+  errorMessage      String?
+  rawResponse       Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([awbNumber])
+  @@index([shipmentStatus])
+}
+
+model Coupon {
+  id                  String        @id @default(uuid())
+  code                String        @unique
+  discountType        DiscountType  @default(PERCENTAGE)
+  discountValue       Float
+  minOrderValueINR    Float         @default(0)
+  maxDiscountINR      Float?
+  startDate           DateTime      @default(now())
+  expiryDate          DateTime?
+  usageLimit          Int?
+  usageCount          Int           @default(0)
+  perUserLimit        Int           @default(1)
+  applicableCountries CountryCode[] @default([IN, AE, US])
+  active              Boolean       @default(true)
+  usages              CouponUsage[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([code])
+  @@index([active])
+}
+
+model CouponUsage {
+  id        String   @id @default(uuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderId   String
+  createdAt DateTime @default(now())
+
+  @@index([couponId])
+  @@index([userId])
+}
+
+model Currency {
+  id        String       @id @default(uuid())
+  code      CurrencyCode @unique
+  name      String
+  symbol    String
+  isBase    Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model ExchangeRate {
+  id           String       @id @default(uuid())
+  fromCurrency CurrencyCode @default(INR)
+  toCurrency   CurrencyCode
+  rate         Float
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([fromCurrency, toCurrency])
+}
+
+model ShippingRule {
+  id                    String      @id @default(uuid())
+  country               CountryCode @unique
+  minOrderAmount        Float       @default(0)
+  shippingFee           Float       @default(0)
+  freeShippingThreshold Float?
+  estimatedDays         String      @default("3-5 business days")
+  active                Boolean     @default(true)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([country])
+}
+
+model HeroSlide {
+  id           String   @id @default(uuid())
+  title        String
+  subtitle     String
+  badge        String?
+  ctaText      String   @default("Shop Now")
+  ctaUrl       String   @default("/shop")
+  desktopImage String
+  mobileImage  String
+  displayOrder Int      @default(0)
+  status       Status   @default(ACTIVE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status])
+  @@index([displayOrder])
+}
+
+model Review {
+  id        String       @id @default(uuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userName  String
+  rating    Int          @default(5)
+  comment   String
+  images    String[]     @default([])
+  status    ReviewStatus @default(APPROVED)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([productId])
+  @@index([status])
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model SiteSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+}

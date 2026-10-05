@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-primary: #8BCF9B;
+    --color-primary-hover: #78be88;
+    --color-primary-dark: #237A3B;
+    --color-primary-dark-hover: #1c6330;
+    --color-primary-light: #F1FAF3;
+    --color-primary-subtle: #E3F5E8;
+    
+    --color-bg: #FFFFFF;
+    --color-surface: #FFFFFF;
+    --color-surface-subtle: #F9FAFB;
+    
+    --color-text-main: #1F2937;
+    --color-text-muted: #6B7280;
+    --color-text-subtle: #9CA3AF;
+    
+    --color-border: #E5E7EB;
+    --color-border-hover: #D1D5DB;
+
+    --color-accent-amber: #F59E0B;
+    --color-accent-red: #EF4444;
+    --color-accent-blue: #3B82F6;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--color-text-main);
+    background-color: var(--color-bg);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1FAF3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C4E7CE;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8BCF9B;
+}
+
+/* Utility Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Glassmorphism subtle */
+.glass-header {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Line Clamp Utilities */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
