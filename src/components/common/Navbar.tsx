@@ -23,6 +23,7 @@ import {
   ArrowRight,
   Globe,
   Package,
+  PackagePlus,
   Check,
   Truck,
   Plus,
@@ -211,7 +212,7 @@ export const Navbar: React.FC = () => {
     if (s.includes('wedding') || s.includes('marriage'))
       return { emoji: '💍', icon: Sparkles };
     if (s.includes('anniversary') || s.includes('couple'))
-      return { emoji: '❤️', icon: HeartHandshake };
+      return { emoji: ' ', icon: HeartHandshake };
     if (s.includes('baby') || s.includes('new-mum') || s.includes('newborn'))
       return { emoji: '👶', icon: Baby };
     if (s.includes('celebrat') || s.includes('birthday') || s.includes('festiv'))
@@ -275,7 +276,7 @@ export const Navbar: React.FC = () => {
     }
     return [
       { label: 'Wedding', icon: Sparkles, emoji: '💍', path: '/category/wedding', desc: 'Traditional Kerala Kasavu sets & brass gifts' },
-      { label: 'Anniversary', icon: HeartHandshake, emoji: '❤️', path: '/category/anniversary', desc: 'Romantic couple hampers & keepsake memories' },
+      { label: 'Anniversary', icon: HeartHandshake, emoji: ' ', path: '/category/anniversary', desc: 'Romantic couple hampers & keepsake memories' },
       { label: 'New Mum & Baby', icon: Baby, emoji: '👶', path: '/category/new-mum-baby', desc: 'Organic muslin swaddles & postpartum recovery' },
       { label: 'Celebrations', icon: PartyPopper, emoji: '🎉', path: '/category/celebrations', desc: 'Festive Onam/Vishu, birthdays & milestones' },
     ];
@@ -326,7 +327,8 @@ export const Navbar: React.FC = () => {
     location.pathname.startsWith('/product');
   const isHampersActive = location.pathname.startsWith('/hampers');
   const isBuildActive =
-    location.pathname === '/custom-hamper' || location.pathname === '/build-hamper';
+    location.pathname.startsWith('/custom-hamper') ||
+    location.pathname.startsWith('/build-hamper');
   const isAccountActive =
     location.pathname.startsWith('/account') ||
     location.pathname === '/login' ||
@@ -1076,29 +1078,29 @@ export const Navbar: React.FC = () => {
               </span>
             </NavLink>
 
-            {/* 4. BUILD (Visually Prominent Primary Feature) */}
+            {/* 4. BUILD */}
             <NavLink
               to="/custom-hamper"
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center py-1 transition-all group min-h-[48px] ${
-                  isBuildActive ? 'text-[#237A3B]' : 'text-gray-600 hover:text-gray-900'
+                  isBuildActive ? 'text-[#237A3B]' : 'text-gray-500 hover:text-gray-900'
                 }`
               }
               aria-label="Build Your Own Custom Hamper"
               aria-current={isBuildActive ? 'page' : undefined}
             >
               <div
-                className={`p-1 px-2.5 rounded-xl transition-all flex items-center justify-center ${
+                className={`p-1 rounded-xl transition-all ${
                   isBuildActive
-                    ? 'bg-[#E3F5E8] text-[#237A3B] border border-[#8BCF9B] shadow-xs ring-2 ring-[#8BCF9B]/30'
-                    : 'bg-[#F1FAF3] text-[#237A3B] border border-[#8BCF9B]/50 hover:bg-[#E3F5E8]'
+                    ? 'bg-[#F1FAF3] text-[#237A3B] shadow-2xs'
+                    : 'text-gray-500 group-hover:text-gray-900'
                 }`}
               >
-                <Sparkles className="w-5 h-5 text-[#237A3B] stroke-[2.2]" />
+                <PackagePlus className={`w-5 h-5 ${isBuildActive ? 'stroke-[2.5]' : 'stroke-[1.9]'}`} />
               </div>
               <span
                 className={`text-[10px] tracking-tight mt-0.5 transition-all ${
-                  isBuildActive ? 'font-extrabold text-[#237A3B]' : 'font-bold text-[#237A3B]'
+                  isBuildActive ? 'font-bold text-[#237A3B]' : 'font-medium text-gray-500'
                 }`}
               >
                 Build
@@ -1174,7 +1176,7 @@ export const Navbar: React.FC = () => {
                       {isAuthenticated ? 'My Account' : 'Welcome to Nest Care'}
                     </h3>
                     <p className="text-[11px] text-gray-500">
-                      {isAuthenticated ? user?.email : 'Send love and healthcare home ❤️'}
+                      {isAuthenticated ? user?.email : 'Send love and healthcare home  '}
                     </p>
                   </div>
                 </div>

@@ -37,7 +37,7 @@ export const PersonalizationPhotoUpload: React.FC<PersonalizationPhotoUploadProp
   instructions = 'Add a special photo to make your gift even more meaningful.',
   cardEnabled = true,
   disabled = false,
-  title = 'Make It Personal ❤️',
+  title = 'Make It Personal  ',
   subtitle,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -10,7 +10,7 @@ export const AboutBrandSection: React.FC = () => {
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#F1FAF3] border border-[#8BCF9B]/50 text-[#237A3B] text-xs font-bold tracking-wide uppercase mb-4">
             <Heart className="w-3.5 h-3.5 text-[#237A3B] fill-current" />
-            <span>Send Love Home ❤️</span>
+            <span>Send Love Home </span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1F2937] tracking-tight">

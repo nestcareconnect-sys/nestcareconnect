@@ -58,7 +58,7 @@ const OCCASION_OPTIONS = [
 
 // Suggested Greeting Prompts
 const MESSAGE_PROMPTS = [
-  'Wishing you good health, joy, and long life! Miss you both so much Mum & Dad ❤️',
+  'Wishing you good health, joy, and long life! Miss you both so much Mum & Dad  ',
   'Sending love and warm hugs from across the miles. Take good care of your health!',
   'Happy Anniversary! May you continue to inspire us with your love and togetherness.',
   'Get well soon! We are always by your side and praying for your speedy recovery.',

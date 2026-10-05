@@ -42,7 +42,7 @@ export const Footer: React.FC = () => {
                 </li>
                 <li>
                   <Link to="/custom-hamper" className="text-[#8BCF9B] font-semibold hover:underline flex items-center gap-1">
-                    Build Custom Hamper <span>✨</span>
+                    Build Custom Hamper 
                   </Link>
                 </li>
                 <li>
@@ -132,7 +132,7 @@ export const Footer: React.FC = () => {
                 >
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4 text-[#8BCF9B]" />
-                    <span>Deliver to: <strong className="text-white">{countryConfig.name}</strong></span>
+                    <span><strong className="text-white">{countryConfig.name}</strong></span>
                   </div>
                   <span className="text-[#8BCF9B] font-bold">{countryConfig.currency}</span>
                 </button>

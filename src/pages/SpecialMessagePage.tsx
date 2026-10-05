@@ -33,7 +33,7 @@ export const SpecialMessagePage: React.FC = () => {
             recipientName: 'Mum & Dad (Bengaluru)',
             hamperName: 'Premium Care Hamper',
             message:
-              'Happy 45th Anniversary Mum & Dad! We miss you so much and cannot wait to visit home soon. Sending you this special care package with all our love and blessings. Stay healthy and smiling always! ❤️',
+              'Happy 45th Anniversary Mum & Dad! We miss you so much and cannot wait to visit home soon. Sending you this special care package with all our love and blessings. Stay healthy and smiling always!  ',
             photos: [
               'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
               'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=800&q=80',
@@ -125,7 +125,7 @@ export const SpecialMessagePage: React.FC = () => {
 
           <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white border border-[#8BCF9B]/60 text-[#237A3B] text-xs font-bold shadow-xs">
             <Sparkles className="w-3.5 h-3.5 text-[#237A3B]" />
-            <span>With Love From Your Family ❤️</span>
+            <span>With Love From Your Family  </span>
           </div>
         </div>
 

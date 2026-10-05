@@ -312,7 +312,7 @@ export const ShopPage: React.FC = () => {
     { label: 'For Mum', slug: 'for-mum', icon: '👩' },
     { label: 'For Dad', slug: 'for-dad', icon: '👨' },
     { label: 'Wedding', slug: 'wedding', icon: '💍' },
-    { label: 'Anniversary', slug: 'anniversary', icon: '❤️' },
+    { label: 'Anniversary', slug: 'anniversary', icon: ' ' },
     { label: 'New Mum & Baby', slug: 'new-mum-baby', icon: '👶' },
     { label: 'Celebrations', slug: 'celebrations', icon: '🎉' },
     { label: 'Gifts', slug: 'gifts', tag: 'gift', icon: '🎁' },

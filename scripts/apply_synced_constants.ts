@@ -9,7 +9,7 @@ export const BRAND_TAGLINES = {
   primary: 'Helping families living overseas care for their parents back home.',
   sub1: 'NESTCARE CONNECT — Because sometimes, love needs a little help reaching home.',
   sub2: 'Care, even when you’re miles away.',
-  sendLoveTitle: 'Send Love Home ❤️',
+  sendLoveTitle: 'Send Love Home ',
   sendLoveSub: 'Living overseas doesn’t mean you have to miss the special moments.',
   sendLoveFull:
     'Whether you’re sending care to your parents, celebrating an anniversary, welcoming a new mum or simply saying "I’m thinking of you", Nest Care helps you send something beautiful, thoughtful and meaningful to the people you love. You choose the hamper, you add your personal message, we take care of the rest.',
@@ -92,7 +92,7 @@ const apiConstantsContent = `export const BRAND_TAGLINES = {
   primary: 'Helping families living overseas care for their parents back home.',
   sub1: 'NESTCARE CONNECT — Because sometimes, love needs a little help reaching home.',
   sub2: 'Care, even when you’re miles away.',
-  sendLoveTitle: 'Send Love Home ❤️',
+  sendLoveTitle: 'Send Love Home ',
   sendLoveSub: 'Living overseas doesn’t mean you have to miss the special moments.',
   sendLoveFull:
     'Whether you’re sending care to your parents, celebrating an anniversary, welcoming a new mum or simply saying "I’m thinking of you", Nest Care helps you send something beautiful, thoughtful and meaningful to the people you love. You choose the hamper, you add your personal message, we take care of the rest.',
@@ -172,7 +172,7 @@ export const INITIAL_COUPONS = [
 export const DEFAULT_SETTINGS = {
   general: {
     siteName: 'Nest Care Connect',
-    tagline: 'Send Love Home ❤️ | Gifting & Care for Parents',
+    tagline: 'Send Love Home | Gifting & Care for Parents',
     supportEmail: 'support@nestcareconnect.com',
     supportPhone: '+91 800 123 4567',
     contactAddress: 'Nest Care Healthcare Distribution Hub, Ernakulam, Kerala, India - 682001',

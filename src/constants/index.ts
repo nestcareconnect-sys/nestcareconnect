@@ -4,7 +4,7 @@ export const BRAND_TAGLINES = {
   primary: 'Helping families living overseas care for their parents back home.',
   sub1: 'NESTCARE CONNECT — Because sometimes, love needs a little help reaching home.',
   sub2: 'Care, even when you’re miles away.',
-  sendLoveTitle: 'Send Love Home ❤️',
+  sendLoveTitle: 'Send Love Home ',
   sendLoveSub: 'Living overseas doesn’t mean you have to miss the special moments.',
   sendLoveFull:
     'Whether you’re sending care to your parents, celebrating an anniversary, welcoming a new mum or simply saying "I’m thinking of you", Nest Care helps you send something beautiful, thoughtful and meaningful to the people you love. You choose the hamper, you add your personal message, we take care of the rest.',
@@ -13,7 +13,7 @@ export const BRAND_TAGLINES = {
 export const INITIAL_HERO_SLIDES: HeroSlide[] = [
   {
     "id": "slide-1",
-    "title": "Send Love Home ❤️",
+    "title": "Send Love Home",
     "subtitle": "Thoughtful care, beautifully delivered. Helping families living overseas care for their parents back home.",
     "badge": "Care Across Miles",
     "ctaText": "Explore Hampers",
@@ -1392,7 +1392,7 @@ export const INITIAL_HAMPERS: Hamper[] = [
   },
   {
     "id": "hamper-anniversary-premium",
-    "name": "Anniversary Premium Hamper ❤️",
+    "name": "Anniversary Premium Hamper  ",
     "slug": "anniversary-premium-hamper",
     "hamperType": "ANNIVERSARY_PREMIUM",
     "recipientType": "COUPLE",

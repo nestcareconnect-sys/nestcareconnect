@@ -136,7 +136,7 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
 }) => {
   const cleanIcon = (icon || '').trim();
 
-  // If it's an emoji (e.g. 🩺, ❤️, 🎁, 👶)
+  // If it's an emoji (e.g. 🩺,  , 🎁, 👶)
   if (isEmoji(cleanIcon)) {
     return (
       <span

@@ -223,7 +223,7 @@ export const CheckoutPage: React.FC = () => {
                 <span>NRI Overseas Care & Gifting Checkout</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-                Send Love Home ❤️
+                Send Love Home 
               </h1>
               <p className="text-xs text-gray-500 mt-0.5">
                 You pay in <strong className="text-[#237A3B]">{countryConfig.currency}</strong> ({countryConfig.name}) • Delivered directly to recipient in India.
@@ -446,7 +446,7 @@ export const CheckoutPage: React.FC = () => {
                     rows={3}
                     value={personalizationNote}
                     onChange={(e) => setPersonalizationNote(e.target.value)}
-                    placeholder="Write a message to be hand-printed on the gift card (e.g. Wishing you good health and long life! Miss you Mum & Dad ❤️)..."
+                    placeholder="Write a message to be hand-printed on the gift card (e.g. Wishing you good health and long life! Miss you Mum & Dad  )..."
                     className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:border-[#8BCF9B] outline-none font-serif italic"
                   />
                   <span className="text-[11px] text-gray-400 block mt-1">

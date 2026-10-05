@@ -320,7 +320,7 @@ class MemoryDatabase {
       videoSecureToken: demoToken,
       videoUrl: 'https://www.youtube.com/watch?v=LXb3EKWsInQ', // Sample uplifting family greeting video
       videoStatus: 'VIDEO_READY',
-      personalizationNote: 'Happy 45th Anniversary Mum & Dad! We miss you so much and cannot wait to visit home soon. With all our love from California ❤️ - Rajesh & Ananya',
+      personalizationNote: 'Happy 45th Anniversary Mum & Dad! We miss you so much and cannot wait to visit home soon. With all our love from California   - Rajesh & Ananya',
       uploadedPhotos: [
         'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=800&q=80',

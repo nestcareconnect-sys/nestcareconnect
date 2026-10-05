@@ -2,7 +2,7 @@
   "heroSlides": [
     {
       "id": "slide-1",
-      "title": "Send Love Home ❤️",
+      "title": "Send Love Home",
       "subtitle": "Thoughtful care, beautifully delivered. Helping families living overseas care for their parents back home.",
       "badge": "Care Across Miles",
       "ctaText": "Explore Hampers",
@@ -1238,7 +1238,7 @@
     },
     {
       "id": "hamper-anniversary-premium",
-      "name": "Anniversary Premium Hamper ❤️",
+      "name": "Anniversary Premium Hamper  ",
       "slug": "anniversary-premium-hamper",
       "hamperType": "ANNIVERSARY_PREMIUM",
       "recipientType": "COUPLE",

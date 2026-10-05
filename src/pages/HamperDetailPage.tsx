@@ -187,7 +187,7 @@ export const HamperDetailPage: React.FC = () => {
   return (
     <>
       <SEO
-        title={`${hamper.name} | Send Love Home ❤️ | Nest Care Connect`}
+        title={`${hamper.name} | Send Love Home | Nest Care Connect`}
         description={hamper.shortDescription || hamper.description}
       />
 
@@ -328,7 +328,7 @@ export const HamperDetailPage: React.FC = () => {
                   isRequired={hamper.photoRequired || false}
                   instructions={hamper.photoInstructions || 'Add a special photo to make your gift even more meaningful.'}
                   cardEnabled={hamper.photoCardEnabled ?? true}
-                  title="Make It Personal ❤️"
+                  title="Make It Personal  "
                 />
               )}
 

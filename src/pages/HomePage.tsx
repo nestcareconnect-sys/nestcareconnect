@@ -14,7 +14,7 @@ export const HomePage: React.FC = () => {
   return (
     <>
       <SEO
-        title="Nest Care Connect | Send Love Home ❤️ | Gifting & Care for Parents"
+        title="Nest Care Connect | Send Love Home  | Gifting & Care for Parents"
         description="Helping families living overseas care for their parents back home. Send medical monitors, bespoke hampers, traditional Kerala attire, and personal family video greetings to India, UAE & USA."
       />
 
