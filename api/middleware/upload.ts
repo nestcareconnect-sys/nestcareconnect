@@ -3,9 +3,19 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 
-const uploadDir = path.resolve(process.cwd(), 'public/uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+import os from 'os';
+
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+export const uploadDir = isServerless
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.resolve(process.cwd(), 'public/uploads');
+
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn('⚠️ [STORAGE] Could not create upload directory:', (err as any)?.message || err);
 }
 
 // Map verified MIME types to safe deterministic extensions

@@ -127,21 +127,21 @@ app.use(
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static uploads folder with nosniff and dotfile protection
-const uploadDir = path.resolve(process.cwd(), 'public/uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+import { uploadDir } from './middleware/upload.js';
+
+if (fs.existsSync(uploadDir)) {
+  app.use(
+    '/uploads',
+    (req, res, next) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      next();
+    },
+    express.static(uploadDir, {
+      dotfiles: 'ignore',
+      index: false,
+    })
+  );
 }
-app.use(
-  '/uploads',
-  (req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    next();
-  },
-  express.static(uploadDir, {
-    dotfiles: 'ignore',
-    index: false,
-  })
-);
 
 // Health Check & Live Database Verification
 const healthHandler = async (_req: express.Request, res: express.Response) => {

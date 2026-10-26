@@ -7,14 +7,9 @@ import { whatsappService } from '../services/whatsapp.service.js';
 import { storageService } from '../services/storage.service.js';
 import prisma from '../config/prisma.js';
 import { uploadLimiter } from '../middleware/rateLimiter.js';
+import { uploadDir } from '../middleware/upload.js';
 
 const router = Router();
-
-// Configure dedicated Multer storage for WhatsApp media (Images & Videos)
-const uploadDir = path.resolve(process.cwd(), 'public/uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 const SAFE_MEDIA_MIMES: Record<string, string> = {
   'image/jpeg': '.jpg',
