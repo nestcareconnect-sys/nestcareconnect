@@ -17,7 +17,7 @@ export const INITIAL_HERO_SLIDES = [
     "ctaText": "Explore Hampers",
     "ctaUrl": "/hampers",
     "desktopImage": "/uploads/hero-hamper-send-love.jpg",
-    "mobileImage": "/uploads/hero-hamper-send-love.jpg",
+    "mobileImage": "/uploads/hero-mobile-send-love.jpg",
     "displayOrder": 1,
     "status": "ACTIVE"
   },
@@ -29,7 +29,7 @@ export const INITIAL_HERO_SLIDES = [
     "ctaText": "Senior Wellness Care",
     "ctaUrl": "/category/medical-care",
     "desktopImage": "/uploads/hero-hamper-mum-dad.jpg",
-    "mobileImage": "/uploads/hero-hamper-mum-dad.jpg",
+    "mobileImage": "/uploads/hero-mobile-mum-dad.jpg",
     "displayOrder": 2,
     "status": "ACTIVE"
   },
@@ -41,7 +41,7 @@ export const INITIAL_HERO_SLIDES = [
     "ctaText": "Shop Celebrations",
     "ctaUrl": "/category/anniversary",
     "desktopImage": "/uploads/hero-hamper-celebrate.jpg",
-    "mobileImage": "/uploads/hero-hamper-celebrate.jpg",
+    "mobileImage": "/uploads/hero-mobile-celebrate.jpg",
     "displayOrder": 3,
     "status": "ACTIVE"
   },
@@ -53,7 +53,7 @@ export const INITIAL_HERO_SLIDES = [
     "ctaText": "Create Hamper",
     "ctaUrl": "/custom-hamper",
     "desktopImage": "/uploads/hero-hamper-build-own.jpg",
-    "mobileImage": "/uploads/hero-hamper-build-own.jpg",
+    "mobileImage": "/uploads/hero-mobile-build-own.jpg",
     "displayOrder": 4,
     "status": "ACTIVE"
   }

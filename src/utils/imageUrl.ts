@@ -107,23 +107,41 @@ export const HERO_SLIDE_FALLBACKS: Record<string, string> = {
     'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1920&q=85',
 };
 
+export const HERO_SLIDE_MOBILE_FALLBACKS: Record<string, string> = {
+  'slide-1': '/uploads/hero-mobile-send-love.jpg',
+  'slide-2': '/uploads/hero-mobile-mum-dad.jpg',
+  'slide-3': '/uploads/hero-mobile-celebrate.jpg',
+  'slide-4': '/uploads/hero-mobile-build-own.jpg',
+  default: '/uploads/hero-mobile-send-love.jpg',
+};
+
 export function getHeroSlideImageUrl(
   url?: string | null,
   slideKey?: string | number | null,
-  updatedAt?: string | Date | number | null
+  updatedAt?: string | Date | number | null,
+  isMobile = false
 ): string {
   const key = String(slideKey || '').toLowerCase();
+  const fallbackMap = isMobile ? HERO_SLIDE_MOBILE_FALLBACKS : HERO_SLIDE_FALLBACKS;
   const fallback =
-    HERO_SLIDE_FALLBACKS[key] ||
+    fallbackMap[key] ||
     (key.includes('1') || key.includes('love')
-      ? HERO_SLIDE_FALLBACKS['slide-1']
+      ? fallbackMap['slide-1']
       : key.includes('2') || key.includes('mum') || key.includes('dad')
-      ? HERO_SLIDE_FALLBACKS['slide-2']
+      ? fallbackMap['slide-2']
       : key.includes('3') || key.includes('celebrat')
-      ? HERO_SLIDE_FALLBACKS['slide-3']
+      ? fallbackMap['slide-3']
       : key.includes('4') || key.includes('build')
-      ? HERO_SLIDE_FALLBACKS['slide-4']
-      : HERO_SLIDE_FALLBACKS.default);
+      ? fallbackMap['slide-4']
+      : fallbackMap.default);
+
+  // On mobile screens, if no separate mobile image is set or if it's the 16:9 desktop banner,
+  // automatically upgrade to the dedicated 9:16 vertical portrait mobile artwork!
+  if (isMobile) {
+    if (!url || typeof url !== 'string' || !url.trim() || url.includes('hero-hamper-')) {
+      return getProductImageUrl(fallback, updatedAt);
+    }
+  }
 
   if (!url || typeof url !== 'string' || !url.trim()) {
     return fallback;
@@ -131,4 +149,5 @@ export function getHeroSlideImageUrl(
 
   return getProductImageUrl(url, updatedAt);
 }
+
 

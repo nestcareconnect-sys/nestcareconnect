@@ -72,8 +72,9 @@ export const HeroSlider: React.FC = () => {
   const rawDesktop = currentSlide.desktopImage || currentSlide.bannerImageUrl || '';
   const rawMobile = currentSlide.mobileImage || currentSlide.mobileImageUrl || rawDesktop;
   const desktopImg = getHeroSlideImageUrl(rawDesktop, currentSlide.id, currentSlide.updatedAt);
-  const mobileImg = getHeroSlideImageUrl(rawMobile, currentSlide.id, currentSlide.updatedAt);
+  const mobileImg = getHeroSlideImageUrl(rawMobile, currentSlide.id, currentSlide.updatedAt, true);
   const fallbackImg = getHeroSlideImageUrl('', currentSlide.id);
+  const fallbackMobileImg = getHeroSlideImageUrl('', currentSlide.id, null, true);
 
   const handleBannerClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('a, button')) return;
@@ -90,7 +91,7 @@ export const HeroSlider: React.FC = () => {
 
   return (
     <div
-      className={`relative w-full overflow-hidden bg-gray-950 select-none h-[80vh] min-h-[500px] max-h-[660px] md:h-[calc(100vh-68px)] md:min-h-[540px] md:max-h-none ${
+      className={`relative w-full overflow-hidden bg-gray-950 select-none h-[82vh] min-h-[520px] max-h-[720px] md:h-[calc(100vh-68px)] md:min-h-[540px] md:max-h-none ${
         hasLink ? 'cursor-pointer' : ''
       }`}
       onClick={handleBannerClick}
@@ -102,6 +103,15 @@ export const HeroSlider: React.FC = () => {
         if (slides.length > 1) autoplayRef.current = setInterval(nextSlide, 6000);
       }}
     >
+      {/* Floating Slide Counter for Mobile */}
+      {slides.length > 1 && (
+        <div className="md:hidden absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white text-[11px] font-bold tracking-wider shadow-lg">
+          <span className="text-[#8BCF9B]">{String(currentIndex + 1).padStart(2, '0')}</span>
+          <span className="text-white/40">/</span>
+          <span className="text-white/70">{String(slides.length).padStart(2, '0')}</span>
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide.id || currentIndex}
@@ -111,7 +121,7 @@ export const HeroSlider: React.FC = () => {
           transition={{ duration: 0.55 }}
           className="absolute inset-0 w-full h-full"
         >
-          {/* Responsive Picture: Desktop 16:9 Landscape vs Mobile Portrait */}
+          {/* Responsive Picture: Desktop 16:9 Landscape vs Mobile 9:16 Portrait */}
           <picture className="w-full h-full block">
             {/* Mobile Portrait Image */}
             <source
@@ -127,52 +137,59 @@ export const HeroSlider: React.FC = () => {
               loading={currentIndex === 0 ? 'eager' : 'lazy'}
               onError={(e) => {
                 const target = e.currentTarget;
-                if (target.src !== fallbackImg) {
-                  target.src = fallbackImg;
+                const isMobileView = typeof window !== 'undefined' && window.innerWidth < 768;
+                const appropriateFallback = isMobileView ? fallbackMobileImg : fallbackImg;
+                if (target.src !== appropriateFallback) {
+                  target.src = appropriateFallback;
                 }
               }}
             />
           </picture>
 
-
           {/* Clean Gradient Overlay for Readability (Preserves photography) */}
           {hasTextContent && (
             <>
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-950/85 via-gray-900/50 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-950/75 via-transparent to-transparent md:hidden" />
+              {/* Desktop lateral vignette */}
+              <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-gray-950/85 via-gray-900/45 to-transparent pointer-events-none" />
+
+              {/* Mobile bottom-to-top vignette: keeps top 55% crisp while guaranteeing text legibility */}
+              <div className="md:hidden absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/75 via-45% to-transparent pointer-events-none" />
+
+              {/* Mobile subtle top vignette for counter contrast */}
+              <div className="md:hidden absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-gray-950/60 to-transparent pointer-events-none" />
             </>
           )}
 
           {/* Slide Text Content Container */}
           {hasTextContent && (
-            <div className="absolute inset-0 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex flex-col justify-center">
+            <div className="absolute inset-0 max-w-7xl mx-auto px-5 sm:px-10 lg:px-16 flex flex-col justify-end pb-14 sm:pb-16 md:justify-center md:pb-0 pointer-events-none">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15, duration: 0.5 }}
-                className="max-w-xl lg:max-w-2xl space-y-4 md:space-y-6"
+                className="max-w-xl lg:max-w-2xl space-y-3 sm:space-y-4 md:space-y-6 pointer-events-auto"
               >
                 {badge && (
-                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#8BCF9B]/20 border border-[#8BCF9B]/40 text-[#8BCF9B] text-xs font-semibold backdrop-blur-xs">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#8BCF9B]/20 border border-[#8BCF9B]/40 text-[#8BCF9B] text-[11px] sm:text-xs font-semibold backdrop-blur-md shadow-xs">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>{badge}</span>
                   </div>
                 )}
 
                 {title && (
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight drop-shadow-md">
                     {title}
                   </h1>
                 )}
 
                 {description && (
-                  <p className="text-sm sm:text-base md:text-lg text-gray-200 font-normal leading-relaxed max-w-lg">
+                  <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-200/95 font-normal leading-relaxed line-clamp-2 sm:line-clamp-none max-w-lg drop-shadow-xs">
                     {description}
                   </p>
                 )}
 
                 {/* Action Buttons */}
-                <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4">
+                <div className="pt-2 flex flex-row items-center gap-2.5 sm:gap-4">
                   {buttonText && hasLink && destinationUrl && (
                     isExternal ? (
                       <a
@@ -180,19 +197,19 @@ export const HeroSlider: React.FC = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-[#8BCF9B] hover:bg-[#78be88] text-[#1F2937] font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-200 transform active:scale-98"
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#8BCF9B] hover:bg-[#78be88] text-[#1F2937] font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-200 transform active:scale-95"
                       >
                         <span>{buttonText}</span>
-                        <ArrowRight className="w-4 h-4 text-[#237A3B]" />
+                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#237A3B]" />
                       </a>
                     ) : (
                       <Link
                         to={destinationUrl}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-[#8BCF9B] hover:bg-[#78be88] text-[#1F2937] font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-200 transform active:scale-98"
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#8BCF9B] hover:bg-[#78be88] text-[#1F2937] font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-200 transform active:scale-95"
                       >
                         <span>{buttonText}</span>
-                        <ArrowRight className="w-4 h-4 text-[#237A3B]" />
+                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#237A3B]" />
                       </Link>
                     )
                   )}
@@ -200,9 +217,9 @@ export const HeroSlider: React.FC = () => {
                   <Link
                     to="/custom-hamper"
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm backdrop-blur-xs border border-white/25 transition-all duration-200 transform active:scale-98"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm backdrop-blur-md border border-white/25 transition-all duration-200 transform active:scale-95"
                   >
-                    <span>Build Custom Hamper</span>
+                    <span>Build Custom</span>
                   </Link>
                 </div>
               </motion.div>
@@ -239,7 +256,7 @@ export const HeroSlider: React.FC = () => {
           </button>
 
           {/* Dots Indicator (Inside hero at bottom) */}
-          <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+          <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20">
             {slides.map((_: any, idx: number) => (
               <button
                 key={idx}
@@ -249,10 +266,10 @@ export const HeroSlider: React.FC = () => {
                   setCurrentIndex(idx);
                 }}
                 aria-label={`Go to hero slide ${idx + 1}`}
-                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${
                   currentIndex === idx
-                    ? 'w-8 bg-[#8BCF9B] shadow-xs'
-                    : 'w-2 bg-white/40 hover:bg-white/70'
+                    ? 'w-6 sm:w-8 bg-[#8BCF9B] shadow-xs'
+                    : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/70'
                 }`}
               />
             ))}
