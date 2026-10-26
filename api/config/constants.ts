@@ -11,7 +11,7 @@ export const BRAND_TAGLINES = {
 export const INITIAL_HERO_SLIDES = [
   {
     "id": "slide-1",
-    "title": "Send Love Home 💕",
+    "title": "Send Love Home",
     "subtitle": "Handcrafted Luxury Care & Wellness Hampers Delivered With Deep Affection",
     "badge": "Signature Wellness",
     "ctaText": "Explore Hampers",

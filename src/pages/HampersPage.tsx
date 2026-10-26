@@ -1,32 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Gift, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Gift, RotateCcw, AlertCircle, Package } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs } from '../components/common/Breadcrumbs';
 import { HamperCard } from '../components/hamper/HamperCard';
-import { Hamper } from '../types';
-import { hampersApi } from '../services/api';
+import { useHampers } from '../hooks/useQueries';
 
 export const HampersPage: React.FC = () => {
-  const [hampers, setHampers] = useState<Hamper[]>([]);
   const [selectedType, setSelectedType] = useState<string>('ALL');
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    hampersApi
-      .list()
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.data)) {
-          setHampers(res.data.data);
-        } else {
-          setHampers([]);
-        }
-      })
-      .catch(() => {
-        setHampers([]);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: hampers = [], isLoading, isError, refetch } = useHampers();
 
   const filteredHampers =
     selectedType === 'ALL'
@@ -89,12 +71,75 @@ export const HampersPage: React.FC = () => {
             ))}
           </div>
 
+          {/* Loading Skeleton */}
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="bg-white rounded-3xl border border-gray-100 p-5 space-y-4 animate-pulse">
+                  <div className="aspect-4/3 bg-gray-100 rounded-2xl w-full" />
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-100 rounded w-1/3" />
+                    <div className="h-5 bg-gray-100 rounded w-3/4" />
+                    <div className="h-3.5 bg-gray-100 rounded w-full" />
+                  </div>
+                  <div className="pt-3 border-t border-gray-50 flex justify-between items-center">
+                    <div className="h-5 bg-gray-100 rounded w-1/3" />
+                    <div className="h-9 w-24 bg-gray-100 rounded-xl" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Error State with Retry Button */}
+          {isError && (
+            <div className="bg-white rounded-3xl border border-red-100 p-12 text-center space-y-4 shadow-xs">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+              <div>
+                <h3 className="font-bold text-lg text-gray-900">Couldn't load hampers catalog</h3>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-sm mx-auto">
+                  Unable to fetch hampers from the database. Please check your connection and try again.
+                </p>
+              </div>
+              <button
+                onClick={() => refetch()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#237A3B] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[#1c6330] transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Try Again</span>
+              </button>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && !isError && filteredHampers.length === 0 && (
+            <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center space-y-4 shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center mx-auto">
+                <Package className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-gray-900">No hampers found</h3>
+                <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                  No care hampers match the selected filter category.
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedType('ALL')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#237A3B] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[#1c6330] transition-colors"
+              >
+                <span>View All Hampers</span>
+              </button>
+            </div>
+          )}
+
           {/* Hampers Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {filteredHampers.map((hamper) => (
-              <HamperCard key={hamper.id} hamper={hamper} />
-            ))}
-          </div>
+          {!isLoading && !isError && filteredHampers.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {filteredHampers.map((hamper) => (
+                <HamperCard key={hamper.id} hamper={hamper} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>

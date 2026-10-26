@@ -19,10 +19,11 @@ export function useCategories() {
       if (res.data?.success && Array.isArray(res.data.data)) {
         return res.data.data;
       }
-      return [];
+      throw new Error((res.data as any)?.message || 'Failed to fetch categories from database.');
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    retry: 2,
   });
 }
 
@@ -37,10 +38,11 @@ export function useHampers() {
       if (res.data?.success && Array.isArray(res.data.data)) {
         return res.data.data;
       }
-      return [];
+      throw new Error((res.data as any)?.message || 'Failed to fetch hampers from database.');
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    retry: 2,
   });
 }
 
@@ -55,10 +57,11 @@ export function useHeroSlides() {
       if (res.data?.success && Array.isArray(res.data.data)) {
         return res.data.data;
       }
-      return [];
+      throw new Error((res.data as any)?.message || 'Failed to fetch hero slides from database.');
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    retry: 2,
   });
 }
 
@@ -73,10 +76,11 @@ export function useHamperBoxes() {
       if (res.data?.success && Array.isArray(res.data.data)) {
         return res.data.data;
       }
-      return [];
+      throw new Error((res.data as any)?.message || 'Failed to fetch hamper boxes from database.');
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    retry: 2,
   });
 }
 

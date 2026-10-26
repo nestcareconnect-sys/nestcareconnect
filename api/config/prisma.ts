@@ -127,9 +127,9 @@ if (!isValidPostgres) {
 
 export const prisma: PrismaClient = (globalForPrisma.prisma || createPrismaClient(normalizedDbUrl)) as unknown as PrismaClient;
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
-}
+// Cache singleton on globalThis across all environments (local and serverless production)
+// to prevent connection pool exhaustion during container reuse or lambdas
+globalForPrisma.prisma = prisma;
 
 /**
  * Verifies live database connectivity and measures query latency
@@ -138,13 +138,31 @@ export async function verifyDatabaseConnection(): Promise<{
   ok: boolean;
   latencyMs: number;
   categoryCount?: number;
+  productCount?: number;
+  hamperCount?: number;
+  orderCount?: number;
+  userCount?: number;
   error?: string;
 }> {
   const start = Date.now();
   try {
-    const categoryCount = await (prisma as any).category.count();
+    const [categoryCount, productCount, hamperCount, orderCount, userCount] = await Promise.all([
+      (prisma as any).category.count().catch(() => 0),
+      (prisma as any).product.count().catch(() => 0),
+      (prisma as any).hamper.count().catch(() => 0),
+      (prisma as any).order.count().catch(() => 0),
+      (prisma as any).user.count().catch(() => 0),
+    ]);
     const latencyMs = Date.now() - start;
-    return { ok: true, latencyMs, categoryCount };
+    return {
+      ok: true,
+      latencyMs,
+      categoryCount,
+      productCount,
+      hamperCount,
+      orderCount,
+      userCount,
+    };
   } catch (err: any) {
     const latencyMs = Date.now() - start;
     const safeError = sanitizeErrorMessage(err?.message);

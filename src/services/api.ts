@@ -25,8 +25,28 @@ import {
   QrCodeItem,
 } from '../types';
 
+/**
+ * Resolves the API Base URL dynamically:
+ * 1. Checks VITE_API_BASE_URL or VITE_API_URL environment variables
+ * 2. Falls back to relative '/api' for same-origin or reverse-proxy deployments
+ */
+export function getApiBaseUrl(): string {
+  const envUrl = (
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
+    ''
+  ).trim();
+
+  if (envUrl) {
+    const cleanUrl = envUrl.replace(/\/+$/, '');
+    return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+  }
+
+  return '/api';
+}
+
 export const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -41,9 +61,26 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor
+// Response interceptor with HTML SPA-fallback detection
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Detect if server returned HTML (e.g. index.html SPA fallback on 404/misconfigured reverse proxy)
+    const contentType = String(response.headers?.['content-type'] || '');
+    if (
+      typeof response.data === 'string' &&
+      (contentType.includes('text/html') ||
+        response.data.trim().startsWith('<!DOCTYPE') ||
+        response.data.trim().startsWith('<html'))
+    ) {
+      const err = new Error(
+        'Backend API returned an HTML response instead of JSON. The production API route may be misconfigured or unreachable.'
+      );
+      (err as any).isHtmlFallback = true;
+      (err as any).response = response;
+      return Promise.reject(err);
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
       if (localStorage.getItem('ncc_token')) {

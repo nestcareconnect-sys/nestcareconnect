@@ -48,9 +48,12 @@ app.use(
   })
 );
 
-// Secure CORS Configuration
-const allowedOrigins = [
+// Secure & Resilient CORS Configuration
+const configuredOrigins = [
   process.env.APP_URL,
+  process.env.FRONTEND_URL,
+  process.env.CLIENT_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
   'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:3000',
@@ -60,16 +63,55 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server, or same-origin)
       if (!origin) return callback(null, true);
+
+      // In non-production, allow all origins
       if (process.env.NODE_ENV !== 'production') return callback(null, true);
-      if (allowedOrigins.some((o) => origin === o || origin.endsWith(o.replace(/^https?:\/\//, '')))) {
+
+      // Check configured origins
+      if (
+        configuredOrigins.some(
+          (o) => origin === o || origin.endsWith(o.replace(/^https?:\/\//, ''))
+        )
+      ) {
         return callback(null, true);
       }
-      return callback(new Error('CORS request blocked by Nest Care Connect security policy.'));
+
+      // Automatically allow all *.vercel.app, *.onrender.com, *.railway.app, and nestcareconnect domains
+      const isAllowedCloudDomain =
+        /^https:\/\/([a-zA-Z0-9_-]+\.)*vercel\.app$/.test(origin) ||
+        /^https:\/\/([a-zA-Z0-9_-]+\.)*onrender\.com$/.test(origin) ||
+        /^https:\/\/([a-zA-Z0-9_-]+\.)*up\.railway\.app$/.test(origin) ||
+        /^https:\/\/(www\.)?nestcareconnect\.com$/.test(origin);
+
+      if (isAllowedCloudDomain) {
+        return callback(null, true);
+      }
+
+      // Reject CORS gracefully without crashing Express
+      console.warn(`[CORS] Request origin blocked: ${origin}`);
+      return callback(null, false);
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   })
 );
+
+// Path normalization middleware for serverless/reverse-proxy hosting
+// When deployed behind Vercel or reverse proxy rewrites, the '/api' prefix may be stripped
+app.use((req, _res, next) => {
+  if (
+    !req.url.startsWith('/api') &&
+    !req.url.startsWith('/uploads') &&
+    req.url !== '/' &&
+    req.url !== '/health'
+  ) {
+    req.url = `/api${req.url.startsWith('/') ? req.url : `/${req.url}`}`;
+  }
+  next();
+});
 
 // General API Rate Limiter
 app.use('/api', generalApiLimiter);
@@ -101,8 +143,8 @@ app.use(
   })
 );
 
-// Health Check
-app.get('/api/health', async (_req, res) => {
+// Health Check & Live Database Verification
+const healthHandler = async (_req: express.Request, res: express.Response) => {
   const dbStatus = await verifyDatabaseConnection();
   const statusCode = dbStatus.ok ? 200 : 503;
   res.status(statusCode).json({
@@ -112,11 +154,19 @@ app.get('/api/health', async (_req, res) => {
     database: {
       connected: dbStatus.ok,
       latencyMs: dbStatus.latencyMs,
-      categoryCount: dbStatus.categoryCount,
+      categoryCount: dbStatus.categoryCount ?? 0,
+      productCount: dbStatus.productCount ?? 0,
+      hamperCount: dbStatus.hamperCount ?? 0,
+      orderCount: dbStatus.orderCount ?? 0,
+      userCount: dbStatus.userCount ?? 0,
       error: dbStatus.error,
     },
+    environment: process.env.NODE_ENV || 'development',
   });
-});
+};
+
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
 // API Routes
 app.use('/api/auth', authRoutes);

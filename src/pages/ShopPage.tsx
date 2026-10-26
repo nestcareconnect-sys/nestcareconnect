@@ -142,34 +142,24 @@ export const ShopPage: React.FC = () => {
       if (filterParams.isAddOn) params.isAddOn = filterParams.isAddOn;
       if (filterParams.tag) params.tag = filterParams.tag;
 
-      try {
-        const res = await productsApi.list(params);
-        if (res.data?.success && res.data.data) {
-          // Extract brands if available
-          if (res.data.data.products?.length) {
-            const fetchedBrands = Array.from(
-              new Set(
-                res.data.data.products
-                  .map((p) => p.brand)
-                  .filter((b): b is string => Boolean(b))
-              )
-            );
-            if (fetchedBrands.length > 0) {
-              setBrands((prev) => Array.from(new Set([...prev, ...fetchedBrands])));
-            }
+      const res = await productsApi.list(params);
+      if (res.data?.success && res.data.data) {
+        // Extract brands if available
+        if (res.data.data.products?.length) {
+          const fetchedBrands = Array.from(
+            new Set(
+              res.data.data.products
+                .map((p) => p.brand)
+                .filter((b): b is string => Boolean(b))
+            )
+          );
+          if (fetchedBrands.length > 0) {
+            setBrands((prev) => Array.from(new Set([...prev, ...fetchedBrands])));
           }
-          return res.data.data;
         }
-      } catch (err) {
-        console.warn('[ShopPage] Failed to fetch products from backend API:', err);
+        return res.data.data;
       }
-
-      return {
-        products: [],
-        nextCursor: null,
-        hasMore: false,
-        pagination: { total: 0 },
-      };
+      throw new Error((res.data as any)?.message || 'Failed to fetch products from backend API.');
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {

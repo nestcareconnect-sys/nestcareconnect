@@ -3,6 +3,18 @@
  * If the image is updated in the database, the updatedAt timestamp provides stable cache-busting
  * so browsers and CDNs fetch the fresh image without requiring manual cache purges.
  */
+function getBackendOrigin(): string {
+  const envUrl = (
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
+    ''
+  ).trim();
+  if (envUrl) {
+    return envUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+  }
+  return '';
+}
+
 export function getProductImageUrl(
   url?: string | null,
   updatedAt?: string | Date | number | null
@@ -14,7 +26,15 @@ export function getProductImageUrl(
     return fallback;
   }
 
-  const trimmedUrl = url.trim();
+  let trimmedUrl = url.trim();
+
+  // If URL is a relative uploaded file and backend origin is configured, resolve it
+  if (trimmedUrl.startsWith('/uploads/')) {
+    const backendOrigin = getBackendOrigin();
+    if (backendOrigin) {
+      trimmedUrl = `${backendOrigin}${trimmedUrl}`;
+    }
+  }
 
   // Data URLs, Blob URLs or SVG inline strings should not be modified
   if (
