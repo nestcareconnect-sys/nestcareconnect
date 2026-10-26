@@ -28,6 +28,12 @@ export const nimbusPostService = {
 
   cancelShipment: (awb: string) => shippingService.cancelShipment(awb),
 
+  requestPickup: (params?: any) => shippingService.requestPickup(params),
+
+  generateLabel: (awb: string) => shippingService.generateLabel(awb),
+
+  generateManifest: (awb: string) => shippingService.generateManifest(awb),
+
   getSettings: () => new NimbusPostShippingProvider().getConfig(),
 
   saveSettings: async (data: any) => {

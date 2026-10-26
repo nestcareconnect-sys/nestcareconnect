@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Save, ShieldCheck, CheckCircle2, AlertCircle, Loader2, Sparkles, MapPin, Globe, Key, Building } from 'lucide-react';
+import { Truck, Save, ShieldCheck, CheckCircle2, AlertCircle, Loader2, MapPin, Globe, Key, Building } from 'lucide-react';
 import { SEO } from '../../components/common/SEO';
 import { ShippingRule, CountryCode, NimbusSettings, NimbusServiceabilityResult } from '../../types';
 import { shippingApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import { INITIAL_SHIPPING_RULES } from '@/constants';
 
 export const AdminShippingPage: React.FC = () => {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'NIMBUSPOST' | 'RULES'>('NIMBUSPOST');
-  const [rules, setRules] = useState<ShippingRule[]>(INITIAL_SHIPPING_RULES as any);
+  const [rules, setRules] = useState<ShippingRule[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // NimbusPost Settings State
@@ -24,7 +23,7 @@ export const AdminShippingPage: React.FC = () => {
     pickupAddress: 'Nest Care Central Medical & Hamper Hub, Indiranagar',
     pickupCity: 'Bengaluru',
     pickupState: 'Karnataka',
-    pickupPhone: '+91 98765 43210',
+    pickupPhone: '+91  8921342411',
     defaultCourier: 'Delhivery Surface Express',
     sandboxMode: true,
   });
@@ -309,7 +308,7 @@ export const AdminShippingPage: React.FC = () => {
                         type="text"
                         value={nimbusSettings.pickupPhone}
                         onChange={(e) => setNimbusSettings({ ...nimbusSettings, pickupPhone: e.target.value })}
-                        placeholder="+91 98765 43210"
+                        placeholder="+91  8921342411"
                         className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none"
                       />
                     </div>

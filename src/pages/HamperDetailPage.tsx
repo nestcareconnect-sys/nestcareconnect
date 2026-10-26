@@ -4,13 +4,10 @@ import {
   Gift,
   ShoppingBag,
   CheckCircle2,
-  Sparkles,
   ShieldCheck,
   Package,
   ArrowRight,
-  Heart,
   QrCode,
-  Image as ImageIcon,
   Plus,
   Check,
 } from 'lucide-react';
@@ -23,9 +20,6 @@ import { useCountryCurrency } from '../context/CountryCurrencyContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useQuery } from '@tanstack/react-query';
-import { INITIAL_HAMPERS, INITIAL_PRODUCTS } from '@/constants';
-import { PersonalizationPhotoUpload } from '../components/hamper/PersonalizationPhotoUpload';
-
 export const HamperDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -37,20 +31,11 @@ export const HamperDetailPage: React.FC = () => {
     queryKey: ['hamper', slug],
     queryFn: async () => {
       if (!slug) throw new Error('Slug is required');
-      try {
-        const res = await hampersApi.getBySlug(slug);
-        if (res.data?.success && res.data.data) {
-          return {
-            hamper: res.data.data,
-            eligibleAddOns: res.data.data.eligibleAddOns || INITIAL_PRODUCTS.filter((p) => p.isAddOn),
-          };
-        }
-      } catch {}
-      const found = INITIAL_HAMPERS.find((h) => h.slug === slug);
-      if (found) {
+      const res = await hampersApi.getBySlug(slug);
+      if (res.data?.success && res.data.data) {
         return {
-          hamper: found as any,
-          eligibleAddOns: INITIAL_PRODUCTS.filter((p) => p.isAddOn),
+          hamper: res.data.data,
+          eligibleAddOns: res.data.data.eligibleAddOns || [],
         };
       }
       throw new Error('Hamper not found');
@@ -62,10 +47,8 @@ export const HamperDetailPage: React.FC = () => {
   const hamper = hamperData?.hamper || null;
   const eligibleAddOns = hamperData?.eligibleAddOns || [];
 
-  // Personalisation states
+  // Hamper variant and add-ons states
   const [recipientVariant, setRecipientVariant] = useState<'Elderly Care' | 'Pregnancy & New Mum Care'>('Elderly Care');
-  const [customMessage, setCustomMessage] = useState('');
-  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [selectedAddOns, setSelectedAddOns] = useState<Record<string, number>>({});
 
   if (isLoading) {
@@ -95,7 +78,7 @@ export const HamperDetailPage: React.FC = () => {
 
   // Calculate selected add-ons cost
   const addOnsTotal = Object.entries(selectedAddOns).reduce((acc, [prodId, qty]) => {
-    const prod = eligibleAddOns.find((p) => p.id === prodId) || INITIAL_PRODUCTS.find((p) => p.id === prodId);
+    const prod = eligibleAddOns.find((p) => p.id === prodId);
     if (prod && qty > 0) {
       const { price } = calculateProductPrice(prod);
       return acc + price * qty;
@@ -104,12 +87,6 @@ export const HamperDetailPage: React.FC = () => {
   }, 0);
 
   const totalPrice = basePrice + addOnsTotal;
-
-  // Word counter
-  const wordCount = customMessage.trim() ? customMessage.trim().split(/\s+/).length : 0;
-  const isMessageValid = wordCount <= 50;
-
-  const isPhotoUploadAllowed = hamper.allowPhotoUpload ?? hamper.allowPhotos ?? false;
 
   const toggleAddOn = (product: Product) => {
     setSelectedAddOns((prev) => {
@@ -125,7 +102,7 @@ export const HamperDetailPage: React.FC = () => {
 
   const preparePersonalizationData = () => {
     const selectedAddOnsList = Object.entries(selectedAddOns).map(([prodId, qty]) => {
-      const prod = eligibleAddOns.find((p) => p.id === prodId) || INITIAL_PRODUCTS.find((p) => p.id === prodId);
+      const prod = eligibleAddOns.find((p) => p.id === prodId);
       return {
         productId: prodId,
         name: prod?.name || 'Add-on',
@@ -135,46 +112,32 @@ export const HamperDetailPage: React.FC = () => {
       };
     });
 
+    const hasVariant = hamper.id === 'hamper-essential-care' && Boolean(recipientVariant);
+    const hasAddOns = selectedAddOnsList.length > 0;
+    const hasVideo = hamper.allowVideoQR;
+
+    if (!hasVariant && !hasAddOns && !hasVideo) {
+      return undefined;
+    }
+
     return {
       recipientVariant: hamper.id === 'hamper-essential-care' ? recipientVariant : undefined,
-      customMessage: customMessage.trim() || undefined,
-      photos: photoUrls.length > 0 ? photoUrls : undefined,
-      attachedPhotos: photoUrls.length > 0 ? photoUrls : undefined,
       selectedAddOns: selectedAddOnsList.length > 0 ? selectedAddOnsList : undefined,
       videoStatus: hamper.allowVideoQR ? ('VIDEO_REQUIRED' as const) : undefined,
     };
   };
 
   const handleAddToCart = async () => {
-    if (wordCount > 50) {
-      showToast('Personal message must be 50 words or fewer.', 'error');
-      return;
-    }
-
-    if (isPhotoUploadAllowed && hamper.photoRequired && photoUrls.length === 0) {
-      showToast('Please upload at least one photo for this personalized hamper.', 'error');
-      return;
-    }
-
     const personalization = preparePersonalizationData();
 
     try {
       await addHamperToCart(hamper, 1, personalization);
-      showToast(`${hamper.name} added to your cart!`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to add hamper to cart.', 'error');
     }
   };
 
   const handleBuyNow = async () => {
-    if (wordCount > 50) {
-      showToast('Personal message must be 50 words or fewer.', 'error');
-      return;
-    }
-    if (isPhotoUploadAllowed && hamper.photoRequired && photoUrls.length === 0) {
-      showToast('Please upload at least one photo for this personalized hamper.', 'error');
-      return;
-    }
     await handleAddToCart();
     navigate('/checkout');
   };
@@ -288,56 +251,12 @@ export const HamperDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {/* 2. Personalised Message Card */}
-              {hamper.allowCustomMessage && (
-                <div className="space-y-2 p-4 bg-gray-50 rounded-2xl border border-gray-200/80">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <Heart className="w-3.5 h-3.5 text-[#237A3B] fill-current" />
-                      <span>Personal Message Card (Printed on Greeting Card)</span>
-                    </label>
-                    <span
-                      className={`text-[11px] font-bold ${
-                        wordCount > 50 ? 'text-red-600' : 'text-gray-500'
-                      }`}
-                    >
-                      {wordCount}/50 words
-                    </span>
-                  </div>
-                  <textarea
-                    rows={3}
-                    value={customMessage}
-                    onChange={(e) => setCustomMessage(e.target.value)}
-                    placeholder="Write a heartfelt note for your parents or loved ones (e.g. Wishing you happy anniversary Mum & Dad! Stay healthy and happy always!)..."
-                    className="w-full text-xs p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#8BCF9B] bg-white text-gray-800 font-sans"
-                  />
-                  {wordCount > 50 && (
-                    <p className="text-[11px] text-red-600 font-semibold">
-                      Please keep your message within 50 words so it fits beautifully on the printed card.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* 3. Photo Upload for eligible hampers */}
-              {isPhotoUploadAllowed && (
-                <PersonalizationPhotoUpload
-                  photos={photoUrls}
-                  onChange={setPhotoUrls}
-                  maxPhotos={hamper.maxPhotos || 3}
-                  isRequired={hamper.photoRequired || false}
-                  instructions={hamper.photoInstructions || 'Add a special photo to make your gift even more meaningful.'}
-                  cardEnabled={hamper.photoCardEnabled ?? true}
-                  title="Make It Personal  "
-                />
-              )}
-
               {/* Action Buttons */}
               <div className="space-y-3 pt-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={handleAddToCart}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-[#F1FAF3] hover:bg-[#E3F5E8] text-[#237A3B] font-bold text-xs sm:text-sm rounded-xl border border-[#8BCF9B] transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-[#F1FAF3] hover:bg-[#E3F5E8] text-[#237A3B] font-bold text-xs sm:text-sm rounded-xl border border-[#8BCF9B] transition-colors shadow-2xs cursor-pointer"
                   >
                     <ShoppingBag className="w-4 h-4" />
                     <span>Add to Cart</span>
@@ -345,7 +264,7 @@ export const HamperDetailPage: React.FC = () => {
 
                   <button
                     onClick={handleBuyNow}
-                    className="w-full py-3.5 px-4 bg-[#237A3B] hover:bg-[#1c6330] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-colors"
+                    className="w-full py-3.5 px-4 bg-[#237A3B] hover:bg-[#1c6330] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-colors cursor-pointer"
                   >
                     Send Love Now
                   </button>
@@ -355,9 +274,24 @@ export const HamperDetailPage: React.FC = () => {
                   to="/custom-hamper"
                   className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-[#237A3B] bg-gray-50 hover:bg-[#F1FAF3] rounded-xl border border-gray-200 transition-colors"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
                   <span>Looking to build a 100% custom hamper from scratch?</span>
                 </Link>
+
+                {/* Trust mini features banner */}
+                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-[11px] text-gray-500">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-[#237A3B] flex-shrink-0" />
+                    <span>100% Genuine</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#237A3B] flex-shrink-0" />
+                    <span>Direct Delivery</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Package className="w-4 h-4 text-[#237A3B] flex-shrink-0" />
+                    <span>Signature Box</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -400,7 +334,6 @@ export const HamperDetailPage: React.FC = () => {
             <div className="bg-white rounded-3xl p-6 sm:p-10 border border-gray-100 shadow-xs space-y-6">
               <div>
                 <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#237A3B]" />
                   <span>Add Special Touches to this Hamper</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-500 mt-1">

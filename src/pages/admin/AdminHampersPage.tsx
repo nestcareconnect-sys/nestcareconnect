@@ -6,7 +6,6 @@ import { hampersApi, productsApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { getHamperImageUrl } from '../../utils/imageUrl';
-import { INITIAL_HAMPERS, INITIAL_PRODUCTS } from '@/constants';
 
 export const AdminHampersPage: React.FC = () => {
   const { showToast } = useToast();
@@ -52,18 +51,18 @@ export const AdminHampersPage: React.FC = () => {
         if (hRes.data?.success && hRes.data.data) {
           setHampers(hRes.data.data);
         } else {
-          setHampers(INITIAL_HAMPERS as any);
+          setHampers([]);
         }
 
         if (pRes.data?.success && pRes.data.data?.products) {
           setAllProducts(pRes.data.data.products);
         } else {
-          setAllProducts(INITIAL_PRODUCTS as any);
+          setAllProducts([]);
         }
       })
       .catch(() => {
-        setHampers(INITIAL_HAMPERS as any);
-        setAllProducts(INITIAL_PRODUCTS as any);
+        setHampers([]);
+        setAllProducts([]);
       })
       .finally(() => setIsLoading(false));
   };

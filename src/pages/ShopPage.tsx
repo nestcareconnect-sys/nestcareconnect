@@ -11,7 +11,6 @@ import {
   ArrowUpDown,
   Check,
   RotateCcw,
-  Sparkles,
   HeartHandshake,
   Activity,
   Heart,
@@ -27,7 +26,6 @@ import { ProductFiltersDrawer } from '../components/product/ProductFiltersDrawer
 import { Product, Category } from '../types';
 import { productsApi } from '../services/api';
 import { useCategories } from '../hooks/useQueries';
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '@/constants';
 
 export const ShopPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -49,7 +47,7 @@ export const ShopPage: React.FC = () => {
   const [isMobileSortOpen, setIsMobileSortOpen] = useState(false);
   const [brands, setBrands] = useState<string[]>([]);
 
-  const { data: rawCategories = INITIAL_CATEGORIES } = useCategories();
+  const { data: rawCategories = [] } = useCategories();
 
   const categories = useMemo(() => {
     const flat: Category[] = [];
@@ -162,45 +160,15 @@ export const ShopPage: React.FC = () => {
           }
           return res.data.data;
         }
-      } catch {
-        // Fallback to local filtering of constants for seamless testing
-      }
-
-      // Mock / Offline Fallback filtering
-      let mockList = [...INITIAL_PRODUCTS];
-      if (filterParams.categorySlug) {
-        mockList = mockList.filter(
-          (p) =>
-            p.category?.slug === filterParams.categorySlug ||
-            p.tags?.includes(filterParams.categorySlug)
-        );
-      }
-      if (filterParams.search) {
-        const q = filterParams.search.toLowerCase();
-        mockList = mockList.filter(
-          (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.description?.toLowerCase().includes(q) ||
-            p.brand?.toLowerCase().includes(q)
-        );
-      }
-      if (filterParams.brand) {
-        mockList = mockList.filter((p) => p.brand === filterParams.brand);
-      }
-      if (filterParams.inStock) {
-        mockList = mockList.filter((p) => p.stock > 0);
-      }
-      if (filterParams.sortBy === 'price-low' || filterParams.sortBy === 'price_asc') {
-        mockList.sort((a, b) => a.basePriceINR - b.basePriceINR);
-      } else if (filterParams.sortBy === 'price-high' || filterParams.sortBy === 'price_desc') {
-        mockList.sort((a, b) => b.basePriceINR - a.basePriceINR);
+      } catch (err) {
+        console.warn('[ShopPage] Failed to fetch products from backend API:', err);
       }
 
       return {
-        products: mockList,
+        products: [],
         nextCursor: null,
         hasMore: false,
-        pagination: { total: mockList.length },
+        pagination: { total: 0 },
       };
     },
     initialPageParam: undefined as string | undefined,
@@ -316,7 +284,7 @@ export const ShopPage: React.FC = () => {
     { label: 'New Mum & Baby', slug: 'new-mum-baby', icon: '👶' },
     { label: 'Celebrations', slug: 'celebrations', icon: '🎉' },
     { label: 'Gifts', slug: 'gifts', tag: 'gift', icon: '🎁' },
-    { label: 'Add-ons', slug: 'addons', type: 'addon', icon: '✨' },
+    { label: 'Add-ons', slug: 'addons', type: 'addon' },
   ];
 
   // Sort Options
@@ -421,7 +389,7 @@ export const ShopPage: React.FC = () => {
                         : 'bg-gray-100 hover:bg-[#F1FAF3] text-gray-700 hover:text-[#237A3B] border border-transparent'
                     }`}
                   >
-                    <span>{pill.icon}</span>
+                    {pill.icon && <span>{pill.icon}</span>}
                     <span>{pill.label}</span>
                   </button>
                 );

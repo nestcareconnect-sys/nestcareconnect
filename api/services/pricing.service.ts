@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.js';
 import { CountryCode, CurrencyCode } from '@prisma/client';
 import { DEFAULT_EXCHANGE_RATES } from '../../src/utils/currency.js';
+import { cacheService } from './cache.service.js';
 
 export interface CalculatedItem {
   itemType: 'PRODUCT' | 'HAMPER' | 'CUSTOM_HAMPER';
@@ -13,6 +14,7 @@ export interface CalculatedItem {
   unitPrice: number;
   quantity: number;
   totalPrice: number;
+  productType?: string;
   snapshot: any;
 }
 
@@ -37,6 +39,9 @@ export class PricingService {
    * Get active exchange rates from database or defaults
    */
   async getExchangeRates(): Promise<Record<CurrencyCode, number>> {
+    const cached = cacheService.get<Record<CurrencyCode, number>>('exchange_rates_map');
+    if (cached) return cached;
+
     try {
       const rates = await prisma.exchangeRate.findMany();
       const rateMap: Record<CurrencyCode, number> = {
@@ -50,6 +55,7 @@ export class PricingService {
           rateMap[r.toCurrency as CurrencyCode] = r.rate;
         }
       }
+      cacheService.set('exchange_rates_map', rateMap, 900); // 15 mins cache
       return rateMap;
     } catch {
       return DEFAULT_EXCHANGE_RATES;
@@ -255,6 +261,11 @@ export class PricingService {
         name: product.name,
         sku: product.sku,
         image: product.images?.[0],
+        images: product.images,
+        unit: product.unit,
+        variant: product.unit || (product as any).packageSize || 'Standard',
+        packageSize: (product as any).packageSize,
+        brand: product.brand,
         unitPrice,
         quantity: qty,
         totalPrice: itemTotal,
@@ -318,6 +329,7 @@ export class PricingService {
         const totalPrice = +(unitPrice * qty).toFixed(2);
         subtotal += totalPrice;
 
+        const prodType = (product as any).productType || 'normal';
         calculatedItems.push({
           itemType: 'PRODUCT',
           productId: product.id,
@@ -326,12 +338,21 @@ export class PricingService {
           unitPrice,
           quantity: qty,
           totalPrice,
+          productType: prodType,
           snapshot: {
+            productId: product.id,
             name: product.name,
             sku: product.sku,
             image: product.images?.[0],
+            images: product.images,
             unit: product.unit,
+            variant: product.unit || (product as any).packageSize || 'Standard',
+            packageSize: (product as any).packageSize,
             brand: product.brand,
+            weight: product.weight,
+            weightUnit: (product as any).weightUnit,
+            dimensions: product.dimensions,
+            productType: prodType,
           },
         });
       } else if (itm.itemType === 'HAMPER' && itm.hamperId) {
@@ -341,6 +362,34 @@ export class PricingService {
 
         const personalization = itm.personalization || itm.customHamperData?.personalization || null;
 
+        const hamperBreakdown = (hamper.items || []).map((hi: any) => ({
+          productId: hi.product?.id || hi.productId,
+          name: hi.product?.name || 'Healthcare Item',
+          sku: hi.product?.sku || null,
+          image: hi.product?.images?.[0] || null,
+          images: hi.product?.images || [],
+          unit: hi.product?.unit || null,
+          variant: hi.product?.unit || (hi.product as any)?.packageSize || 'Standard',
+          packageSize: (hi.product as any)?.packageSize || null,
+          brand: hi.product?.brand || null,
+          quantity: hi.quantity || 1,
+          unitPrice: hi.product?.basePriceINR || 0,
+          totalPrice: +((hi.product?.basePriceINR || 0) * (hi.quantity || 1)).toFixed(2),
+        }));
+
+        const isSignature = String(hamper.hamperType || '').includes('SIGNATURE');
+        const isPremium = String(hamper.hamperType || '').includes('PREMIUM');
+        const defaultBox = {
+          name: isSignature
+            ? 'Signature Heritage Gift Box'
+            : isPremium
+            ? 'Premium Magnetic Luxury Box'
+            : 'Premium White Keepsake Box',
+          size: hamperBreakdown.length > 8 ? 'Large' : 'Medium',
+          color: isSignature ? 'Warm Cream & Gold' : isPremium ? 'Light Sage Green' : 'Pure White & Gold',
+          material: 'Reinforced Matte Rigid Luxury Box',
+        };
+
         calculatedItems.push({
           itemType: 'HAMPER',
           hamperId: hamper.id,
@@ -348,13 +397,19 @@ export class PricingService {
           unitPrice,
           quantity: qty,
           totalPrice,
+          productType: 'hamper',
           personalization,
           snapshot: {
+            hamperId: hamper.id,
             name: hamper.name,
             image: hamper.images?.[0],
+            images: hamper.images,
             hamperType: hamper.hamperType,
-            itemCount: hamper.items?.length || 0,
+            itemCount: hamperBreakdown.length || hamper.items?.length || 0,
+            box: defaultBox,
+            breakdown: hamperBreakdown,
             personalization,
+            productType: 'hamper',
           },
         });
       } else if (itm.itemType === 'CUSTOM_HAMPER' && itm.customHamperData) {
@@ -380,6 +435,7 @@ export class PricingService {
           unitPrice,
           quantity: qty,
           totalPrice,
+          productType: 'hamper',
           personalization,
           snapshot: {
             title: itm.customHamperData.title || 'Custom Healthcare Hamper',
@@ -391,6 +447,7 @@ export class PricingService {
             breakdown,
             totalItemQuantity,
             personalization,
+            productType: 'hamper',
           },
         });
       }

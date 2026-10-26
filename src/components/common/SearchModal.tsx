@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, ArrowRight, ArrowLeft, Package, Gift, FolderTree, Clock, Sparkles } from 'lucide-react';
+import { Search, X, ArrowRight, ArrowLeft, Package, Gift, FolderTree, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { searchApi } from '../../services/api';
 import { useCountryCurrency } from '../../context/CountryCurrencyContext';
@@ -182,7 +182,6 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
             {/* Typo Correction Banner */}
             {results.correctedQuery && (
               <div className="px-5 py-2 bg-[#F1FAF3] border-b border-[#8BCF9B]/40 flex items-center gap-2 text-xs text-[#237A3B]">
-                <Sparkles className="w-3.5 h-3.5 flex-shrink-0 text-[#237A3B]" />
                 <span>
                   Showing results for <span className="font-bold underline">{results.correctedQuery}</span> (corrected from "{query}")
                 </span>
@@ -248,8 +247,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                       }}
                       className="text-[#237A3B] font-semibold hover:underline flex items-center gap-1"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>✨ Build Your Own Hamper</span>
+                      <span>Build Your Own Hamper</span>
                     </button>
                   </div>
                 </div>

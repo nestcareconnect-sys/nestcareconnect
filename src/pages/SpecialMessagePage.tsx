@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Heart, Play, Film, Image, Sparkles, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Heart, Play, Film, Image, ArrowLeft, ShieldCheck, RotateCcw } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { ordersApi } from '../services/api';
 import { SpecialMessagePayload } from '../types';
@@ -12,45 +12,46 @@ export const SpecialMessagePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchSpecialMessage() {
-      if (!token) return;
-      try {
-        setLoading(true);
-        const res = await ordersApi.getSpecialMessage(token);
-        if (res.data.success) {
-          setMessageData(res.data.data);
-        } else {
-          setError('Special message could not be loaded.');
-        }
-      } catch (err: any) {
-        // Fallback for demo token
-        if (token === 'demo-love-video-2026') {
-          setMessageData({
-            token: 'demo-love-video-2026',
-            orderNumber: 'NCC-2026-98102',
-            buyerName: 'Rajesh & Ananya Sharma (California, USA)',
-            recipientName: 'Mum & Dad (Bengaluru)',
-            hamperName: 'Premium Care Hamper',
-            message:
-              'Happy 45th Anniversary Mum & Dad! We miss you so much and cannot wait to visit home soon. Sending you this special care package with all our love and blessings. Stay healthy and smiling always!  ',
-            photos: [
-              'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
-              'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=800&q=80',
-            ],
-            videoUrl: 'https://www.youtube.com/watch?v=LXb3EKWsInQ',
-            videoStatus: 'VIDEO_READY',
-            createdAt: new Date().toISOString(),
-          });
-        } else {
-          setError('Special message not found or link has expired.');
-        }
-      } finally {
-        setLoading(false);
+  const fetchSpecialMessage = useCallback(async () => {
+    if (!token) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await ordersApi.getSpecialMessage(token);
+      if (res.data.success) {
+        setMessageData(res.data.data);
+      } else {
+        setError('Special message could not be loaded.');
       }
+    } catch (err: any) {
+      if (token === 'demo-love-video-2026') {
+        setMessageData({
+          token: 'demo-love-video-2026',
+          orderNumber: 'NCC-2026-98102',
+          buyerName: 'Rajesh & Ananya Sharma (California, USA)',
+          recipientName: 'Mum & Dad (Bengaluru)',
+          hamperName: 'Premium Care Hamper',
+          message:
+            'Happy 45th Anniversary Mum & Dad! We miss you so much and cannot wait to visit home soon. Sending you this special care package with all our love and blessings. Stay healthy and smiling always!  ',
+          photos: [
+            'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
+            'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=800&q=80',
+          ],
+          videoUrl: 'https://www.youtube.com/watch?v=LXb3EKWsInQ',
+          videoStatus: 'VIDEO_READY',
+          createdAt: new Date().toISOString(),
+        });
+      } else {
+        setError(err.response?.data?.message || 'Special message not found or link has expired.');
+      }
+    } finally {
+      setLoading(false);
     }
-    fetchSpecialMessage();
   }, [token]);
+
+  useEffect(() => {
+    fetchSpecialMessage();
+  }, [fetchSpecialMessage]);
 
   // Helper to extract YouTube embed URL
   const getEmbedUrl = (url: string) => {
@@ -84,20 +85,29 @@ export const SpecialMessagePage: React.FC = () => {
   if (error || !messageData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-gray-200 text-center shadow-lg">
-          <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-gray-200 text-center shadow-lg space-y-4">
+          <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto">
             <Heart className="w-6 h-6" />
           </div>
           <h2 className="text-xl font-bold text-gray-900">Message Not Found</h2>
-          <p className="text-sm text-gray-500 mt-2">
-            The special video message link could not be verified or is still being prepared by our concierge team.
+          <p className="text-sm text-gray-500">
+            {error || 'The special video message link could not be verified or is still being prepared by our concierge team.'}
           </p>
-          <Link
-            to="/"
-            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#237A3B] text-white text-xs font-bold"
-          >
-            <ArrowLeft className="w-4 h-4" /> Return to Home
-          </Link>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={fetchSpecialMessage}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#237A3B] hover:bg-[#1c6330] text-white text-xs font-bold transition-colors shadow-xs"
+            >
+              <RotateCcw className="w-4 h-4" /> Retry
+            </button>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> Return to Home
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -123,8 +133,7 @@ export const SpecialMessagePage: React.FC = () => {
             <span className="font-extrabold text-lg text-[#237A3B] tracking-tight">NESTCARE CONNECT</span>
           </Link>
 
-          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white border border-[#8BCF9B]/60 text-[#237A3B] text-xs font-bold shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-[#237A3B]" />
+          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white border border-[#8BCF9B]/60 text-[#237A3B] text-xs font-bold shadow-xs">
             <span>With Love From Your Family  </span>
           </div>
         </div>

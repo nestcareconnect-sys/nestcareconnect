@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Plus, Check, Heart, Shield, Gift, ArrowRight } from 'lucide-react';
+import { Plus, Check, Heart, Shield, Gift, ArrowRight } from 'lucide-react';
 import { Product } from '../../types';
 import { useCountryCurrency } from '../../context/CountryCurrencyContext';
 import { useCart } from '../../context/CartContext';
@@ -8,7 +8,6 @@ import { useToast } from '../../context/ToastContext';
 import { useQuery } from '@tanstack/react-query';
 import { productsApi } from '../../services/api';
 import { getProductImageUrl } from '../../utils/imageUrl';
-import { INITIAL_PRODUCTS } from '../../constants';
 
 export const AddOnsSection: React.FC = () => {
   const { formatPrice, calculateProductPrice } = useCountryCurrency();
@@ -26,8 +25,13 @@ export const AddOnsSection: React.FC = () => {
         if (res.data?.success && res.data.data?.products?.length > 0) {
           return res.data.data.products;
         }
+        // Fallback to active catalog products from database
+        const allRes = await productsApi.list({ limit: 30 });
+        if (allRes.data?.success && allRes.data.data?.products?.length > 0) {
+          return allRes.data.data.products;
+        }
       } catch {}
-      return INITIAL_PRODUCTS.filter((p) => p.isAddOn);
+      return [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -38,7 +42,6 @@ export const AddOnsSection: React.FC = () => {
     try {
       await addProductToCart(product, 1);
       setAddedIds((prev) => ({ ...prev, [product.id]: true }));
-      showToast(`${product.name} added to cart!`, 'success');
       setTimeout(() => {
         setAddedIds((prev) => ({ ...prev, [product.id]: false }));
       }, 2000);
@@ -52,8 +55,7 @@ export const AddOnsSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F1FAF3] border border-[#8BCF9B]/50 text-[#237A3B] text-xs font-bold tracking-wide uppercase mb-2.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#237A3B]" />
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#F1FAF3] border border-[#8BCF9B]/50 text-[#237A3B] text-xs font-bold tracking-wide uppercase mb-2.5">
               <span>🧴 PERSONALISE YOUR HAMPER</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1F2937] tracking-tight">

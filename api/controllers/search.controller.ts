@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma.js';
+import { handleControllerError } from '../utils/dbError.js';
+
 
 // Comprehensive healthcare, gifting and e-commerce typo dictionary
 const TYPO_MAP: Record<string, string> = {
@@ -95,20 +97,22 @@ export async function searchCatalog(req: Request, res: Response) {
 
     const effectiveQuery = hasCorrection ? correctedWords.join(' ') : rawQuery;
 
+    const mode = 'insensitive' as const;
+
     // Search in parallel with optimized field selections
     const [products, categories, hampers] = await Promise.all([
       prisma.product.findMany({
         where: {
           status: 'ACTIVE',
           OR: [
-            { name: { contains: effectiveQuery, mode: 'insensitive' } },
-            { description: { contains: effectiveQuery, mode: 'insensitive' } },
-            { brand: { contains: effectiveQuery, mode: 'insensitive' } },
+            { name: { contains: effectiveQuery, mode } },
+            { description: { contains: effectiveQuery, mode } },
+            { brand: { contains: effectiveQuery, mode } },
             { tags: { has: effectiveQuery } },
             ...(hasCorrection
               ? [
-                  { name: { contains: rawQuery, mode: 'insensitive' } },
-                  { description: { contains: rawQuery, mode: 'insensitive' } },
+                  { name: { contains: rawQuery, mode } },
+                  { description: { contains: rawQuery, mode } },
                 ]
               : []),
           ],
@@ -131,10 +135,10 @@ export async function searchCatalog(req: Request, res: Response) {
         where: {
           status: 'ACTIVE',
           OR: [
-            { name: { contains: effectiveQuery, mode: 'insensitive' } },
-            { description: { contains: effectiveQuery, mode: 'insensitive' } },
+            { name: { contains: effectiveQuery, mode } },
+            { description: { contains: effectiveQuery, mode } },
             ...(hasCorrection
-              ? [{ name: { contains: rawQuery, mode: 'insensitive' } }]
+              ? [{ name: { contains: rawQuery, mode } }]
               : []),
           ],
         },
@@ -152,10 +156,10 @@ export async function searchCatalog(req: Request, res: Response) {
         where: {
           status: 'ACTIVE',
           OR: [
-            { name: { contains: effectiveQuery, mode: 'insensitive' } },
-            { description: { contains: effectiveQuery, mode: 'insensitive' } },
+            { name: { contains: effectiveQuery, mode } },
+            { description: { contains: effectiveQuery, mode } },
             ...(hasCorrection
-              ? [{ name: { contains: rawQuery, mode: 'insensitive' } }]
+              ? [{ name: { contains: rawQuery, mode } }]
               : []),
           ],
         },
@@ -184,7 +188,8 @@ export async function searchCatalog(req: Request, res: Response) {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Search failed.');
   }
 }
+
 

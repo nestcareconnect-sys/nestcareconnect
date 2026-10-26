@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Mail, User, ShieldCheck, ArrowRight, AlertCircle, Phone } from 'lucide-react';
+import { Lock, Mail, User, ArrowRight, AlertCircle, Phone } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Logo } from '../components/common/Logo';
 import { useAuth } from '../context/AuthContext';
@@ -95,8 +95,7 @@ export const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">Admin/Demo Credentials in Seed</span>
+              <div className="flex items-center justify-end text-xs">
                 <Link to="/contact" className="text-[#237A3B] hover:underline font-semibold">
                   Need Help?
                 </Link>
@@ -111,66 +110,6 @@ export const LoginPage: React.FC = () => {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
-
-            {/* Quick 1-Click Demo Login Box */}
-            <div className="pt-2 border-t border-gray-100 space-y-2">
-              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-                Quick 1-Click Demo Logins
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setEmail('admin@nestcareconnect.com');
-                    setPassword('Admin@123456');
-                    setIsLoading(true);
-                    setError(null);
-                    try {
-                      await login({ email: 'admin@nestcareconnect.com', password: 'Admin@123456' });
-                      showToast('Logged in as Administrator (Dr. Sarah Mathews)', 'success');
-                      navigate(redirect === '/account' ? '/admin/products' : redirect);
-                    } catch (err: any) {
-                      setError('Failed to login as admin.');
-                    } finally {
-                      setIsLoading(false);
-                    }
-                  }}
-                  className="p-2.5 rounded-xl bg-[#F1FAF3] hover:bg-[#E3F5E8] border border-[#8BCF9B] text-left transition-colors flex items-center gap-2"
-                >
-                  <ShieldCheck className="w-4 h-4 text-[#237A3B] flex-shrink-0" />
-                  <div>
-                    <div className="text-xs font-bold text-[#237A3B]">Admin Console</div>
-                    <div className="text-[10px] text-gray-500">Manage products & catalog</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setEmail('customer@nestcareconnect.com');
-                    setPassword('User@123456');
-                    setIsLoading(true);
-                    setError(null);
-                    try {
-                      await login({ email: 'customer@nestcareconnect.com', password: 'User@123456' });
-                      showToast('Logged in as Customer (Rajesh Sharma)', 'success');
-                      navigate(redirect);
-                    } catch (err: any) {
-                      setError('Failed to login as customer.');
-                    } finally {
-                      setIsLoading(false);
-                    }
-                  }}
-                  className="p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-left transition-colors flex items-center gap-2"
-                >
-                  <User className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                  <div>
-                    <div className="text-xs font-bold text-gray-800">Customer Demo</div>
-                    <div className="text-[10px] text-gray-500">Rajesh Sharma</div>
-                  </div>
-                </button>
-              </div>
-            </div>
 
             <div className="border-t border-gray-100 pt-3 text-center">
               <span className="text-xs text-gray-500">Don't have an account yet? </span>
@@ -199,12 +138,26 @@ export const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password) return;
+    if (!name.trim() || !email.trim() || !phone.trim() || !password) {
+      setError('Please fill in all required fields including your phone number.');
+      return;
+    }
+
+    const digitsOnly = phone.replace(/\D/g, '');
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+      setError('Please enter a valid phone number (7 to 15 digits, e.g. +91  8921342411).');
+      return;
+    }
+
+    if (password.length < 12) {
+      setError('Password must be at least 12 characters long for account security.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
     try {
-      await register({ name, email, phone, password });
+      await register({ name: name.trim(), email: email.trim(), phone: phone.trim(), password });
       showToast('Account created successfully!', 'success');
       navigate('/account');
     } catch (err: any) {
@@ -275,18 +228,23 @@ export const RegisterPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Phone Number (Optional)
+                  Phone Number *
                 </label>
                 <div className="relative">
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+91 98765 43210"
+                    placeholder="e.g. +91  8921342411"
+                    required
+                    autoComplete="tel"
                     className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:border-[#8BCF9B] outline-none"
                   />
                   <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Required for courier delivery updates, milestone tracking, and order confirmations.
+                </p>
               </div>
 
               <div>
@@ -298,13 +256,14 @@ export const RegisterPage: React.FC = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="••••••••••••"
                     required
-                    minLength={6}
+                    minLength={12}
                     className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:border-[#8BCF9B] outline-none"
                   />
                   <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
+                <p className="text-[11px] text-gray-400 mt-1">Must be at least 12 characters long.</p>
               </div>
 
               <button

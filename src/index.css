@@ -72,6 +72,10 @@
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Line Clamp Utilities */
@@ -95,3 +99,53 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Admin Sidebar Navigation Scrollbar */
+.admin-sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 9999px;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #4B5563;
+}
+
+/* Toast Notification Container (Fixed Top-Center) */
+.toast-container {
+  position: fixed !important;
+  top: 24px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  -webkit-transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+  width: max-content !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+  pointer-events: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  .toast-container {
+    top: 16px !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+}
+

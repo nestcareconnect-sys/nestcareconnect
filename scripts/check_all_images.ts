@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../api/config/prisma.js';
 import { INITIAL_HERO_SLIDES as API_HERO, INITIAL_PRODUCTS as API_PRODS, INITIAL_HAMPERS as API_HAMPERS, INITIAL_CATEGORIES as API_CATS, INITIAL_HAMPER_BOXES as API_BOXES } from '../api/config/constants.js';
 import { INITIAL_HERO_SLIDES as SRC_HERO, INITIAL_PRODUCTS as SRC_PRODS, INITIAL_HAMPERS as SRC_HAMPERS, INITIAL_CATEGORIES as SRC_CATS, INITIAL_HAMPER_BOXES as SRC_BOXES } from '../src/constants/index.js';
-
-const prisma = new PrismaClient();
 
 async function checkAll() {
   console.log('====================================================');

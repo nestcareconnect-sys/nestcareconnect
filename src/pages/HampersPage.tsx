@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Gift, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Gift, ArrowRight, ShieldCheck } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs } from '../components/common/Breadcrumbs';
 import { HamperCard } from '../components/hamper/HamperCard';
 import { Hamper } from '../types';
 import { hampersApi } from '../services/api';
-import { INITIAL_HAMPERS } from '@/constants';
 
 export const HampersPage: React.FC = () => {
   const [hampers, setHampers] = useState<Hamper[]>([]);
@@ -17,14 +16,14 @@ export const HampersPage: React.FC = () => {
     hampersApi
       .list()
       .then((res) => {
-        if (res.data?.success && res.data.data?.length > 0) {
+        if (res.data?.success && Array.isArray(res.data.data)) {
           setHampers(res.data.data);
         } else {
-          setHampers(INITIAL_HAMPERS as any);
+          setHampers([]);
         }
       })
       .catch(() => {
-        setHampers(INITIAL_HAMPERS as any);
+        setHampers([]);
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -64,7 +63,6 @@ export const HampersPage: React.FC = () => {
               to="/custom-hamper"
               className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#8BCF9B] hover:bg-[#78be88] text-[#1F2937] font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all self-start md:self-auto"
             >
-              <Sparkles className="w-4 h-4 text-[#237A3B]" />
               <span>Or Build Your Own Custom Hamper</span>
             </Link>
           </div>

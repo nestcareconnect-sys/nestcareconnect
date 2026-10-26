@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Product } from '../../types';
 import { ProductCard } from '../product/ProductCard';
 import { productsApi } from '../../services/api';
@@ -28,8 +28,8 @@ export const FeaturedProducts: React.FC = () => {
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
-            <span className="text-xs font-bold text-[#237A3B] uppercase tracking-wider bg-[#F1FAF3] px-3 py-1 rounded-full border border-[#8BCF9B]/40 inline-flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#237A3B]" /> Verified Medical Essentials
+            <span className="text-xs font-bold text-[#237A3B] uppercase tracking-wider bg-[#F1FAF3] px-3 py-1 rounded-full border border-[#8BCF9B]/40 inline-flex items-center">
+              Verified Medical Essentials
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-2 tracking-tight">
               Featured Healthcare Products

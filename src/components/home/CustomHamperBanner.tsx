@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowRight, CheckCircle2, ShieldCheck, Heart } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, Heart } from 'lucide-react';
 
 export const CustomHamperBanner: React.FC = () => {
   return (
@@ -11,8 +11,7 @@ export const CustomHamperBanner: React.FC = () => {
           <div className="absolute right-0 top-0 w-96 h-96 bg-[#8BCF9B]/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative max-w-2xl space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/20 text-[#8BCF9B] text-xs font-semibold backdrop-blur-xs">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/15 border border-white/20 text-[#8BCF9B] text-xs font-semibold backdrop-blur-xs">
               <span>Interactive Healthcare Hamper Studio</span>
             </div>
 

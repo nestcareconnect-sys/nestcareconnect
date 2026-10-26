@@ -10,7 +10,7 @@ export const AdminSettingsPage: React.FC = () => {
     companyName: 'Nest Care Connect',
     contactEmail: 'support@nestcareconnect.com',
     contactPhone: '+91 800 123 4567',
-    whatsappNumber: '+91 98765 43210',
+    whatsappNumber: '+91 89213 42411',
     officeAddress: 'Nest Healthcare Hub, Level 4, Tech Enclave, Indiranagar, Bengaluru, 560038, India',
     supportedCountries: ['IN', 'AE', 'US'],
     supportedCurrencies: ['INR', 'AED', 'USD'],

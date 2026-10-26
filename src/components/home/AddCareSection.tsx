@@ -5,7 +5,6 @@ import { Product } from '../../types';
 import { ProductCard } from '../product/ProductCard';
 import { productsApi } from '../../services/api';
 import { useQuery } from '@tanstack/react-query';
-import { INITIAL_PRODUCTS } from '../../constants';
 
 export const AddCareSection: React.FC = () => {
   const { data: products = [] } = useQuery<Product[]>({
@@ -19,14 +18,13 @@ export const AddCareSection: React.FC = () => {
         if (res.data?.success && res.data.data?.products?.length > 0) {
           return res.data.data.products;
         }
+        // Fallback to active catalog products from database
+        const allRes = await productsApi.list({ limit: 4 });
+        if (allRes.data?.success && allRes.data.data?.products?.length > 0) {
+          return allRes.data.data.products;
+        }
       } catch {}
-      return INITIAL_PRODUCTS.filter(
-        (p) =>
-          p.categoryId?.includes('medical') ||
-          p.categoryId?.includes('bp') ||
-          p.categoryId?.includes('diabetes') ||
-          p.categoryId?.includes('personal')
-      ).slice(0, 4);
+      return [];
     },
     staleTime: 5 * 60 * 1000,
   });

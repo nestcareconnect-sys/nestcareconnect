@@ -4,7 +4,6 @@ import { SEO } from '../../components/common/SEO';
 import { Coupon, DiscountType, CountryCode } from '../../types';
 import { couponsApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import { INITIAL_COUPONS } from '@/constants';
 
 export const AdminCouponsPage: React.FC = () => {
   const { showToast } = useToast();
@@ -33,11 +32,11 @@ export const AdminCouponsPage: React.FC = () => {
         if (res.data?.success && res.data.data) {
           setCoupons(res.data.data);
         } else {
-          setCoupons(INITIAL_COUPONS as any);
+          setCoupons([]);
         }
       })
       .catch(() => {
-        setCoupons(INITIAL_COUPONS as any);
+        setCoupons([]);
       })
       .finally(() => setIsLoading(false));
   };

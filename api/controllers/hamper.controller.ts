@@ -1,9 +1,17 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma.js';
 import { Prisma, HamperType, PricingType, CountryCode, CurrencyCode, Status } from '@prisma/client';
+import { handleControllerError } from '../utils/dbError.js';
+import { cacheService } from '../services/cache.service.js';
 
 export async function getHampers(req: Request, res: Response) {
   try {
+    const cacheKey = `hamper:list:${JSON.stringify(req.query)}`;
+    const cached = cacheService.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
+
     const { hamperType, recipientType, occasion, featured, status = 'ACTIVE', country } = req.query;
 
     const where: any = {};
@@ -39,15 +47,22 @@ export async function getHampers(req: Request, res: Response) {
       },
     });
 
+    cacheService.set(cacheKey, hampers, 600); // 10 min cache
+
     return res.json({ success: true, data: hampers });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch hampers.');
   }
 }
 
 export async function getHamperBySlug(req: Request, res: Response) {
   try {
     const { slug } = req.params;
+    const cacheKey = `hamper:slug:${slug}`;
+    const cached = cacheService.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
 
     const hamper = await prisma.hamper.findFirst({
       where: {
@@ -81,9 +96,12 @@ export async function getHamperBySlug(req: Request, res: Response) {
       include: { countryPrices: true },
     });
 
-    return res.json({ success: true, data: { ...hamper, eligibleAddOns: addOnProducts } });
+    const responseData = { ...hamper, eligibleAddOns: addOnProducts };
+    cacheService.set(cacheKey, responseData, 600); // 10 min cache
+
+    return res.json({ success: true, data: responseData });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch hamper details.');
   }
 }
 
@@ -273,12 +291,10 @@ export async function createHamper(req: Request, res: Response) {
       });
     });
 
+    cacheService.delPrefix('hamper:');
     return res.status(201).json({ success: true, message: 'Hamper created successfully.', data: created, hamper: created });
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return res.status(409).json({ success: false, message: 'A hamper with this slug already exists.', errorCode: 'P2002' });
-    }
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to create hamper.');
   }
 }
 
@@ -524,6 +540,7 @@ export async function updateHamper(req: Request, res: Response) {
       });
     });
 
+    cacheService.delPrefix('hamper:');
     return res.json({
       success: true,
       message: 'Hamper updated successfully.',
@@ -531,43 +548,7 @@ export async function updateHamper(req: Request, res: Response) {
       hamper: updatedHamper,
     });
   } catch (error: any) {
-    console.error('[HAMPER_UPDATE_ERROR]', {
-      message: error.message,
-      name: error.name,
-      prismaCode: error.code || null,
-      operation: 'updateHamper',
-    });
-
-    if (error.code === 'P2025') {
-      return res.status(404).json({
-        success: false,
-        message: 'Hamper not found in database.',
-        errorCode: 'P2025',
-      });
-    }
-
-    if (error.code === 'P2002') {
-      return res.status(409).json({
-        success: false,
-        message: 'A hamper with this slug already exists.',
-        errorCode: 'P2002',
-      });
-    }
-
-    if (error.code === 'P2003') {
-      return res.status(400).json({
-        success: false,
-        message: 'Foreign key constraint failed. A referenced product or relation does not exist.',
-        errorCode: 'P2003',
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: `Unable to update hamper: ${error.message || 'Unknown database error'}`,
-      error: process.env.NODE_ENV !== 'production' ? error.message : undefined,
-      errorCode: error.code || 'HAMPER_UPDATE_FAILED',
-    });
+    return handleControllerError(res, error, 'Unable to update hamper.');
   }
 }
 
@@ -593,12 +574,9 @@ export async function deleteHamper(req: Request, res: Response) {
       where: { id: existingHamper.id },
     });
 
+    cacheService.delPrefix('hamper:');
     return res.json({ success: true, message: 'Hamper deleted successfully.' });
   } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to delete hamper',
-      errorCode: error.code || 'HAMPER_DELETE_FAILED',
-    });
+    return handleControllerError(res, error, 'Failed to delete hamper.');
   }
 }

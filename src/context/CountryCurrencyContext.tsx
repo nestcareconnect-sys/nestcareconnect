@@ -32,7 +32,18 @@ export const CountryCurrencyProvider: React.FC<{ children: React.ReactNode }> = 
     return 'IN';
   });
 
-  const [exchangeRates, setExchangeRates] = useState<Record<CurrencyCode, number>>(DEFAULT_EXCHANGE_RATES);
+  const [exchangeRates, setExchangeRates] = useState<Record<CurrencyCode, number>>(() => {
+    try {
+      const saved = localStorage.getItem('ncc_exchange_rates');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...DEFAULT_EXCHANGE_RATES, ...parsed };
+        }
+      }
+    } catch {}
+    return DEFAULT_EXCHANGE_RATES;
+  });
 
   const countryConfig = COUNTRIES[country] || COUNTRIES.IN;
   const currency = countryConfig.currency;
@@ -50,6 +61,9 @@ export const CountryCurrencyProvider: React.FC<{ children: React.ReactNode }> = 
             }
           });
           setExchangeRates(rates);
+          try {
+            localStorage.setItem('ncc_exchange_rates', JSON.stringify(rates));
+          } catch {}
         }
       })
       .catch(() => {

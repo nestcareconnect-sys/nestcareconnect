@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Globe, Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Heart, Globe, ShieldCheck, ArrowRight } from 'lucide-react';
 import { BRAND_TAGLINES } from '../../constants';
 
 export const AboutBrandSection: React.FC = () => {

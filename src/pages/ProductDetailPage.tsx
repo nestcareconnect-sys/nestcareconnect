@@ -11,7 +11,6 @@ import {
   Plus,
   Minus,
   Star,
-  Sparkles,
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs } from '../components/common/Breadcrumbs';
@@ -25,7 +24,6 @@ import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useProductBySlug } from '../hooks/useQueries';
-import { INITIAL_PRODUCTS } from '@/constants';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -84,7 +82,6 @@ export const ProductDetailPage: React.FC = () => {
   const handleAddToCart = async () => {
     if (!inStock) return;
     await addProductToCart(product, quantity);
-    showToast(`${quantity} × ${product.name} added to cart!`, 'success');
   };
 
   const handleBuyNow = async () => {

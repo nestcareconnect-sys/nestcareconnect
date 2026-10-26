@@ -9,7 +9,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
-  Sparkles,
   Heart,
 } from 'lucide-react';
 import { uploadApi } from '../../services/api';
@@ -159,8 +158,8 @@ export const PersonalizationPhotoUpload: React.FC<PersonalizationPhotoUploadProp
               </span>
             )}
             {cardEnabled && (
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100/70 text-[#237A3B] text-[10px] font-bold">
-                <Sparkles className="w-3 h-3" /> Keepsake Card
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100/70 text-[#237A3B] text-[10px] font-bold">
+                Keepsake Card
               </span>
             )}
           </div>

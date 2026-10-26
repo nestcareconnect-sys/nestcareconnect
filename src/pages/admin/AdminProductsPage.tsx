@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Plus,
   Edit2,
@@ -11,14 +11,26 @@ import {
   Package,
   Upload,
   Loader2,
+  Truck,
+  Scale,
+  Box,
+  Info,
+  HelpCircle,
+  Gift,
+  RefreshCw,
 } from 'lucide-react';
 import { SEO } from '../../components/common/SEO';
 import { Product, Category, CountryCode, CurrencyCode } from '../../types';
 import { productsApi, categoriesApi, uploadApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getProductImageUrl } from '../../utils/imageUrl';
-import { INITIAL_PRODUCTS } from '@/constants';
+import {
+  calculateProductShippingDetails,
+  hasCompleteShippingDetails,
+  WeightUnit,
+  DimensionUnit,
+} from '../../utils/shippingCalculation';
 
 export const AdminProductsPage: React.FC = () => {
   const { showToast } = useToast();
@@ -49,41 +61,77 @@ export const AdminProductsPage: React.FC = () => {
     brand: 'Nest Care Connect',
     unit: '1 Unit',
     weight: '0.5',
+    weightUnit: 'kg' as WeightUnit,
+    length: '20',
+    width: '15',
+    height: '10',
+    dimensionUnit: 'cm' as DimensionUnit,
     status: 'ACTIVE',
     featured: false,
+    productType: 'normal' as 'normal' | 'hamper',
     tags: '',
     countryPriceAE: '',
     countryPriceUS: '',
   });
 
-  const loadData = () => {
-    setIsLoading(true);
-    Promise.all([productsApi.list({ limit: 50 }), categoriesApi.getTree()])
-      .then(([prodRes, catRes]) => {
-        if (prodRes.data?.success && prodRes.data.data?.products) {
-          setProducts(prodRes.data.data.products);
-        } else {
-          setProducts(INITIAL_PRODUCTS as any);
-        }
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'NORMAL' | 'HAMPER'>('ALL');
 
-        if (catRes.data?.success && catRes.data.data) {
-          const flat: Category[] = [];
-          catRes.data.data.forEach((r) => {
-            flat.push(r);
-            if (r.children) r.children.forEach((c) => flat.push(c));
-          });
-          setCategories(flat);
-        }
-      })
-      .catch(() => {
-        setProducts(INITIAL_PRODUCTS as any);
-      })
-      .finally(() => setIsLoading(false));
-  };
+  const {
+    data: queryProducts,
+    isLoading: isProductsQueryLoading,
+    isFetching: isProductsFetching,
+    isError: isProductsError,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useQuery({
+    queryKey: ['admin-products'],
+    queryFn: async () => {
+      const prodRes = await productsApi.list({ limit: 100 });
+      if (prodRes.data?.success && prodRes.data.data?.products) {
+        return prodRes.data.data.products;
+      }
+      throw new Error((prodRes.data as any)?.message || 'Failed to retrieve products from database.');
+    },
+    staleTime: 60000,
+  });
+
+  const { data: queryCategories } = useQuery({
+    queryKey: ['admin-categories-flat'],
+    queryFn: async () => {
+      const catRes = await categoriesApi.getTree();
+      if (catRes.data?.success && catRes.data.data) {
+        const flat: Category[] = [];
+        catRes.data.data.forEach((r) => {
+          flat.push(r);
+          if (r.children) r.children.forEach((c) => flat.push(c));
+        });
+        return flat;
+      }
+      return [];
+    },
+    staleTime: 5 * 60000,
+  });
+
+  const isCatalogLoading = isProductsQueryLoading || (isLoading && products.length === 0);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (queryProducts) {
+      setProducts(queryProducts);
+      setIsLoading(false);
+    } else if (isProductsError) {
+      setIsLoading(false);
+    }
+  }, [queryProducts, isProductsError]);
+
+  useEffect(() => {
+    if (queryCategories) {
+      setCategories(queryCategories);
+    }
+  }, [queryCategories]);
+
+  const loadData = () => {
+    refetchProducts();
+  };
 
   const handleOpenAddModal = () => {
     setEditingProductId(null);
@@ -100,9 +148,15 @@ export const AdminProductsPage: React.FC = () => {
       categoryId: categories[0]?.id || '',
       brand: 'Nest Care Connect',
       unit: '1 Unit',
-      weight: '0.5',
+      weight: '500',
+      weightUnit: 'g',
+      length: '20',
+      width: '15',
+      height: '10',
+      dimensionUnit: 'cm',
       status: 'ACTIVE',
       featured: false,
+      productType: 'normal',
       tags: 'healthcare, testing',
       countryPriceAE: '',
       countryPriceUS: '',
@@ -114,6 +168,23 @@ export const AdminProductsPage: React.FC = () => {
     setEditingProductId(product.id);
     const aePrice = product.countryPrices?.find((cp) => cp.country === 'AE')?.fixedPrice?.toString() || '';
     const usPrice = product.countryPrices?.find((cp) => cp.country === 'US')?.fixedPrice?.toString() || '';
+
+    const pWeightUnit = (product.weightUnit || 'kg') as WeightUnit;
+    const pDimUnit = (product.dimensionUnit || 'cm') as DimensionUnit;
+
+    // Format weight according to selected unit
+    let displayWeight = '';
+    if (product.weight !== null && product.weight !== undefined) {
+      if (pWeightUnit === 'g') {
+        displayWeight = Math.round(product.weight * 1000).toString();
+      } else {
+        displayWeight = product.weight.toString();
+      }
+    }
+
+    const pLength = (product.length || product.packageLength)?.toString() || '';
+    const pWidth = (product.width || product.packageWidth)?.toString() || '';
+    const pHeight = (product.height || product.packageHeight)?.toString() || '';
 
     setFormData({
       name: product.name,
@@ -128,15 +199,82 @@ export const AdminProductsPage: React.FC = () => {
       categoryId: product.categoryId || '',
       brand: product.brand || '',
       unit: product.unit || '',
-      weight: product.weight?.toString() || '',
+      weight: displayWeight,
+      weightUnit: pWeightUnit,
+      length: pLength,
+      width: pWidth,
+      height: pHeight,
+      dimensionUnit: pDimUnit,
       status: product.status,
       featured: product.featured,
+      productType: (product.productType || 'normal') as 'normal' | 'hamper',
       tags: product.tags?.join(', ') || '',
       countryPriceAE: aePrice,
       countryPriceUS: usPrice,
     });
     setIsModalOpen(true);
   };
+
+  const handleWeightUnitChange = (newUnit: WeightUnit) => {
+    if (formData.weight) {
+      const val = parseFloat(formData.weight);
+      if (!isNaN(val) && val > 0) {
+        if (formData.weightUnit === 'kg' && newUnit === 'g') {
+          setFormData((prev) => ({ ...prev, weight: (val * 1000).toString(), weightUnit: newUnit }));
+          return;
+        } else if (formData.weightUnit === 'g' && newUnit === 'kg') {
+          setFormData((prev) => ({ ...prev, weight: (val / 1000).toString(), weightUnit: newUnit }));
+          return;
+        }
+      }
+    }
+    setFormData((prev) => ({ ...prev, weightUnit: newUnit }));
+  };
+
+  const handleDimensionUnitChange = (newUnit: DimensionUnit) => {
+    if (formData.length || formData.width || formData.height) {
+      const l = parseFloat(formData.length);
+      const w = parseFloat(formData.width);
+      const h = parseFloat(formData.height);
+      if (formData.dimensionUnit === 'cm' && newUnit === 'in') {
+        setFormData((prev) => ({
+          ...prev,
+          length: !isNaN(l) ? (Math.round((l / 2.54) * 100) / 100).toString() : prev.length,
+          width: !isNaN(w) ? (Math.round((w / 2.54) * 100) / 100).toString() : prev.width,
+          height: !isNaN(h) ? (Math.round((h / 2.54) * 100) / 100).toString() : prev.height,
+          dimensionUnit: newUnit,
+        }));
+        return;
+      } else if (formData.dimensionUnit === 'in' && newUnit === 'cm') {
+        setFormData((prev) => ({
+          ...prev,
+          length: !isNaN(l) ? (Math.round(l * 2.54 * 100) / 100).toString() : prev.length,
+          width: !isNaN(w) ? (Math.round(w * 2.54 * 100) / 100).toString() : prev.width,
+          height: !isNaN(h) ? (Math.round(h * 2.54 * 100) / 100).toString() : prev.height,
+          dimensionUnit: newUnit,
+        }));
+        return;
+      }
+    }
+    setFormData((prev) => ({ ...prev, dimensionUnit: newUnit }));
+  };
+
+  // Live real-time derived volumetric and chargeable weight calculation
+  const liveShipping = useMemo(() => {
+    const w = parseFloat(formData.weight) || 0;
+    const l = parseFloat(formData.length) || 0;
+    const wth = parseFloat(formData.width) || 0;
+    const h = parseFloat(formData.height) || 0;
+
+    return calculateProductShippingDetails({
+      weight: w,
+      weightUnit: formData.weightUnit,
+      length: l,
+      width: wth,
+      height: h,
+      dimensionUnit: formData.dimensionUnit,
+    });
+  }, [formData.weight, formData.weightUnit, formData.length, formData.width, formData.height, formData.dimensionUnit]);
 
   const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -200,6 +338,24 @@ export const AdminProductsPage: React.FC = () => {
       return;
     }
 
+    if (formData.weight) {
+      const w = parseFloat(formData.weight);
+      if (isNaN(w) || w <= 0) {
+        showToast('Product weight must be a positive number greater than zero.', 'error');
+        return;
+      }
+    }
+
+    if (formData.length || formData.width || formData.height) {
+      const l = parseFloat(formData.length);
+      const w = parseFloat(formData.width);
+      const h = parseFloat(formData.height);
+      if (isNaN(l) || l <= 0 || isNaN(w) || w <= 0 || isNaN(h) || h <= 0) {
+        showToast('Package Length, Width, and Height must all be positive numbers greater than zero.', 'error');
+        return;
+      }
+    }
+
     const payload: any = {
       name: formData.name,
       slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -213,7 +369,13 @@ export const AdminProductsPage: React.FC = () => {
       categoryId: formData.categoryId || null,
       brand: formData.brand,
       unit: formData.unit,
+      productType: formData.productType,
       weight: formData.weight ? parseFloat(formData.weight) : null,
+      weightUnit: formData.weightUnit,
+      length: formData.length ? parseFloat(formData.length) : null,
+      width: formData.width ? parseFloat(formData.width) : null,
+      height: formData.height ? parseFloat(formData.height) : null,
+      dimensionUnit: formData.dimensionUnit,
       status: formData.status,
       featured: formData.featured,
       tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
@@ -263,12 +425,16 @@ export const AdminProductsPage: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(
-    (p) =>
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.brand?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      p.brand?.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+    if (typeFilter === 'NORMAL') return (p.productType || 'normal') === 'normal';
+    if (typeFilter === 'HAMPER') return p.productType === 'hamper';
+    return true;
+  });
 
   return (
     <>
@@ -286,26 +452,82 @@ export const AdminProductsPage: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={handleOpenAddModal}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#237A3B] hover:bg-[#1c6330] text-white text-xs font-bold rounded-xl shadow-md transition-all self-start"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add New Product</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => refetchProducts()}
+              disabled={isProductsQueryLoading || isProductsFetching}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
+              title="Refresh product list"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isProductsQueryLoading || isProductsFetching ? 'animate-spin text-[#237A3B]' : ''}`} />
+              <span>Refresh</span>
+            </button>
+
+            <button
+              onClick={handleOpenAddModal}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#237A3B] hover:bg-[#1c6330] text-white text-xs font-bold rounded-xl shadow-md transition-all self-start"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Product</span>
+            </button>
+          </div>
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center gap-3">
-          <Search className="w-4 h-4 text-gray-400 ml-1" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by product title, brand, or SKU..."
-            className="flex-1 text-xs bg-transparent border-none outline-none text-gray-800"
-          />
-          <span className="text-xs text-gray-400">{filteredProducts.length} items</span>
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <Search className="w-4 h-4 text-gray-400 ml-1" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by product title, brand, or SKU..."
+              className="flex-1 text-xs bg-transparent border-none outline-none text-gray-800"
+            />
+            {isProductsFetching && (
+              <div className="flex items-center gap-1.5 text-[11px] text-[#237A3B] font-medium animate-pulse mr-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Updating...</span>
+              </div>
+            )}
+          </div>
+
+          {/* Type Filter Pills */}
+          <div className="flex items-center gap-1.5 bg-gray-50 p-1 rounded-xl border border-gray-200">
+            <button
+              type="button"
+              onClick={() => setTypeFilter('ALL')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all ${
+                typeFilter === 'ALL' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              All {isCatalogLoading ? '(...)' : `(${products.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTypeFilter('NORMAL')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                typeFilter === 'NORMAL' ? 'bg-white text-[#237A3B] shadow-xs' : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <Package className="w-3 h-3" />
+              <span>Normal {isCatalogLoading ? '(...)' : `(${products.filter((p) => (p.productType || 'normal') === 'normal').length})`}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTypeFilter('HAMPER')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                typeFilter === 'HAMPER' ? 'bg-white text-purple-700 shadow-xs' : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <Gift className="w-3 h-3 text-purple-600" />
+              <span>Hampers {isCatalogLoading ? '(...)' : `(${products.filter((p) => p.productType === 'hamper').length})`}</span>
+            </button>
+          </div>
+
+          <span className="text-xs text-gray-400">
+            {isCatalogLoading ? 'Loading catalog...' : `${filteredProducts.length} items`}
+          </span>
         </div>
 
         {/* Products Table */}
@@ -315,16 +537,87 @@ export const AdminProductsPage: React.FC = () => {
               <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-100">
                 <tr>
                   <th className="p-4">Product</th>
+                  <th className="p-4">Type</th>
                   <th className="p-4">SKU</th>
                   <th className="p-4">Base Price (INR)</th>
                   <th className="p-4">Country Overrides</th>
                   <th className="p-4">Stock</th>
+                  <th className="p-4">Shipping & Package</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
-                {filteredProducts.map((p) => {
+                {isCatalogLoading ? (
+                  <tr>
+                    <td colSpan={9} className="py-20 px-4 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#237A3B] flex items-center justify-center shadow-2xs">
+                          <Loader2 className="w-6 h-6 animate-spin text-[#237A3B]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">Loading healthcare products...</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Fetching catalog items, stock levels, and country pricing</p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : isProductsError ? (
+                  <tr>
+                    <td colSpan={9} className="py-16 px-4 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shadow-2xs">
+                          <AlertCircle className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">Unable to load products</p>
+                          <p className="text-xs text-gray-500 mt-0.5 max-w-sm">
+                            {(productsError as any)?.response?.data?.message ||
+                              (productsError as any)?.message ||
+                              'A network or server error occurred while retrieving the product catalog.'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => refetchProducts()}
+                          className="mt-1 px-4 py-2 bg-[#237A3B] hover:bg-[#1c6330] text-white text-xs font-bold rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Retry</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="py-16 px-4 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center shadow-2xs">
+                          <Package className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">No products found matching current filters.</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {searchQuery || typeFilter !== 'ALL'
+                              ? 'Try adjusting your search terms or clearing active filters.'
+                              : 'No healthcare items or gift hampers have been added to the catalog yet.'}
+                          </p>
+                        </div>
+                        {(searchQuery || typeFilter !== 'ALL') && (
+                          <button
+                            onClick={() => {
+                              setSearchQuery('');
+                              setTypeFilter('ALL');
+                            }}
+                            className="mt-1 px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                          >
+                            Clear Filters
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredProducts.map((p) => {
                   const ae = p.countryPrices?.find((cp) => cp.country === 'AE')?.fixedPrice;
                   const us = p.countryPrices?.find((cp) => cp.country === 'US')?.fixedPrice;
 
@@ -347,6 +640,19 @@ export const AdminProductsPage: React.FC = () => {
                           </div>
                         </div>
                       </td>
+                      <td className="p-4">
+                        {p.productType === 'hamper' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold text-[10px] border border-purple-200">
+                            <Gift className="w-3 h-3 text-purple-600" />
+                            <span>Hamper</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-200">
+                            <Package className="w-3 h-3 text-slate-500" />
+                            <span>Normal</span>
+                          </span>
+                        )}
+                      </td>
                       <td className="p-4 font-mono font-medium text-gray-600">{p.sku}</td>
                       <td className="p-4 font-bold text-gray-900">₹{p.basePriceINR.toLocaleString()}</td>
                       <td className="p-4">
@@ -367,6 +673,48 @@ export const AdminProductsPage: React.FC = () => {
                         >
                           {p.stock} units
                         </span>
+                      </td>
+                      <td className="p-4">
+                        {(() => {
+                          const hasLen = (p.length || p.packageLength) && (p.length || p.packageLength)! > 0;
+                          const hasWeight = (p.weight || p.packageWeight) && (p.weight || p.packageWeight)! > 0;
+                          if (hasLen && hasWeight) {
+                            const l = p.length || p.packageLength;
+                            const w = p.width || p.packageWidth;
+                            const h = p.height || p.packageHeight;
+                            const chg = p.chargeableWeight || Math.max(p.weight || 0, ((l || 0) * (w || 0) * (h || 0)) / 5000);
+                            return (
+                              <div className="space-y-0.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold text-[10px]">
+                                  <Truck className="w-3 h-3 text-emerald-600" />
+                                  <span>{chg.toFixed(2)} kg billable</span>
+                                </span>
+                                <span className="block text-[10px] text-gray-500 font-mono">
+                                  {l}×{w}×{h}cm ({p.weight}kg act)
+                                </span>
+                              </div>
+                            );
+                          }
+                          if (hasWeight) {
+                            return (
+                              <div className="space-y-0.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-semibold text-[10px]" title="Dimensions missing - required for volumetric courier rating">
+                                  <AlertCircle className="w-3 h-3 text-amber-600" />
+                                  <span>Needs Dimensions</span>
+                                </span>
+                                <span className="block text-[10px] text-gray-400">
+                                  Act Weight: {p.weight} kg
+                                </span>
+                              </div>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 font-semibold text-[10px]" title="Weight and dimensions missing">
+                              <AlertCircle className="w-3 h-3 text-rose-600" />
+                              <span>Incomplete</span>
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="p-4">
                         <span className="px-2 py-0.5 rounded-full bg-[#F1FAF3] text-[#237A3B] text-[10px] font-bold">
@@ -393,8 +741,9 @@ export const AdminProductsPage: React.FC = () => {
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
+                })
+              )}
+            </tbody>
             </table>
           </div>
         </div>
@@ -417,7 +766,7 @@ export const AdminProductsPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmitForm} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">Product Title *</label>
                   <input
@@ -428,6 +777,18 @@ export const AdminProductsPage: React.FC = () => {
                     placeholder="e.g. Omron Blood Pressure Monitor"
                     className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#8BCF9B]"
                   />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Product Type *</label>
+                  <select
+                    value={formData.productType}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, productType: e.target.value as 'normal' | 'hamper' }))}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#8BCF9B] font-semibold text-gray-800"
+                  >
+                    <option value="normal">Normal Product (Standard Checkout)</option>
+                    <option value="hamper">Hamper (Customized Checkout)</option>
+                  </select>
                 </div>
 
                 <div>
@@ -551,6 +912,180 @@ export const AdminProductsPage: React.FC = () => {
                     placeholder="1 Device / Pack of 50"
                     className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl"
                   />
+                </div>
+              </div>
+
+              {/* Shipping & Package Details Section */}
+              <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-[#237A3B] text-white flex items-center justify-center">
+                      <Truck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-xs">Shipping & Package Details</h4>
+                      <p className="text-[11px] text-gray-500">
+                        Physical weight and dimensions for NimbusPost courier calculation and volumetric billing.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono bg-white px-2 py-1 rounded-md border border-emerald-200 text-emerald-800 font-semibold">
+                    Divisor: 5000 (IATA/Nimbus)
+                  </span>
+                </div>
+
+                {/* Actual Product Weight */}
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1 text-xs">
+                    Product Weight <span className="text-gray-400 font-normal">(Actual net physical weight)</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Scale className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="number"
+                        step="any"
+                        min="0"
+                        value={formData.weight}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, weight: e.target.value }))}
+                        placeholder={formData.weightUnit === 'g' ? 'e.g. 500' : 'e.g. 0.5'}
+                        className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#8BCF9B] text-xs font-medium"
+                      />
+                    </div>
+                    <select
+                      value={formData.weightUnit}
+                      onChange={(e) => handleWeightUnitChange(e.target.value as WeightUnit)}
+                      className="px-3 py-2 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#8BCF9B] text-xs font-semibold text-gray-700"
+                    >
+                      <option value="g">Grams (g)</option>
+                      <option value="kg">Kilograms (kg)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Product Package Dimensions */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700 text-xs">
+                      Package Dimensions <span className="text-gray-400 font-normal">(Length × Width × Height)</span>
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-gray-500">Unit:</span>
+                      <select
+                        value={formData.dimensionUnit}
+                        onChange={(e) => handleDimensionUnitChange(e.target.value as DimensionUnit)}
+                        className="px-2 py-1 bg-white border border-gray-200 rounded-lg outline-none text-[11px] font-semibold text-gray-700"
+                      >
+                        <option value="cm">Centimeters (cm)</option>
+                        <option value="in">Inches (in)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <span className="block text-[10px] text-gray-500 mb-0.5">Length ({formData.dimensionUnit})</span>
+                      <input
+                        type="number"
+                        step="any"
+                        min="0"
+                        value={formData.length}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, length: e.target.value }))}
+                        placeholder="Length"
+                        className="w-full p-2 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#8BCF9B] text-xs font-medium"
+                      />
+                    </div>
+                    <div>
+                      <span className="block text-[10px] text-gray-500 mb-0.5">Width ({formData.dimensionUnit})</span>
+                      <input
+                        type="number"
+                        step="any"
+                        min="0"
+                        value={formData.width}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, width: e.target.value }))}
+                        placeholder="Width"
+                        className="w-full p-2 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#8BCF9B] text-xs font-medium"
+                      />
+                    </div>
+                    <div>
+                      <span className="block text-[10px] text-gray-500 mb-0.5">Height ({formData.dimensionUnit})</span>
+                      <input
+                        type="number"
+                        step="any"
+                        min="0"
+                        value={formData.height}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, height: e.target.value }))}
+                        placeholder="Height"
+                        className="w-full p-2 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#8BCF9B] text-xs font-medium"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Automatic Calculated Volumetric & Chargeable Weight Display */}
+                <div className="p-3 bg-white rounded-xl border border-emerald-200/80 shadow-2xs space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center sm:text-left">
+                    <div className="p-2 rounded-lg bg-gray-50 border border-gray-100">
+                      <span className="block text-[10px] uppercase tracking-wider font-semibold text-gray-500">
+                        Actual Weight
+                      </span>
+                      <span className="text-xs font-bold text-gray-900">
+                        {liveShipping.weightKg > 0 ? `${liveShipping.weightKg.toFixed(3)} kg` : '—'}
+                      </span>
+                      <span className="block text-[10px] text-gray-400">
+                        {formData.weight ? `(${formData.weight} ${formData.weightUnit})` : 'Not entered'}
+                      </span>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-gray-50 border border-gray-100">
+                      <span className="block text-[10px] uppercase tracking-wider font-semibold text-gray-500">
+                        Volumetric Weight
+                      </span>
+                      <span className="text-xs font-bold text-gray-900">
+                        {liveShipping.volumetricWeightKg > 0 ? `${liveShipping.volumetricWeightKg.toFixed(3)} kg` : '—'}
+                      </span>
+                      <span className="block text-[10px] text-gray-400">
+                        (L×W×H ÷ 5000)
+                      </span>
+                    </div>
+
+                    <div className={`p-2 rounded-lg border ${
+                      liveShipping.chargeableWeightKg > 0
+                        ? 'bg-emerald-50 border-emerald-300'
+                        : 'bg-gray-50 border-gray-100'
+                    }`}>
+                      <span className="block text-[10px] uppercase tracking-wider font-bold text-emerald-800">
+                        Chargeable Weight
+                      </span>
+                      <span className="text-xs font-extrabold text-emerald-700">
+                        {liveShipping.chargeableWeightKg > 0 ? `${liveShipping.chargeableWeightKg.toFixed(3)} kg` : '—'}
+                      </span>
+                      <span className="block text-[10px] text-emerald-600 font-medium">
+                        Max(Actual, Volumetric)
+                      </span>
+                    </div>
+                  </div>
+
+                  {liveShipping.chargeableWeightKg > 0 && (
+                    <div className="flex items-start gap-1.5 pt-1 text-[11px] text-gray-600">
+                      <Info className="w-3.5 h-3.5 text-[#237A3B] flex-shrink-0 mt-0.5" />
+                      <span>
+                        {liveShipping.volumetricWeightKg > liveShipping.weightKg ? (
+                          <>
+                            <strong className="text-amber-800">Volumetric weight governs:</strong> Package dimensions exceed actual density. NimbusPost and couriers will bill this product at <strong>{liveShipping.volumetricWeightKg.toFixed(3)} kg</strong>.
+                          </>
+                        ) : liveShipping.weightKg > liveShipping.volumetricWeightKg ? (
+                          <>
+                            <strong className="text-emerald-800">Actual weight governs:</strong> Dense item. NimbusPost and couriers will bill this product at <strong>{liveShipping.weightKg.toFixed(3)} kg</strong>.
+                          </>
+                        ) : (
+                          <>
+                            Actual and volumetric weight are equal at <strong>{liveShipping.chargeableWeightKg.toFixed(3)} kg</strong>.
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

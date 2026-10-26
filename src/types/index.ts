@@ -141,12 +141,24 @@ export interface Product {
   brand?: string | null;
   unit?: string | null;
   weight?: number | null;
+  weightUnit?: string | null;
   dimensions?: string | null;
+  length?: number | null;
+  width?: number | null;
+  height?: number | null;
+  dimensionUnit?: string | null;
+  volumetricWeight?: number | null;
+  chargeableWeight?: number | null;
+  packageLength?: number | null;
+  packageWidth?: number | null;
+  packageHeight?: number | null;
+  packageWeight?: number | null;
   status: Status;
   featured: boolean;
   isAddOn?: boolean;
   addOnCategory?: AddOnCategory | null;
   isCustomHamperEligible?: boolean;
+  productType?: 'normal' | 'hamper';
   tags: string[];
   specifications?: Record<string, string> | null;
   countryPrices?: ProductCountryPrice[];
@@ -223,6 +235,7 @@ export interface Hamper {
 export interface PersonalizationData {
   recipientVariant?: string; // e.g. 'Elderly Care' | 'Pregnancy & New Mum Care'
   customMessage?: string; // Max 50 words
+  message?: string; // Alias for customMessage
   photos?: string[]; // 1-3 photo URLs
   uploadedPhotos?: string[]; // Uploaded customer photos for greeting card / keepsake
   attachedPhotos?: string[]; // Alias for uploaded photos
@@ -328,6 +341,7 @@ export interface CartItem {
   unitPrice: number;
   totalPrice: number;
   name?: string;
+  productType?: 'normal' | 'hamper';
   snapshot?: any;
 }
 
@@ -373,11 +387,16 @@ export interface OrderItemSnapshot {
   hamperId?: string | null;
   name: string;
   sku?: string | null;
+  variant?: string | null;
+  image?: string | null;
   unitPrice: number;
   quantity: number;
   totalPrice: number;
+  productType?: 'normal' | 'hamper';
   personalization?: PersonalizationData;
   snapshot: any;
+  product?: Product | null;
+  hamper?: any;
 }
 
 export interface OrderTimeline {
@@ -431,10 +450,44 @@ export interface Order {
   videoStatus?: VideoStatus;
   personalizationNote?: string | null;
   uploadedPhotos?: string[];
+  whatsappMedia?: WhatsAppMediaItem[];
+  whatsappStatus?: 'NOT_SENT' | 'PENDING' | 'SENT' | 'FAILED' | 'CLICK_TO_CHAT_FALLBACK' | 'NOT_APPLICABLE';
+  whatsappMessageId?: string | null;
+  whatsappSentAt?: string | null;
 
   couponCode?: string | null;
   trackingNumber?: string | null;
+  shippingMethod?: 'MANUAL' | 'NIMBUSPOST_AUTOMATED' | 'NIMBUSPOST_MANUAL' | 'NIMBUSPOST' | 'PENDING_SELECTION' | string | null;
+  shippingMethodLabel?: string | null;
+  courierName?: string | null;
+  trackingUrl?: string | null;
+  dispatchedAt?: string | null;
+  dispatchDate?: string | null;
+  estimatedDelivery?: string | null;
+  shipmentStatus?: string | null;
+  nimbusOrderId?: string | null;
+  nimbusShipmentId?: string | null;
+  syncStatus?: string | null;
+  importStatus?: 'NOT_IMPORTED' | 'CSV_GENERATED' | 'IMPORTING' | 'IMPORTED_TO_NIMBUSPOST' | 'IMPORT_FAILED' | 'SHIPMENT_CREATED';
+  lastSyncAt?: string | null;
+  errorMessage?: string | null;
+  manualShipment?: {
+    courierName: string;
+    trackingNumber?: string | null;
+    trackingUrl?: string | null;
+    estimatedDelivery?: string | null;
+    shippingNotes?: string | null;
+    dispatchedAt?: string | null;
+    dispatchDate?: string | null;
+  } | null;
+  isManualShipment?: boolean;
   notes?: string | null;
+  packingChecklist?: {
+    packedItems: Record<string, boolean>;
+    packedCount?: number;
+    updatedAt?: string;
+    updatedBy?: string;
+  };
   items: OrderItemSnapshot[];
   timeline: OrderTimeline[];
   payments?: Payment[];
@@ -442,6 +495,54 @@ export interface Order {
   nimbusTracking?: NimbusTrackingResult | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface OrderPackageDetails {
+  orderId: string;
+  orderNumber: string;
+  orderValue: number;
+  currency: CurrencyCode;
+  country: CountryCode;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  shippingAddress: {
+    name: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
+  fullAddressString: string;
+  pickupHub: {
+    hubName: string;
+    city: string;
+    pincode: string;
+  };
+  packageWeightKg: number;
+  dimensions: {
+    length: number;
+    breadth: number;
+    height: number;
+  };
+  dimensionsString: string;
+  chargeableWeightKg: number;
+  items: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    sku?: string | null;
+  }>;
+  isCustomHamper?: boolean;
+  boxDetails?: any;
+  existingShipment?: any;
+  orderStatus: string;
+  paymentStatus: string;
+  shippingMethod?: string | null;
 }
 
 export interface Payment {
@@ -463,19 +564,26 @@ export interface Shipment {
   id: string;
   orderId: string;
   provider: string;
+  shippingMethod?: string | null;
   providerOrderId?: string | null;
   awbNumber?: string | null;
+  trackingNumber?: string | null;
   courierName?: string | null;
   courierId?: number | null;
   shipmentStatus: string;
+  status?: string;
   trackingUrl?: string | null;
   labelUrl?: string | null;
   manifestUrl?: string | null;
   estimatedDelivery?: string | null;
+  shippingNotes?: string | null;
+  dispatchedAt?: string | null;
   weightKg?: number | null;
   pickupPincode?: string | null;
   deliveryPincode?: string | null;
   errorMessage?: string | null;
+  syncStatus?: string | null;
+  nimbusPostShipmentId?: string | null;
   rawResponse?: any;
   createdAt: string;
   updatedAt: string;
@@ -507,6 +615,7 @@ export interface NimbusShipmentResult {
   provider?: string;
   providerOrderId?: string;
   awbNumber: string;
+  trackingNumber?: string;
   courierName: string;
   courierId: number;
   labelUrl: string;
@@ -519,6 +628,9 @@ export interface NimbusShipmentResult {
   deliveryPincode: string;
   weightKg: number;
   isTestMode?: boolean;
+  isSimulated?: boolean;
+  order?: Order;
+  shipment?: Shipment;
 }
 
 export interface NimbusTrackingCheckpoint {
@@ -565,6 +677,7 @@ export interface ShippingInfo {
   env: 'test' | 'production';
   isTestMode: boolean;
   baseUrl: string;
+  dashboardUrl?: string;
   pickupLocation: string;
   pickupCity: string;
   pickupPincode: string;
@@ -585,17 +698,29 @@ export interface SpecialMessagePayload {
   createdAt: string;
 }
 
+export type HeroSlideLinkType = 'PRODUCT' | 'CATEGORY' | 'CUSTOM' | 'NONE';
+
 export interface HeroSlide {
   id: string;
-  title: string;
-  subtitle: string;
+  title?: string | null;
+  subtitle?: string | null;
+  description?: string | null;
   badge?: string | null;
-  ctaText: string;
-  ctaUrl: string;
+  ctaText?: string | null;
+  buttonText?: string | null;
+  ctaUrl?: string | null;
+  destinationUrl?: string | null;
   desktopImage: string;
-  mobileImage: string;
+  bannerImageUrl?: string | null;
+  mobileImage?: string | null;
+  mobileImageUrl?: string | null;
+  linkType?: HeroSlideLinkType | string | null;
+  linkedProductId?: string | null;
+  linkedCategoryId?: string | null;
   displayOrder: number;
   status: Status;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Coupon {
@@ -668,3 +793,54 @@ export interface SiteSettings {
     keywords: string;
   };
 }
+
+export interface WhatsAppMediaItem {
+  id?: string;
+  url: string;
+  key?: string;
+  originalName: string;
+  mimeType: string;
+  fileSize?: number;
+  mediaType: 'IMAGE' | 'VIDEO';
+  uploadedAt?: string;
+  localPreviewUrl?: string;
+}
+
+export interface WhatsAppConfig {
+  businessPhoneNumber: string;
+  formattedBusinessPhone: string;
+  cloudApiAvailable: boolean;
+}
+
+export interface QrCodeItem {
+  id: string;
+  label?: string | null;
+  youtubeUrl: string;
+  qrDataUrl: string;
+  svg?: string;
+  videoId?: string;
+  adminId?: string | null;
+  adminName?: string | null;
+  adminEmail?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Authoritative check to identify if an item is a Hamper or a Normal Product.
+ * Never relies on name strings or guessing.
+ */
+export function isHamperItem(item: any): boolean {
+  if (!item) return false;
+  if (item.itemType === 'HAMPER' || item.itemType === 'CUSTOM_HAMPER') return true;
+  if (Boolean(item.hamperId)) return true;
+  if (item.productType === 'hamper') return true;
+  if (item.product?.productType === 'hamper') return true;
+  if (item.snapshot?.productType === 'hamper') return true;
+  return false;
+}
+
+export function isNormalProductItem(item: any): boolean {
+  return !isHamperItem(item);
+}
+

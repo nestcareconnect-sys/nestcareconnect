@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import prisma from '../config/prisma.js';
 import { CountryCode, CurrencyCode, Status } from '@prisma/client';
 import { pricingService } from '../services/pricing.service.js';
-import { INITIAL_HAMPER_BOXES } from '../config/constants.js';
+import { handleControllerError } from '../utils/dbError.js';
+
 
 /**
  * Get all available hamper boxes for storefront or admin
@@ -16,18 +17,13 @@ export async function getBoxes(req: Request, res: Response) {
       whereClause.status = Status.ACTIVE;
     }
 
-    let boxes = await prisma.hamperBox.findMany({
+    const boxes = await prisma.hamperBox.findMany({
       where: whereClause,
       include: {
         countryPrices: true,
       },
       orderBy: [{ sortOrder: 'asc' }, { basePriceINR: 'asc' }],
     });
-
-    if (boxes.length === 0 && includeInactive !== 'true') {
-      // Fallback to initial hamper boxes if database empty
-      boxes = INITIAL_HAMPER_BOXES as any;
-    }
 
     const rates = await pricingService.getExchangeRates();
     const curr = currency as CurrencyCode;
@@ -63,7 +59,7 @@ export async function getBoxes(req: Request, res: Response) {
       data: enrichedBoxes,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch hamper boxes.');
   }
 }
 
@@ -110,7 +106,7 @@ export async function getBoxById(req: Request, res: Response) {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch hamper box.');
   }
 }
 
@@ -197,7 +193,7 @@ export async function createBox(req: Request, res: Response) {
       data: createdBox,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to create hamper box.');
   }
 }
 
@@ -290,7 +286,7 @@ export async function updateBox(req: Request, res: Response) {
       data: fullUpdated,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to update hamper box.');
   }
 }
 
@@ -303,6 +299,6 @@ export async function deleteBox(req: Request, res: Response) {
     await prisma.hamperBox.delete({ where: { id } });
     return res.json({ success: true, message: 'Hamper box deleted successfully.' });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to delete hamper box.');
   }
 }

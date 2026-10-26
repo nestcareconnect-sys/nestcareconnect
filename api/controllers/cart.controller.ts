@@ -3,6 +3,8 @@ import prisma from '../config/prisma.js';
 import { AuthRequest } from '../middleware/auth.js';
 import { pricingService } from '../services/pricing.service.js';
 import { CountryCode, CurrencyCode, ItemType } from '@prisma/client';
+import { handleControllerError } from '../utils/dbError.js';
+
 
 /**
  * Helper to fetch, calculate pricing, and enrich cart items in a single pass
@@ -64,7 +66,7 @@ async function fetchEnrichedCart(
     cartItemId: sortedItems[idx]?.id,
     personalization:
       sortedItems[idx]?.personalization ||
-      sortedItems[idx]?.customHamperData?.personalization ||
+      (sortedItems[idx]?.customHamperData as any)?.personalization ||
       calcItem.personalization ||
       calcItem.snapshot?.personalization ||
       null,
@@ -143,7 +145,7 @@ export async function getCart(req: AuthRequest, res: Response) {
       data: enrichedCart,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch cart.');
   }
 }
 
@@ -355,7 +357,7 @@ export async function addToCart(req: AuthRequest, res: Response) {
       data: updatedCart,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to add item to cart.');
   }
 }
 
@@ -373,11 +375,15 @@ export async function updateCartItemQuantity(req: AuthRequest, res: Response) {
 
     const item = await prisma.cartItem.findUnique({
       where: { id },
-      select: { id: true, cartId: true, productId: true },
+      include: { cart: true },
     });
 
     if (!item) {
       return res.status(404).json({ success: false, message: 'Cart item not found.' });
+    }
+
+    if (item.cart.userId && (!req.user || (item.cart.userId !== req.user.id && req.user.role !== 'ADMIN'))) {
+      return res.status(403).json({ success: false, message: 'Access denied.' });
     }
 
     const qty = parseInt(quantity, 10);
@@ -403,8 +409,7 @@ export async function updateCartItemQuantity(req: AuthRequest, res: Response) {
       data: updatedCart,
     });
   } catch (error: any) {
-    console.error('[UPDATE_CART_ITEM_ERROR]', error);
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to update cart item.');
   }
 }
 
@@ -422,11 +427,15 @@ export async function removeCartItem(req: AuthRequest, res: Response) {
 
     const item = await prisma.cartItem.findUnique({
       where: { id },
-      select: { id: true, cartId: true },
+      include: { cart: true },
     });
 
     if (!item) {
       return res.status(404).json({ success: false, message: 'Cart item not found.' });
+    }
+
+    if (item.cart.userId && (!req.user || (item.cart.userId !== req.user.id && req.user.role !== 'ADMIN'))) {
+      return res.status(403).json({ success: false, message: 'Access denied.' });
     }
 
     await prisma.cartItem.delete({ where: { id } });
@@ -444,8 +453,7 @@ export async function removeCartItem(req: AuthRequest, res: Response) {
       data: updatedCart,
     });
   } catch (error: any) {
-    console.error('[REMOVE_CART_ITEM_ERROR]', error);
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to remove cart item.');
   }
 }
 
@@ -479,7 +487,7 @@ export async function clearCart(req: AuthRequest, res: Response) {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to clear cart.');
   }
 }
 
@@ -527,6 +535,6 @@ export async function mergeGuestCart(req: AuthRequest, res: Response) {
 
     return res.json({ success: true, message: 'Guest cart merged successfully.' });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to merge guest cart.');
   }
 }

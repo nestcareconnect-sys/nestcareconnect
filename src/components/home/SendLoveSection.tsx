@@ -1,23 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Heart, Sparkles, Gift } from 'lucide-react';
+import { ArrowRight, Heart, Gift } from 'lucide-react';
 import { Hamper } from '../../types';
 import { HamperCard } from '../hamper/HamperCard';
 import { hampersApi } from '../../services/api';
 import { useQuery } from '@tanstack/react-query';
-import { INITIAL_HAMPERS } from '../../constants';
 
 export const SendLoveSection: React.FC = () => {
-  const { data: hampers = INITIAL_HAMPERS } = useQuery<Hamper[]>({
-    queryKey: ['hampers', 'featured'],
+  const { data: hampers = [] } = useQuery<Hamper[]>({
+    queryKey: ['hampers', 'send-love-preview'],
     queryFn: async () => {
       try {
-        const res = await hampersApi.getAll({ featured: true });
-        if (res.data?.success && res.data.data?.length > 0) {
+        const res = await hampersApi.getAll();
+        if (res.data?.success && Array.isArray(res.data.data)) {
           return res.data.data;
         }
       } catch {}
-      return INITIAL_HAMPERS;
+      return [];
     },
     staleTime: 5 * 60 * 1000,
   });

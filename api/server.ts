@@ -1,8 +1,15 @@
+import 'dotenv/config';
+import dns from 'dns';
+
+// Ensure IPv4 is prioritized for all outbound requests in the backend process
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
-import dotenv from 'dotenv';
 
 import authRoutes from './routes/auth.routes.js';
 import categoryRoutes from './routes/categories.routes.js';
@@ -20,38 +27,94 @@ import reviewRoutes from './routes/reviews.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import qrCodeRoutes from './routes/qrCode.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import whatsappRoutes from './routes/whatsapp.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { validateServerEnvironment } from './config/envValidation.js';
+import { verifyDatabaseConnection } from './config/prisma.js';
+import helmet from 'helmet';
+import { generalApiLimiter } from './middleware/rateLimiter.js';
 
-dotenv.config();
 validateServerEnvironment();
 
 export const app = express();
 
-// Security & Parsing Middlewares
+// Security Headers via Helmet
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false, // Managed by client build and meta headers
+  })
+);
+
+// Secure CORS Configuration
+const allowedOrigins = [
+  process.env.APP_URL,
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (process.env.NODE_ENV !== 'production') return callback(null, true);
+      if (allowedOrigins.some((o) => origin === o || origin.endsWith(o.replace(/^https?:\/\//, '')))) {
+        return callback(null, true);
+      }
+      return callback(new Error('CORS request blocked by Nest Care Connect security policy.'));
+    },
     credentials: true,
   })
 );
-app.use(express.json({ limit: '10mb' }));
+
+// General API Rate Limiter
+app.use('/api', generalApiLimiter);
+
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static uploads folder
+// Static uploads folder with nosniff and dotfile protection
 const uploadDir = path.resolve(process.cwd(), 'public/uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-app.use('/uploads', express.static(uploadDir));
+app.use(
+  '/uploads',
+  (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+  },
+  express.static(uploadDir, {
+    dotfiles: 'ignore',
+    index: false,
+  })
+);
 
 // Health Check
-app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'healthy',
+app.get('/api/health', async (_req, res) => {
+  const dbStatus = await verifyDatabaseConnection();
+  const statusCode = dbStatus.ok ? 200 : 503;
+  res.status(statusCode).json({
+    status: dbStatus.ok ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     service: 'Nest Care Connect API v1.0',
+    database: {
+      connected: dbStatus.ok,
+      latencyMs: dbStatus.latencyMs,
+      categoryCount: dbStatus.categoryCount,
+      error: dbStatus.error,
+    },
   });
 });
 
@@ -72,7 +135,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/qr-codes', qrCodeRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Static client build serving (for production and unified preview)
 const distDir = path.resolve(process.cwd(), 'dist');
@@ -91,9 +156,22 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  app.listen(PORT, () => {
+const isDirectExecution =
+  process.argv[1] &&
+  (process.argv[1].replace(/\\/g, '/').endsWith('api/server.ts') ||
+   process.argv[1].replace(/\\/g, '/').endsWith('api/server.js') ||
+   process.env.RUN_SERVER === 'true');
+
+if (isDirectExecution && (process.env.NODE_ENV !== 'production' || !process.env.VERCEL)) {
+  app.listen(PORT, async () => {
     console.log(`🌿 Nest Care Connect backend server running on http://localhost:${PORT}`);
+    // Warm up database connection on server start
+    const dbStatus = await verifyDatabaseConnection();
+    if (dbStatus.ok) {
+      console.log(`🗄️  [DATABASE] Connected to Neon PostgreSQL (${dbStatus.latencyMs}ms, ${dbStatus.categoryCount} categories found)`);
+    } else {
+      console.warn(`⚠️  [DATABASE] Initial connection notice: ${dbStatus.error}`);
+    }
   });
 }
 

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../api/config/prisma.js';
 import fs from 'fs';
-
-const prisma = new PrismaClient();
 
 async function exportDbState() {
   const heroSlides = await prisma.heroSlide.findMany({ orderBy: { displayOrder: 'asc' } });

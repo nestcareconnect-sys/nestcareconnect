@@ -1,7 +1,6 @@
 import { PaymentProvider, CreatePaymentParams, PaymentOrderResult, VerifyPaymentParams, VerificationResult } from './paymentProvider.interface.js';
 import { RazorpayProvider } from './razorpay.provider.js';
 import { StripeProvider } from './stripe.provider.js';
-import { DemoPaymentProvider } from './demo.provider.js';
 
 class PaymentService {
   private providers: Map<string, PaymentProvider> = new Map();
@@ -9,7 +8,6 @@ class PaymentService {
   constructor() {
     this.registerProvider('RAZORPAY', new RazorpayProvider());
     this.registerProvider('STRIPE', new StripeProvider());
-    this.registerProvider('DEMO', new DemoPaymentProvider());
   }
 
   registerProvider(name: string, provider: PaymentProvider) {
@@ -17,46 +15,42 @@ class PaymentService {
   }
 
   get isDemoMode(): boolean {
-    return (process.env.PAYMENT_PROVIDER || '').trim().toLowerCase() === 'demo';
+    return false;
   }
 
   getProviderForCountry(country: string): PaymentProvider {
-    if (this.isDemoMode) {
-      return this.providers.get('DEMO') || new DemoPaymentProvider();
-    }
-    if (country === 'IN') {
+    if (country === 'IN' || !country) {
       return this.providers.get('RAZORPAY') || new RazorpayProvider();
     }
     return this.providers.get('STRIPE') || new StripeProvider();
   }
 
   getProviderByName(name: string): PaymentProvider {
-    if (this.isDemoMode && (!name || name.toUpperCase() !== 'STRIPE')) {
-      return this.providers.get('DEMO') || new DemoPaymentProvider();
+    const normalized = (name || '').toUpperCase();
+    if (normalized === 'DEMO') {
+      throw new Error(
+        'Demo payment mode is disabled. Nest Care Connect uses official Razorpay Live Payment Gateway for transactions.'
+      );
     }
-    const provider = this.providers.get(name.toUpperCase());
+    const provider = this.providers.get(normalized);
     if (!provider) {
-      return this.isDemoMode
-        ? this.providers.get('DEMO') || new DemoPaymentProvider()
-        : this.providers.get('RAZORPAY') || new RazorpayProvider();
+      return this.providers.get('RAZORPAY') || new RazorpayProvider();
     }
     return provider;
   }
 
   async createPaymentSession(params: CreatePaymentParams, providerName?: string): Promise<PaymentOrderResult> {
-    const effectiveProviderName = this.isDemoMode ? 'DEMO' : providerName;
-    const provider = effectiveProviderName
-      ? this.getProviderByName(effectiveProviderName)
+    const targetProvider = (providerName && providerName.toUpperCase() !== 'DEMO')
+      ? this.getProviderByName(providerName)
       : this.getProviderForCountry(params.notes?.country || 'IN');
-    return await provider.createPaymentOrder(params);
+    return await targetProvider.createPaymentOrder(params);
   }
 
   async verifyPayment(params: VerifyPaymentParams, providerName?: string): Promise<VerificationResult> {
-    const effectiveProviderName = this.isDemoMode ? 'DEMO' : (providerName || 'RAZORPAY');
-    const provider = this.getProviderByName(effectiveProviderName);
+    const targetName = (providerName && providerName.toUpperCase() !== 'DEMO') ? providerName : 'RAZORPAY';
+    const provider = this.getProviderByName(targetName);
     return await provider.verifyPayment(params);
   }
 }
 
 export const paymentService = new PaymentService();
-

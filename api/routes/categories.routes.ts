@@ -11,6 +11,7 @@ import { authenticate, requireAdmin } from '../middleware/auth.js';
 const router = Router();
 
 router.get('/', getCategoryTree);
+router.get('/tree', getCategoryTree);
 router.get('/:slug', getCategoryBySlug);
 
 // Admin operations

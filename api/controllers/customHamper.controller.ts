@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import prisma from '../config/prisma.js';
 import { pricingService } from '../services/pricing.service.js';
 import { CountryCode, CurrencyCode } from '@prisma/client';
+import { handleControllerError } from '../utils/dbError.js';
+
 
 export async function getCustomHamperConfig(req: Request, res: Response) {
   try {
@@ -47,7 +49,7 @@ export async function getCustomHamperConfig(req: Request, res: Response) {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch custom hamper configuration.');
   }
 }
 
@@ -135,6 +137,6 @@ export async function updateCustomHamperConfig(req: Request, res: Response) {
 
     return res.json({ success: true, message: 'Custom hamper settings saved.', data: config });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to update custom hamper settings.');
   }
 }

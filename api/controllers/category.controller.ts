@@ -1,9 +1,16 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma.js';
+import { handleControllerError } from '../utils/dbError.js';
+import { cacheService } from '../services/cache.service.js';
 
 export async function getCategoryTree(req: Request, res: Response) {
   try {
     const { includeInactive } = req.query;
+    const cacheKey = `category:tree:${includeInactive === 'true' ? 'all' : 'active'}`;
+    const cached = cacheService.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
 
     const categories = await prisma.category.findMany({
       where: includeInactive === 'true' ? {} : { status: 'ACTIVE' },
@@ -32,15 +39,22 @@ export async function getCategoryTree(req: Request, res: Response) {
       }
     });
 
+    cacheService.set(cacheKey, rootCategories, 1800); // 30 min cache
+
     return res.json({ success: true, data: rootCategories });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch categories.');
   }
 }
 
 export async function getCategoryBySlug(req: Request, res: Response) {
   try {
     const { slug } = req.params;
+    const cacheKey = `category:slug:${slug}`;
+    const cached = cacheService.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
 
     const category = await prisma.category.findUnique({
       where: { slug },
@@ -73,9 +87,11 @@ export async function getCategoryBySlug(req: Request, res: Response) {
       return res.status(404).json({ success: false, message: 'Category not found.' });
     }
 
+    cacheService.set(cacheKey, category, 1800); // 30 min cache
+
     return res.json({ success: true, data: category });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch category details.');
   }
 }
 
@@ -110,9 +126,10 @@ export async function createCategory(req: Request, res: Response) {
       },
     });
 
+    cacheService.delPrefix('category:');
     return res.status(201).json({ success: true, message: 'Category created successfully.', data: category });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to create category.');
   }
 }
 
@@ -140,9 +157,10 @@ export async function updateCategory(req: Request, res: Response) {
       },
     });
 
+    cacheService.delPrefix('category:');
     return res.json({ success: true, message: 'Category updated successfully.', data: category });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to update category.');
   }
 }
 
@@ -160,8 +178,9 @@ export async function deleteCategory(req: Request, res: Response) {
     }
 
     await prisma.category.delete({ where: { id } });
+    cacheService.delPrefix('category:');
     return res.json({ success: true, message: 'Category deleted successfully.' });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to delete category.');
   }
 }

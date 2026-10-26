@@ -5,7 +5,6 @@ import {
   Plus,
   Minus,
   Trash2,
-  Sparkles,
   ShoppingBag,
   ArrowRight,
   ArrowLeft,
@@ -32,7 +31,6 @@ import { customHamperApi, boxesApi } from '../../services/api';
 import { useCountryCurrency } from '../../context/CountryCurrencyContext';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
-import { INITIAL_PRODUCTS, INITIAL_HAMPER_BOXES } from '../../constants';
 import { PersonalizationPhotoUpload } from './PersonalizationPhotoUpload';
 
 // Pre-defined Recipient Options
@@ -97,9 +95,7 @@ export const CustomHamperBuilder: React.FC = () => {
   const [personalMessage, setPersonalMessage] = useState<string>(
     'With love and wishes for your good health and happiness from your children across the miles!'
   );
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=400&q=80',
-  ]);
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [includeVideoQR, setIncludeVideoQR] = useState<boolean>(true);
 
   // UI state
@@ -107,7 +103,7 @@ export const CustomHamperBuilder: React.FC = () => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState(false);
 
-  // Fetch Config, Products & Hamper Boxes
+  // Fetch Config, Products & Hamper Boxes from database
   useEffect(() => {
     setIsLoading(true);
     Promise.all([
@@ -117,15 +113,15 @@ export const CustomHamperBuilder: React.FC = () => {
       .then(([configRes, boxesRes]) => {
         if (configRes?.data?.success && configRes.data.data) {
           setConfig(configRes.data.data.config);
-          setProducts(configRes.data.data.products);
+          setProducts(configRes.data.data.products || []);
         } else {
-          setProducts(INITIAL_PRODUCTS as any);
+          setProducts([]);
         }
 
-        if (boxesRes?.data?.success && Array.isArray(boxesRes.data.data) && boxesRes.data.data.length > 0) {
+        if (boxesRes?.data?.success && Array.isArray(boxesRes.data.data)) {
           setBoxes(boxesRes.data.data);
         } else {
-          setBoxes(INITIAL_HAMPER_BOXES as any);
+          setBoxes([]);
         }
       })
       .finally(() => setIsLoading(false));
@@ -307,7 +303,6 @@ export const CustomHamperBuilder: React.FC = () => {
       });
 
       setIsSuccessModalOpen(true);
-      showToast('Customized care hamper added to cart successfully!', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to add custom hamper to cart.', 'error');
     } finally {
@@ -395,8 +390,7 @@ export const CustomHamperBuilder: React.FC = () => {
       {/* Top Hero Banner */}
       <div className="bg-radial from-[#237A3B] to-[#144822] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 border border-[#8BCF9B]/30 relative overflow-hidden">
         <div className="space-y-2 max-w-xl relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 border border-white/20 text-[#8BCF9B] text-xs font-bold backdrop-blur-xs">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/15 border border-white/20 text-[#8BCF9B] text-xs font-bold backdrop-blur-xs">
             <span>Curate a Bespoke Care Package</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -1036,8 +1030,8 @@ export const CustomHamperBuilder: React.FC = () => {
 
                         <div className="flex items-center gap-1">
                           {isBestFit && (
-                            <span className="px-2 py-0.5 rounded-full bg-[#237A3B] text-white text-[10px] font-extrabold flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" /> Recommended
+                            <span className="px-2 py-0.5 rounded-full bg-[#237A3B] text-white text-[10px] font-extrabold">
+                              Recommended
                             </span>
                           )}
                           {isSelected && (

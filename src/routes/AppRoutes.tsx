@@ -28,21 +28,23 @@ import {
 } from '../pages/LegalPages';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
-// Admin Pages
 import { AdminLayout } from '../components/admin/AdminLayout';
-import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
-import { AdminProductsPage } from '../pages/admin/AdminProductsPage';
-import { AdminCategoriesPage } from '../pages/admin/AdminCategoriesPage';
-import { AdminHampersPage } from '../pages/admin/AdminHampersPage';
-import { AdminBoxesPage } from '../pages/admin/AdminBoxesPage';
-import { AdminCustomHamperSettingsPage } from '../pages/admin/AdminCustomHamperSettingsPage';
-import { AdminOrdersPage } from '../pages/admin/AdminOrdersPage';
-import { AdminCustomersPage } from '../pages/admin/AdminCustomersPage';
-import { AdminCouponsPage } from '../pages/admin/AdminCouponsPage';
-import { AdminCurrenciesPage } from '../pages/admin/AdminCurrenciesPage';
-import { AdminShippingPage } from '../pages/admin/AdminShippingPage';
-import { AdminHeroSlidesPage } from '../pages/admin/AdminHeroSlidesPage';
-import { AdminSettingsPage } from '../pages/admin/AdminSettingsPage';
+
+// Lazy-loaded Admin Pages for maximum performance, minimal bundle size, and instant chunk loading
+const AdminDashboardPage = React.lazy(() => import('../pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
+const AdminProductsPage = React.lazy(() => import('../pages/admin/AdminProductsPage').then(m => ({ default: m.AdminProductsPage })));
+const AdminCategoriesPage = React.lazy(() => import('../pages/admin/AdminCategoriesPage').then(m => ({ default: m.AdminCategoriesPage })));
+const AdminHampersPage = React.lazy(() => import('../pages/admin/AdminHampersPage').then(m => ({ default: m.AdminHampersPage })));
+const AdminBoxesPage = React.lazy(() => import('../pages/admin/AdminBoxesPage').then(m => ({ default: m.AdminBoxesPage })));
+const AdminQrCodePage = React.lazy(() => import('../pages/admin/AdminQrCodePage').then(m => ({ default: m.AdminQrCodePage })));
+const AdminCustomHamperSettingsPage = React.lazy(() => import('../pages/admin/AdminCustomHamperSettingsPage').then(m => ({ default: m.AdminCustomHamperSettingsPage })));
+const AdminOrdersPage = React.lazy(() => import('../pages/admin/AdminOrdersPage').then(m => ({ default: m.AdminOrdersPage })));
+const AdminCustomersPage = React.lazy(() => import('../pages/admin/AdminCustomersPage').then(m => ({ default: m.AdminCustomersPage })));
+const AdminCouponsPage = React.lazy(() => import('../pages/admin/AdminCouponsPage').then(m => ({ default: m.AdminCouponsPage })));
+const AdminCurrenciesPage = React.lazy(() => import('../pages/admin/AdminCurrenciesPage').then(m => ({ default: m.AdminCurrenciesPage })));
+const AdminShippingPage = React.lazy(() => import('../pages/admin/AdminShippingPage').then(m => ({ default: m.AdminShippingPage })));
+const AdminHeroSlidesPage = React.lazy(() => import('../pages/admin/AdminHeroSlidesPage').then(m => ({ default: m.AdminHeroSlidesPage })));
+const AdminSettingsPage = React.lazy(() => import('../pages/admin/AdminSettingsPage').then(m => ({ default: m.AdminSettingsPage })));
 
 const StorefrontLayout: React.FC = () => {
   const location = useLocation();
@@ -87,6 +89,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
         <Route path="/order-tracking" element={<OrderTrackingPage />} />
+        <Route path="/track" element={<OrderTrackingPage />} />
+        <Route path="/tracking" element={<OrderTrackingPage />} />
+        <Route path="/orders/:orderId" element={<OrderTrackingPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -106,6 +111,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="hampers" element={<AdminHampersPage />} />
         <Route path="boxes" element={<AdminBoxesPage />} />
+        <Route path="qr-codes" element={<AdminQrCodePage />} />
+        <Route path="qr-code" element={<AdminQrCodePage />} />
         <Route path="custom-hampers" element={<AdminCustomHamperSettingsPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="customers" element={<AdminCustomersPage />} />

@@ -39,6 +39,7 @@ export interface CreateShipmentParams {
   pickupPincode?: string;
   deliveryAddress: ConsigneeAddress;
   items: ShipmentItemPayload[];
+  allowSimulation?: boolean;
 }
 
 export interface ShipmentResult {
@@ -62,6 +63,7 @@ export interface ShipmentResult {
   dimensions?: PackageDimensions;
   rawResponse?: any;
   isTestMode: boolean;
+  isSimulated?: boolean;
 }
 
 export interface ServiceabilityParams {
@@ -69,6 +71,10 @@ export interface ServiceabilityParams {
   destinationPincode: string;
   weightKg?: number;
   paymentType?: 'prepaid' | 'cod';
+  dimensions?: PackageDimensions;
+  length?: number;
+  breadth?: number;
+  height?: number;
 }
 
 export interface CourierRateOption {
@@ -90,6 +96,9 @@ export interface ServiceabilityResult {
   couriers: CourierRateOption[];
   message?: string;
   isTestMode?: boolean;
+  packageDetails?: any;
+  missingShippingDetails?: boolean;
+  missingProducts?: any[];
 }
 
 export interface TrackingCheckpoint {
@@ -119,6 +128,22 @@ export interface CancelShipmentResult {
   rawResponse?: any;
 }
 
+export interface PickupRequestParams {
+  pickupLocation?: string;
+  pickupPincode?: string;
+  pickupDate?: string;
+  pickupTime?: string;
+  expectedPackageCount?: number;
+}
+
+export interface PickupRequestResult {
+  success: boolean;
+  message: string;
+  pickupRequestId?: string;
+  rawResponse?: any;
+  isTestMode?: boolean;
+}
+
 export interface ShippingProvider {
   name: string;
   isTestMode: boolean;
@@ -127,4 +152,7 @@ export interface ShippingProvider {
   trackShipment(awb: string): Promise<TrackingResult | null>;
   cancelShipment(awb: string): Promise<CancelShipmentResult>;
   generateLabel?(awb: string): Promise<{ labelUrl: string }>;
+  generateManifest?(awb: string): Promise<{ manifestUrl: string }>;
+  requestPickup?(params?: PickupRequestParams): Promise<PickupRequestResult>;
 }
+

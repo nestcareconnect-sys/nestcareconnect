@@ -15,22 +15,17 @@ import {
 } from 'lucide-react';
 import { SEO } from '../../components/common/SEO';
 import { adminApi } from '../../services/api';
+import { useQuery } from '@tanstack/react-query';
 
 export const AdminDashboardPage: React.FC = () => {
-  const [stats, setStats] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    adminApi
-      .getStats()
-      .then((res) => {
-        if (res.data?.success && res.data.data) {
-          setStats(res.data.data);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['admin-dashboard-stats'],
+    queryFn: async () => {
+      const res = await adminApi.getStats();
+      return res.data?.data;
+    },
+    staleTime: 1000 * 60, // 1 minute fresh cache
+  });
 
   const metrics = stats?.metrics || {
     totalOrders: 0,

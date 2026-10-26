@@ -5,7 +5,6 @@ import {
   Trash2,
   Package,
   Layers,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Image as ImageIcon,
@@ -19,7 +18,6 @@ import { boxesApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { getBoxImageUrl } from '../../utils/imageUrl';
-import { INITIAL_HAMPER_BOXES } from '@/constants';
 
 export const AdminBoxesPage: React.FC = () => {
   const { showToast } = useToast();
@@ -64,11 +62,11 @@ export const AdminBoxesPage: React.FC = () => {
         if (res.data?.success && res.data.data?.length) {
           setBoxes(res.data.data);
         } else {
-          setBoxes(INITIAL_HAMPER_BOXES);
+          setBoxes([]);
         }
       })
       .catch(() => {
-        setBoxes(INITIAL_HAMPER_BOXES);
+        setBoxes([]);
       })
       .finally(() => setIsLoading(false));
   };
@@ -231,7 +229,6 @@ export const AdminBoxesPage: React.FC = () => {
 
         {/* Info Callout */}
         <div className="p-4 rounded-2xl bg-[#F1FAF3] border border-[#8BCF9B]/50 flex items-start gap-3 text-xs text-[#237A3B]">
-          <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <div className="leading-relaxed">
             <strong>Business Rule:</strong> Every customized hamper assembled by a customer <em>must</em> have a box selected before it can be added to the cart. The system validates that the selected items do not exceed the box's item capacity.
           </div>

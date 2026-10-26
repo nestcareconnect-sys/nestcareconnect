@@ -1,9 +1,29 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma.js';
 import { CountryCode, CurrencyCode } from '@prisma/client';
+import { handleControllerError } from '../utils/dbError.js';
+import { cacheService } from '../services/cache.service.js';
+import {
+  calculateProductShippingDetails,
+  normalizeWeightToKg,
+  normalizeDimensionToCm,
+  WeightUnit,
+  DimensionUnit,
+} from '../utils/shippingCalculation.js';
+
+function handleDbError(res: Response, error: any, action = 'Query') {
+  return handleControllerError(res, error, `Failed to execute ${action}.`);
+}
+
 
 export async function getProducts(req: Request, res: Response) {
   try {
+    const cacheKey = `product:list:${JSON.stringify(req.query)}`;
+    const cached = cacheService.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
+
     const {
       categorySlug,
       category,
@@ -29,6 +49,7 @@ export async function getProducts(req: Request, res: Response) {
       occasion,
       recipient,
       tag,
+      productType,
     } = req.query;
 
     const limitNum = Math.min(50, Math.max(1, parseInt((limit as string) || '20', 10)));
@@ -37,6 +58,10 @@ export async function getProducts(req: Request, res: Response) {
     const sortParam = ((sort || sortBy) as string || 'newest').toLowerCase();
 
     const where: any = {};
+
+    if (productType) {
+      where.productType = productType as string;
+    }
 
     if (status) {
       where.status = status as any;
@@ -184,30 +209,39 @@ export async function getProducts(req: Request, res: Response) {
 
     const currentPage = cursor && !isNaN(Number(cursor)) ? parseInt(cursor as string, 10) : Math.max(1, parseInt(page as string, 10));
 
+    const responseData = {
+      products,
+      nextCursor,
+      hasMore,
+      pagination: {
+        total: totalCount,
+        page: currentPage,
+        limit: limitNum,
+        totalPages: Math.ceil(totalCount / limitNum),
+        hasMore,
+        nextCursor,
+      },
+    };
+
+    cacheService.set(cacheKey, responseData, 300); // 5 min cache
+
     return res.json({
       success: true,
-      data: {
-        products,
-        nextCursor,
-        hasMore,
-        pagination: {
-          total: totalCount,
-          page: currentPage,
-          limit: limitNum,
-          totalPages: Math.ceil(totalCount / limitNum),
-          hasMore,
-          nextCursor,
-        },
-      },
+      data: responseData,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleDbError(res, error, 'getProducts');
   }
 }
 
 export async function getProductBySlug(req: Request, res: Response) {
   try {
     const { slug } = req.params;
+    const cacheKey = `product:slug:${slug}`;
+    const cached = cacheService.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
 
     const product = await prisma.product.findUnique({
       where: { slug },
@@ -243,15 +277,19 @@ export async function getProductBySlug(req: Request, res: Response) {
       });
     }
 
+    const responseData = {
+      product,
+      relatedProducts,
+    };
+
+    cacheService.set(cacheKey, responseData, 600); // 10 min cache
+
     return res.json({
       success: true,
-      data: {
-        product,
-        relatedProducts,
-      },
+      data: responseData,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleDbError(res, error, 'getProductBySlug');
   }
 }
 
@@ -272,6 +310,11 @@ export async function createProduct(req: Request, res: Response) {
       brand,
       unit,
       weight,
+      weightUnit = 'kg',
+      length,
+      width,
+      height,
+      dimensionUnit = 'cm',
       dimensions,
       status,
       featured,
@@ -283,10 +326,68 @@ export async function createProduct(req: Request, res: Response) {
       countryPrices,
       seoTitle,
       seoDescription,
+      productType = 'normal',
     } = req.body;
 
     if (!name || !sku || basePriceINR === undefined) {
       return res.status(400).json({ success: false, message: 'Product name, SKU, and base price (INR) are required.' });
+    }
+
+    // Shipping dimensions & weight validation
+    const parsedWeight = weight !== undefined && weight !== null && weight !== '' ? parseFloat(weight) : null;
+    const parsedLength = length !== undefined && length !== null && length !== '' ? parseFloat(length) : null;
+    const parsedWidth = width !== undefined && width !== null && width !== '' ? parseFloat(width) : null;
+    const parsedHeight = height !== undefined && height !== null && height !== '' ? parseFloat(height) : null;
+
+    if (parsedWeight !== null && (isNaN(parsedWeight) || parsedWeight <= 0)) {
+      return res.status(400).json({ success: false, message: 'Product weight must be a positive number greater than zero.' });
+    }
+    if (parsedLength !== null && (isNaN(parsedLength) || parsedLength <= 0)) {
+      return res.status(400).json({ success: false, message: 'Product length must be a positive number greater than zero.' });
+    }
+    if (parsedWidth !== null && (isNaN(parsedWidth) || parsedWidth <= 0)) {
+      return res.status(400).json({ success: false, message: 'Product width must be a positive number greater than zero.' });
+    }
+    if (parsedHeight !== null && (isNaN(parsedHeight) || parsedHeight <= 0)) {
+      return res.status(400).json({ success: false, message: 'Product height must be a positive number greater than zero.' });
+    }
+
+    const wUnit: WeightUnit = weightUnit === 'g' ? 'g' : 'kg';
+    const dUnit: DimensionUnit = dimensionUnit === 'in' ? 'in' : 'cm';
+
+    let shippingData: any = {};
+    if (parsedWeight !== null || (parsedLength !== null && parsedWidth !== null && parsedHeight !== null)) {
+      const calc = calculateProductShippingDetails({
+        weight: parsedWeight || 0,
+        weightUnit: wUnit,
+        length: parsedLength || 0,
+        width: parsedWidth || 0,
+        height: parsedHeight || 0,
+        dimensionUnit: dUnit,
+      });
+
+      const formattedDimensions = calc.lengthCm > 0 && calc.widthCm > 0 && calc.heightCm > 0
+        ? `${calc.lengthCm} x ${calc.widthCm} x ${calc.heightCm} cm`
+        : dimensions?.trim() || null;
+
+      shippingData = {
+        weight: calc.weightKg > 0 ? calc.weightKg : null,
+        weightUnit: wUnit,
+        length: calc.lengthCm > 0 ? calc.lengthCm : null,
+        width: calc.widthCm > 0 ? calc.widthCm : null,
+        height: calc.heightCm > 0 ? calc.heightCm : null,
+        dimensionUnit: dUnit,
+        volumetricWeight: calc.volumetricWeightKg > 0 ? calc.volumetricWeightKg : null,
+        chargeableWeight: calc.chargeableWeightKg > 0 ? calc.chargeableWeightKg : null,
+        dimensions: formattedDimensions,
+        packageLength: calc.lengthCm > 0 ? calc.lengthCm : null,
+        packageWidth: calc.widthCm > 0 ? calc.widthCm : null,
+        packageHeight: calc.heightCm > 0 ? calc.heightCm : null,
+        packageWeight: calc.chargeableWeightKg > 0 ? calc.chargeableWeightKg : (calc.weightKg > 0 ? calc.weightKg : null),
+        packageVolume: calc.lengthCm > 0 && calc.widthCm > 0 && calc.heightCm > 0
+          ? Math.round(calc.lengthCm * calc.widthCm * calc.heightCm * 100) / 100
+          : null,
+      };
     }
 
     const generatedSlug = (slug || name)
@@ -314,13 +415,13 @@ export async function createProduct(req: Request, res: Response) {
         categoryId: categoryId || null,
         brand: brand?.trim() || null,
         unit: unit?.trim() || null,
-        weight: weight ? parseFloat(weight) : null,
-        dimensions: dimensions?.trim() || null,
+        ...shippingData,
         status: status || 'ACTIVE',
         featured: featured || false,
         isAddOn: isAddOn || false,
         addOnCategory: addOnCategory || null,
         isCustomHamperEligible: isCustomHamperEligible ?? true,
+        productType: productType === 'hamper' ? 'hamper' : 'normal',
         tags: Array.isArray(tags) ? tags : [],
         specifications: specifications || {},
         seoTitle,
@@ -359,6 +460,8 @@ export async function createProduct(req: Request, res: Response) {
       },
     });
 
+    cacheService.delPrefix('product:');
+
     return res.status(201).json({
       success: true,
       message: 'Product created successfully.',
@@ -372,6 +475,11 @@ export async function createProduct(req: Request, res: Response) {
 export async function updateProduct(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const existing = await prisma.product.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Product not found.' });
+    }
+
     const {
       name,
       slug,
@@ -387,6 +495,11 @@ export async function updateProduct(req: Request, res: Response) {
       brand,
       unit,
       weight,
+      weightUnit,
+      length,
+      width,
+      height,
+      dimensionUnit,
       dimensions,
       status,
       featured,
@@ -398,7 +511,76 @@ export async function updateProduct(req: Request, res: Response) {
       countryPrices,
       seoTitle,
       seoDescription,
+      productType,
     } = req.body;
+
+    const shippingPayloadProvided =
+      weight !== undefined ||
+      length !== undefined ||
+      width !== undefined ||
+      height !== undefined ||
+      weightUnit !== undefined ||
+      dimensionUnit !== undefined;
+
+    let shippingUpdates: any = {};
+    if (shippingPayloadProvided) {
+      const targetWeightUnit: WeightUnit = (weightUnit || existing.weightUnit || 'kg') === 'g' ? 'g' : 'kg';
+      const targetDimUnit: DimensionUnit = (dimensionUnit || existing.dimensionUnit || 'cm') === 'in' ? 'in' : 'cm';
+
+      // Parse incoming or retain existing
+      const candidateWeight = weight !== undefined ? (weight !== null && weight !== '' ? parseFloat(weight) : null) : existing.weight;
+      const candidateLength = length !== undefined ? (length !== null && length !== '' ? parseFloat(length) : null) : existing.length;
+      const candidateWidth = width !== undefined ? (width !== null && width !== '' ? parseFloat(width) : null) : existing.width;
+      const candidateHeight = height !== undefined ? (height !== null && height !== '' ? parseFloat(height) : null) : existing.height;
+
+      if (candidateWeight !== null && (isNaN(candidateWeight) || candidateWeight <= 0)) {
+        return res.status(400).json({ success: false, message: 'Product weight must be a positive number greater than zero.' });
+      }
+      if (candidateLength !== null && (isNaN(candidateLength) || candidateLength <= 0)) {
+        return res.status(400).json({ success: false, message: 'Product length must be a positive number greater than zero.' });
+      }
+      if (candidateWidth !== null && (isNaN(candidateWidth) || candidateWidth <= 0)) {
+        return res.status(400).json({ success: false, message: 'Product width must be a positive number greater than zero.' });
+      }
+      if (candidateHeight !== null && (isNaN(candidateHeight) || candidateHeight <= 0)) {
+        return res.status(400).json({ success: false, message: 'Product height must be a positive number greater than zero.' });
+      }
+
+      if (candidateWeight !== null || (candidateLength !== null && candidateWidth !== null && candidateHeight !== null)) {
+        // If candidate values came from existing (which was already in kg/cm), calculate accordingly
+        const calc = calculateProductShippingDetails({
+          weight: candidateWeight || 0,
+          weightUnit: weight !== undefined ? targetWeightUnit : 'kg',
+          length: candidateLength || 0,
+          width: candidateWidth || 0,
+          height: candidateHeight || 0,
+          dimensionUnit: length !== undefined ? targetDimUnit : 'cm',
+        });
+
+        const formattedDimensions = calc.lengthCm > 0 && calc.widthCm > 0 && calc.heightCm > 0
+          ? `${calc.lengthCm} x ${calc.widthCm} x ${calc.heightCm} cm`
+          : dimensions !== undefined ? dimensions : existing.dimensions;
+
+        shippingUpdates = {
+          weight: calc.weightKg > 0 ? calc.weightKg : null,
+          weightUnit: targetWeightUnit,
+          length: calc.lengthCm > 0 ? calc.lengthCm : null,
+          width: calc.widthCm > 0 ? calc.widthCm : null,
+          height: calc.heightCm > 0 ? calc.heightCm : null,
+          dimensionUnit: targetDimUnit,
+          volumetricWeight: calc.volumetricWeightKg > 0 ? calc.volumetricWeightKg : null,
+          chargeableWeight: calc.chargeableWeightKg > 0 ? calc.chargeableWeightKg : null,
+          dimensions: formattedDimensions,
+          packageLength: calc.lengthCm > 0 ? calc.lengthCm : null,
+          packageWidth: calc.widthCm > 0 ? calc.widthCm : null,
+          packageHeight: calc.heightCm > 0 ? calc.heightCm : null,
+          packageWeight: calc.chargeableWeightKg > 0 ? calc.chargeableWeightKg : (calc.weightKg > 0 ? calc.weightKg : null),
+          packageVolume: calc.lengthCm > 0 && calc.widthCm > 0 && calc.heightCm > 0
+            ? Math.round(calc.lengthCm * calc.widthCm * calc.heightCm * 100) / 100
+            : null,
+        };
+      }
+    }
 
     const product = await prisma.product.update({
       where: { id },
@@ -416,13 +598,13 @@ export async function updateProduct(req: Request, res: Response) {
         categoryId: categoryId === undefined ? undefined : categoryId || null,
         brand: brand !== undefined ? brand : undefined,
         unit: unit !== undefined ? unit : undefined,
-        weight: weight !== undefined ? (weight ? parseFloat(weight) : null) : undefined,
-        dimensions: dimensions !== undefined ? dimensions : undefined,
+        ...shippingUpdates,
         status: status || undefined,
         featured: featured !== undefined ? featured : undefined,
         isAddOn: isAddOn !== undefined ? isAddOn : undefined,
         addOnCategory: addOnCategory !== undefined ? addOnCategory : undefined,
         isCustomHamperEligible: isCustomHamperEligible !== undefined ? isCustomHamperEligible : undefined,
+        productType: productType !== undefined ? (productType === 'hamper' ? 'hamper' : 'normal') : undefined,
         tags: tags ? (Array.isArray(tags) ? tags : [tags]) : undefined,
         specifications: specifications !== undefined ? specifications : undefined,
         seoTitle,
@@ -471,6 +653,7 @@ export async function updateProduct(req: Request, res: Response) {
       },
     });
 
+    cacheService.delPrefix('product:');
     return res.json({ success: true, message: 'Product updated successfully.', data: freshProduct || product });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
@@ -481,6 +664,7 @@ export async function deleteProduct(req: Request, res: Response) {
   try {
     const { id } = req.params;
     await prisma.product.delete({ where: { id } });
+    cacheService.delPrefix('product:');
     return res.json({ success: true, message: 'Product deleted successfully.' });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });

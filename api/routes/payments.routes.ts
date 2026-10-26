@@ -1,23 +1,17 @@
 import { Router } from 'express';
-import { createPaymentSession, verifyPayment, handleWebhook, processDemoPayment } from '../controllers/payment.controller.js';
+import {
+  createPaymentSession,
+  verifyPayment,
+  handleWebhook,
+  getRazorpayConfig,
+  processDemoPayment,
+} from '../controllers/payment.controller.js';
 
 const router = Router();
 
-// Demo Payment Endpoints
-router.post('/demo/create', createPaymentSession);
-router.post('/demo/process', processDemoPayment);
-router.post('/demo/success', (req, res) => {
-  req.body.action = 'SUCCESS';
-  return processDemoPayment(req, res);
-});
-router.post('/demo/failure', (req, res) => {
-  req.body.action = 'FAILED';
-  return processDemoPayment(req, res);
-});
-router.post('/demo/pending', (req, res) => {
-  req.body.action = 'PENDING';
-  return processDemoPayment(req, res);
-});
+// Public Razorpay Configuration (Key ID only)
+router.get('/config', getRazorpayConfig);
+router.get('/razorpay-key', getRazorpayConfig);
 
 // Dedicated Razorpay Endpoints
 router.post('/razorpay/create-order', createPaymentSession);
@@ -30,5 +24,9 @@ router.post('/verify', verifyPayment);
 router.post('/webhook', handleWebhook);
 router.post('/webhook/:provider', handleWebhook);
 
-export default router;
+// Disabled Demo Endpoints (Returns 403 Forbidden)
+router.all('/demo/*', processDemoPayment);
+router.post('/demo/create', processDemoPayment);
+router.post('/demo/process', processDemoPayment);
 
+export default router;

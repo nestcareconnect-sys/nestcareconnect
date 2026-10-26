@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../config/prisma.js';
 import { AuthRequest } from '../middleware/auth.js';
 import { ReviewStatus } from '@prisma/client';
+import { handleControllerError } from '../utils/dbError.js';
 
 export async function getProductReviews(req: Request, res: Response) {
   try {
@@ -12,7 +13,7 @@ export async function getProductReviews(req: Request, res: Response) {
     });
     return res.json({ success: true, data: reviews });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch reviews.');
   }
 }
 
@@ -39,7 +40,7 @@ export async function createReview(req: AuthRequest, res: Response) {
 
     return res.status(201).json({ success: true, message: 'Review submitted successfully.', data: review });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to submit review.');
   }
 }
 
@@ -53,7 +54,7 @@ export async function getAdminReviews(req: Request, res: Response) {
     });
     return res.json({ success: true, data: reviews });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch admin reviews.');
   }
 }
 
@@ -69,6 +70,6 @@ export async function updateReviewStatus(req: Request, res: Response) {
 
     return res.json({ success: true, message: 'Review status updated.', data: review });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to update review status.');
   }
 }

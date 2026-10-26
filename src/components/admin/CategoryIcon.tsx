@@ -10,7 +10,6 @@ import {
   Users,
   Gift,
   Baby,
-  Sparkles,
   ShoppingBag,
   Folder,
   FolderTree,
@@ -56,7 +55,6 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   users: Users,
   gift: Gift,
   baby: Baby,
-  sparkles: Sparkles,
   shoppingbag: ShoppingBag,
   folder: Folder,
   foldertree: FolderTree,
@@ -102,7 +100,6 @@ export const POPULAR_CATEGORY_ICONS = [
   { name: 'Gift', key: 'Gift', label: 'Hampers & Gifts' },
   { name: 'Baby', key: 'Baby', label: 'New Mum & Baby' },
   { name: 'HeartHandshake', key: 'HeartHandshake', label: 'Anniversary' },
-  { name: 'Sparkles', key: 'Sparkles', label: 'Wedding & Luxury' },
   { name: 'PartyPopper', key: 'PartyPopper', label: 'Celebrations' },
   { name: 'HandHeart', key: 'HandHeart', label: 'Comfort Care' },
   { name: 'Flower2', key: 'Flower2', label: 'Florals & Mum' },
@@ -135,8 +132,13 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
   variant = 'root',
 }) => {
   const cleanIcon = (icon || '').trim();
+  const normalizedKey = cleanIcon.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  // If it's an emoji (e.g. 🩺,  , 🎁, 👶)
+  if (cleanIcon === '✨' || normalizedKey === 'sparkles') {
+    return null;
+  }
+
+  // If it's an emoji (e.g. 🩺, 🎁, 👶)
   if (isEmoji(cleanIcon)) {
     return (
       <span
@@ -151,7 +153,6 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
   }
 
   // Lookup in Icon Map (case insensitive)
-  const normalizedKey = cleanIcon.toLowerCase().replace(/[^a-z0-9]/g, '');
   const IconComponent = CATEGORY_ICON_MAP[normalizedKey] || Folder;
 
   const iconSizeClass =

@@ -7,13 +7,12 @@ import { Breadcrumbs } from '../components/common/Breadcrumbs';
 import { ProductCard } from '../components/product/ProductCard';
 import { Category, Product } from '../types';
 import { categoriesApi, productsApi } from '../services/api';
-import { INITIAL_CATEGORIES, INITIAL_PRODUCTS } from '@/constants';
 
 export const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // Cached Category metadata
+  // Cached Category metadata from database
   const { data: category, isLoading: isCategoryLoading } = useQuery<Category | null>({
     queryKey: ['category', slug],
     queryFn: async () => {
@@ -24,21 +23,10 @@ export const CategoryPage: React.FC = () => {
           return res.data.data;
         }
       } catch {}
-
-      const findCat = (items: any[]): any => {
-        for (const itm of items) {
-          if (itm.slug === slug) return itm;
-          if (itm.children) {
-            const found = findCat(itm.children);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-      return findCat(INITIAL_CATEGORIES);
+      return null;
     },
     enabled: Boolean(slug),
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Infinite query for products in this category
@@ -66,18 +54,15 @@ export const CategoryPage: React.FC = () => {
         if (res.data?.success && res.data.data) {
           return res.data.data;
         }
-      } catch {
-        // Fallback
+      } catch (err) {
+        console.warn('[CategoryPage] Failed to fetch category products:', err);
       }
 
-      const mockProducts = INITIAL_PRODUCTS.filter(
-        (p) => p.category?.slug === slug || p.tags?.includes(slug || '')
-      );
       return {
-        products: mockProducts.length > 0 ? mockProducts : INITIAL_PRODUCTS.slice(0, 8),
+        products: [],
         nextCursor: null,
         hasMore: false,
-        pagination: { total: mockProducts.length || 8 },
+        pagination: { total: 0 },
       };
     },
     initialPageParam: undefined as string | undefined,

@@ -55,7 +55,7 @@ export const CountryAddressForm: React.FC<CountryAddressFormProps> = ({
             type="tel"
             value={address.phone || ''}
             onChange={(e) => onChange('phone', e.target.value)}
-            placeholder={country === 'IN' ? '+91 98765 43210' : country === 'AE' ? '+971 50 123 4567' : '+1 234 567 8900'}
+            placeholder={country === 'IN' ? '+91  8921342411' : country === 'AE' ? '+971 50 123 4567' : '+1 234 567 8900'}
             className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:border-[#8BCF9B] outline-none"
           />
           {errors.phone && <p className="text-[11px] text-red-500 mt-1">{errors.phone}</p>}

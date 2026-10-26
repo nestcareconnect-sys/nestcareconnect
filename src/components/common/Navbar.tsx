@@ -5,7 +5,6 @@ import {
   House,
   ShoppingBag,
   Gift,
-  Sparkles,
   UserRound,
   User as UserIcon,
   Search,
@@ -39,7 +38,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { CountrySelectorModal } from './CountrySelectorModal';
 import { SearchModal } from './SearchModal';
-import { INITIAL_CATEGORIES, INITIAL_HAMPERS } from '../../constants';
 import { useCategories, useHampers } from '../../hooks/useQueries';
 import { Category, Hamper, CountryCode, COUNTRIES } from '../../types';
 
@@ -54,7 +52,8 @@ export const Navbar: React.FC = () => {
   // Navigation visibility & scroll states
   const [isScrolled, setIsScrolled] = useState(false);
   const [isNavVisible, setIsNavVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
+  const tickingRef = useRef(false);
 
   // Dropdowns & Modals
   const [isShopMegaOpen, setIsShopMegaOpen] = useState(false);
@@ -66,8 +65,8 @@ export const Navbar: React.FC = () => {
   const [isMobileAccountSheetOpen, setIsMobileAccountSheetOpen] = useState(false);
 
   // Dynamic Cached Data from TanStack React Query
-  const { data: categories = INITIAL_CATEGORIES } = useCategories();
-  const { data: hampers = INITIAL_HAMPERS } = useHampers();
+  const { data: categories = [] } = useCategories();
+  const { data: hampers = [] } = useHampers();
 
   // Hover timeout refs to prevent dropdown flickers
   const shopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -111,37 +110,56 @@ export const Navbar: React.FC = () => {
     isSearchModalOpen ||
     isMobileAccountSheetOpen;
 
-  // Scroll listener for top header hide/reveal
+  const isAnyMenuOpenRef = useRef(isAnyMenuOpen);
+  useEffect(() => {
+    isAnyMenuOpenRef.current = isAnyMenuOpen;
+  }, [isAnyMenuOpen]);
+
+  // Optimized, throttled scroll listener with hysteresis to eliminate vibration & jitter
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      if (tickingRef.current) return;
+      tickingRef.current = true;
 
-      // Scrolled state
-      setIsScrolled(currentScrollY > 20);
+      window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const lastScrollY = lastScrollYRef.current;
+        const delta = currentScrollY - lastScrollY;
 
-      // Don't hide top header if any dropdown or modal is open
-      if (isAnyMenuOpen) {
-        setIsNavVisible(true);
-        setLastScrollY(currentScrollY);
-        return;
-      }
+        // Deadband hysteresis for isScrolled to prevent boundary flickering
+        if (currentScrollY > 24) {
+          setIsScrolled(true);
+        } else if (currentScrollY < 12) {
+          setIsScrolled(false);
+        }
 
-      if (currentScrollY <= 40) {
-        setIsNavVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 120) {
-        // Scrolling down
-        setIsNavVisible(false);
-      } else if (currentScrollY < lastScrollY) {
-        // Scrolling up
-        setIsNavVisible(true);
-      }
+        // Keep header visible if any menu/modal is open or at top of page
+        if (isAnyMenuOpenRef.current || currentScrollY <= 40) {
+          setIsNavVisible(true);
+          lastScrollYRef.current = currentScrollY;
+          tickingRef.current = false;
+          return;
+        }
 
-      setLastScrollY(currentScrollY);
+        // Require at least 10px of scroll delta to prevent micro-jitter direction flipping
+        if (Math.abs(delta) >= 10) {
+          if (delta > 0 && currentScrollY > 120) {
+            // Scrolling down past header threshold
+            setIsNavVisible(false);
+          } else if (delta < 0) {
+            // Scrolling up deliberately
+            setIsNavVisible(true);
+          }
+          lastScrollYRef.current = currentScrollY;
+        }
+
+        tickingRef.current = false;
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY, isAnyMenuOpen]);
+  }, []);
 
   // Hover handlers with debounce for desktop dropdowns
   const handleShopMouseEnter = () => {
@@ -210,7 +228,7 @@ export const Navbar: React.FC = () => {
     if (s.includes('dad') || s.includes('father') || s.includes('men'))
       return { emoji: '👨', icon: UserCheck };
     if (s.includes('wedding') || s.includes('marriage'))
-      return { emoji: '💍', icon: Sparkles };
+      return { emoji: '💍', icon: undefined };
     if (s.includes('anniversary') || s.includes('couple'))
       return { emoji: ' ', icon: HeartHandshake };
     if (s.includes('baby') || s.includes('new-mum') || s.includes('newborn'))
@@ -220,7 +238,7 @@ export const Navbar: React.FC = () => {
     if (s.includes('gift') || s.includes('tradition'))
       return { emoji: '🎁', icon: Gift };
     if (s.includes('addon') || s.includes('add-on'))
-      return { emoji: '✨', icon: Sparkles };
+      return { emoji: '', icon: undefined };
     return { emoji: '🛍️', icon: Package };
   };
 
@@ -275,7 +293,7 @@ export const Navbar: React.FC = () => {
       });
     }
     return [
-      { label: 'Wedding', icon: Sparkles, emoji: '💍', path: '/category/wedding', desc: 'Traditional Kerala Kasavu sets & brass gifts' },
+      { label: 'Wedding', icon: undefined, emoji: '💍', path: '/category/wedding', desc: 'Traditional Kerala Kasavu sets & brass gifts' },
       { label: 'Anniversary', icon: HeartHandshake, emoji: ' ', path: '/category/anniversary', desc: 'Romantic couple hampers & keepsake memories' },
       { label: 'New Mum & Baby', icon: Baby, emoji: '👶', path: '/category/new-mum-baby', desc: 'Organic muslin swaddles & postpartum recovery' },
       { label: 'Celebrations', icon: PartyPopper, emoji: '🎉', path: '/category/celebrations', desc: 'Festive Onam/Vishu, birthdays & milestones' },
@@ -286,7 +304,7 @@ export const Navbar: React.FC = () => {
     () => [
       { label: 'Gifts', icon: Gift, emoji: '🎁', path: '/shop?tag=gift', desc: 'Curated artisanal & traditional Kerala items' },
       { label: 'All Products', icon: Package, emoji: '🛍️', path: '/shop', desc: 'Browse the entire healthcare & lifestyle catalog' },
-      { label: 'Add-ons', icon: Sparkles, emoji: '✨', path: '/shop?type=addon', desc: 'Extra personal touches to append to any hamper' },
+      { label: 'Add-ons', icon: undefined, emoji: '', path: '/shop?type=addon', desc: 'Extra personal touches to append to any hamper' },
     ],
     []
   );
@@ -347,12 +365,12 @@ export const Navbar: React.FC = () => {
       {/* 1. TOP HEADER (Responsive: Compact on Mobile, Full on Desktop)           */}
       {/* ========================================================================= */}
       <header
-        className={`sticky top-0 z-40 w-full transition-transform duration-300 ease-in-out ${
+        className={`sticky top-0 z-40 w-full transform-gpu will-change-transform transition-transform duration-300 ease-in-out py-2 sm:py-2.5 ${
           isNavVisible ? 'translate-y-0' : '-translate-y-full md:-translate-y-full'
         } ${
           isScrolled
-            ? 'glass-header shadow-xs border-b border-gray-200/80 py-2 sm:py-2.5'
-            : 'bg-white border-b border-gray-100 py-2 sm:py-3.5'
+            ? 'glass-header shadow-xs border-b border-gray-200/80'
+            : 'bg-white/98 border-b border-gray-100'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -624,7 +642,6 @@ export const Navbar: React.FC = () => {
                               {signatureHamper.shortDescription || 'Kasavu Mundu & Saree, Teak frame, video QR'}
                             </div>
                           </div>
-                          <Sparkles className="w-4 h-4 text-[#237A3B]" />
                         </Link>
                       </div>
 
@@ -644,7 +661,7 @@ export const Navbar: React.FC = () => {
                 </AnimatePresence>
               </div>
 
-              {/* ✨ Build Your Own (Visually Emphasized Primary Action) */}
+              {/* Build Your Own (Visually Emphasized Primary Action) */}
               <NavLink
                 to="/custom-hamper"
                 className={({ isActive }) =>
@@ -655,7 +672,6 @@ export const Navbar: React.FC = () => {
                   }`
                 }
               >
-                <Sparkles className="w-3.5 h-3.5 text-[#237A3B]" />
                 <span>Build Your Own</span>
               </NavLink>
             </nav>

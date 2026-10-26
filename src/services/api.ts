@@ -19,6 +19,10 @@ import {
   NimbusShipmentResult,
   NimbusTrackingResult,
   NimbusSettings,
+  OrderPackageDetails,
+  WhatsAppMediaItem,
+  WhatsAppConfig,
+  QrCodeItem,
 } from '../types';
 
 export const apiClient = axios.create({
@@ -46,9 +50,13 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('ncc_token');
       }
     }
+    if (error.response?.status === 503) {
+      console.warn('⚠️ [API Service Unavailable]:', error.response.data?.message || 'Database is temporarily paused/waking up.');
+    }
     return Promise.reject(error);
   }
 );
+
 
 // Auth API
 export const authApi = {
@@ -57,6 +65,8 @@ export const authApi = {
   getMe: () => apiClient.get<{ success: boolean; data: User & { addresses: any[] } }>('/auth/me'),
   updateProfile: (data: any) => apiClient.put('/auth/profile', data),
   changePassword: (data: any) => apiClient.post('/auth/change-password', data),
+  forgotPassword: (data: { email: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/forgot-password', data),
+  resetPassword: (data: { token: string; newPassword: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/reset-password', data),
   getAddresses: () => apiClient.get<{ success: boolean; data: any[] }>('/auth/addresses'),
   createAddress: (data: any) => apiClient.post('/auth/addresses', data),
   deleteAddress: (id: string) => apiClient.delete(`/auth/addresses/${id}`),
@@ -149,7 +159,7 @@ export const ordersApi = {
   create: (data: any) => apiClient.post<{ success: boolean; data: Order }>('/orders', data),
   getMyOrders: () => apiClient.get<{ success: boolean; data: Order[] }>('/orders/my'),
   getById: (id: string) => apiClient.get<{ success: boolean; data: Order }>(`/orders/${id}`),
-  track: (data: { orderNumber: string; emailOrPhone: string }) =>
+  track: (data: { orderNumber: string; emailOrPhone?: string }) =>
     apiClient.post<{ success: boolean; data: Order & { nimbusTracking?: NimbusTrackingResult } }>('/orders/track', data),
   getTracking: (orderId: string) =>
     apiClient.get<{ success: boolean; data: { order: Order; shipment?: any; tracking?: NimbusTrackingResult } }>(`/orders/${orderId}/tracking`),
@@ -157,16 +167,25 @@ export const ordersApi = {
     apiClient.get<{ success: boolean; data: SpecialMessagePayload }>(`/orders/special-message/${token}`),
   getAdminOrders: (params?: any) => apiClient.get('/orders/admin/all', { params }),
   updateStatus: (id: string, data: any) => apiClient.put(`/orders/admin/${id}/status`, data),
+  updateAddress: (id: string, data: any) =>
+    apiClient.put<{ success: boolean; data: Order; message: string }>(`/orders/admin/${id}/address`, data),
   updateVideo: (id: string, data: { videoUrl: string; videoStatus?: string }) =>
     apiClient.put(`/orders/admin/${id}/video`, data),
   getQRCode: (id: string) =>
     apiClient.get<{ success: boolean; data: { token: string; targetUrl: string; qrDataUrl: string } }>(`/orders/admin/${id}/qr-code`),
   generateQRCode: (id: string) =>
     apiClient.get<{ success: boolean; data: { token: string; targetUrl: string; qrDataUrl: string } }>(`/orders/admin/${id}/qr-code`),
+  updatePackingChecklist: (id: string, data: { packedItems?: Record<string, boolean>; resetAll?: boolean }) =>
+    apiClient.put<{ success: boolean; data: Order; message: string }>(`/orders/admin/${id}/packing`, data),
 };
 
 // Payments API
 export const paymentsApi = {
+  getConfig: () =>
+    apiClient.get<{
+      success: boolean;
+      data: { keyId: string; isLive: boolean; mode: 'live' | 'test' };
+    }>('/payments/config'),
   createSession: (data: { orderId: string; providerName?: string }) =>
     apiClient.post<{
       success: boolean;
@@ -264,10 +283,18 @@ export const shippingApi = {
   
   // NimbusPost endpoints
   getInfo: () => apiClient.get<{ success: boolean; data: any }>('/shipping/info'),
-  checkServiceability: (data: { pincode: string; pickupPincode?: string; weightKg?: number }) =>
+  checkServiceability: (data: { pincode: string; pickupPincode?: string; weightKg?: number; items?: any[]; cartId?: string; paymentType?: string }) =>
     apiClient.post<{ success: boolean; data: NimbusServiceabilityResult }>('/shipping/nimbus/check-serviceability', data),
-  checkNimbusServiceability: (data: { pincode: string; pickupPincode?: string; weightKg?: number }) =>
+  checkNimbusServiceability: (data: { pincode: string; pickupPincode?: string; weightKg?: number; items?: any[]; cartId?: string; paymentType?: string }) =>
     apiClient.post<{ success: boolean; data: NimbusServiceabilityResult }>('/shipping/nimbus/check-serviceability', data),
+  // Option B: Dedicated NimbusPost Automated Shipment Dispatch
+  createNimbusPostAutomatedShipment: (data: {
+    orderId: string;
+    courierId?: number;
+    courierName?: string;
+    pickupPincode?: string;
+    weightKg?: number;
+  }) => apiClient.post<{ success: boolean; message: string; data: NimbusShipmentResult }>('/shipping/nimbus/automated-shipment', data),
   createNimbusShipment: (data: {
     orderId: string;
     courierId?: number;
@@ -284,19 +311,140 @@ export const shippingApi = {
     apiClient.get<{ success: boolean; data: NimbusTrackingResult }>(`/shipping/nimbus/track/${awb}`),
   cancelNimbusShipment: (awb: string) =>
     apiClient.post<{ success: boolean; message: string }>('/shipping/nimbus/cancel', { awb }),
+  requestPickup: (data: {
+    pickupLocation?: string;
+    pickupPincode?: string;
+    pickupDate?: string;
+    pickupTime?: string;
+    expectedPackageCount?: number;
+  }) => apiClient.post<{ success: boolean; message: string; pickupRequestId?: string }>('/shipping/nimbus/pickup/request', data),
   getNimbusSettings: () =>
     apiClient.get<{ success: boolean; data: NimbusSettings }>('/shipping/nimbus/settings'),
   updateNimbusSettings: (data: Partial<NimbusSettings>) =>
     apiClient.put<{ success: boolean; message: string; data: NimbusSettings }>('/shipping/nimbus/settings', data),
+
+  // Package Review Endpoint
+  getOrderPackageDetails: (orderId: string) =>
+    apiClient.get<{ success: boolean; data: OrderPackageDetails }>(`/shipping/order-package/${orderId}`),
+
+  // Option C: Dedicated NimbusPost Manual Order Ingestion (New Orders queue)
+  pushOrderToNimbusPostNewOrders: (orderId: string, options?: { pickupPincode?: string; forceRetry?: boolean }) =>
+    apiClient.post<{
+      success: boolean;
+      message: string;
+      data: {
+        order: any;
+        shipment: any;
+        orderId: string;
+        orderNumber: string;
+        nimbusOrderId: string;
+        dashboardUrl: string;
+        orderStatus: string;
+        shipmentStatus: string;
+        isBooked: boolean;
+        importStatus?: 'NOT_IMPORTED' | 'IMPORTING' | 'IMPORTED_TO_NIMBUSPOST' | 'IMPORT_FAILED' | 'SHIPMENT_CREATED';
+        apiLimitation?: boolean;
+        apiLimitationNote?: string;
+        downloadCsvUrl?: string;
+        alreadyImported?: boolean;
+        alreadyShipped?: boolean;
+        awbNumber?: string | null;
+        courierName?: string | null;
+      };
+    }>('/shipping/nimbus/push-new-orders', { orderId, ...options }),
+
+  // Option C: Push Order to NimbusPost Manual (backward compatible alias)
+  pushOrderToNimbusManual: (orderId: string, options?: { pickupPincode?: string; forceRetry?: boolean }) =>
+    apiClient.post<{
+      success: boolean;
+      message: string;
+      data: {
+        order: any;
+        shipment: any;
+        orderId: string;
+        orderNumber: string;
+        nimbusOrderId: string;
+        dashboardUrl: string;
+        orderStatus: string;
+        shipmentStatus: string;
+        isBooked: boolean;
+        importStatus?: 'NOT_IMPORTED' | 'IMPORTING' | 'IMPORTED_TO_NIMBUSPOST' | 'IMPORT_FAILED' | 'SHIPMENT_CREATED';
+        apiLimitation?: boolean;
+        apiLimitationNote?: string;
+        downloadCsvUrl?: string;
+        alreadyImported?: boolean;
+        alreadyShipped?: boolean;
+        awbNumber?: string | null;
+        courierName?: string | null;
+      };
+    }>('/shipping/nimbus/push-order', { orderId, ...options }),
+
+  // Option C: Export NimbusPost Bulk Order CSV
+  exportNimbusOrderCsv: async (orderId: string): Promise<Blob> => {
+    const res = await apiClient.get(`/shipping/nimbus/export-csv/${orderId}`, { responseType: 'blob' });
+    return res.data;
+  },
+
+  // Option C: Mark Order CSV as Generated
+  markOrderCsvGenerated: (orderId: string) =>
+    apiClient.post<{ success: boolean; message: string; data: { order: any } }>(
+      '/shipping/nimbus/mark-csv-generated',
+      { orderId }
+    ),
+
+  // Option C: Confirm Order Uploaded to NimbusPost Bulk Upload
+  confirmNimbusPostImported: (orderId: string) =>
+    apiClient.post<{ success: boolean; message: string; data: { order: any; shipment: any } }>(
+      '/shipping/nimbus/confirm-imported',
+      { orderId }
+    ),
+
+  // Synchronize Order Tracking Status from NimbusPost
+  syncNimbusShipment: (orderId: string) =>
+    apiClient.post<{ success: boolean; message: string; data: { order: any; shipment: any; isBooked?: boolean } }>(
+      `/shipping/nimbus/sync/${orderId}`
+    ),
+
+  // Option C Legacy: Record NimbusPost Manual Shipment
+  recordNimbusManualShipment: (data: {
+    orderId: string;
+    awbNumber: string;
+    trackingNumber?: string;
+    courierName?: string;
+    trackingUrl?: string;
+    nimbusPostShipmentId?: string;
+    dispatchDate?: string;
+    dispatchedAt?: string;
+    estimatedDelivery?: string;
+    shippingNotes?: string;
+  }) => apiClient.post<{ success: boolean; message: string; data: any }>('/shipping/nimbus/manual-record', data),
+
+  // Manual Shipping Endpoints
+  createManualShipment: (data: {
+    orderId: string;
+    courierName: string;
+    trackingNumber: string;
+    trackingUrl?: string;
+    dispatchDate?: string;
+    dispatchedAt?: string;
+    estimatedDelivery?: string;
+    shippingNotes?: string;
+    notifyCustomer?: boolean;
+  }) => apiClient.post<{ success: boolean; message: string; data: any }>('/shipping/manual-shipment', data),
+  resetShipment: (orderId: string) =>
+    apiClient.post<{ success: boolean; message: string; data: any }>('/shipping/reset-shipment', { orderId }),
 };
 
 // Hero Slides API
 export const heroSlidesApi = {
   getActive: () => apiClient.get<{ success: boolean; data: HeroSlide[] }>('/hero-slides'),
   getAll: () => apiClient.get<{ success: boolean; data: HeroSlide[] }>('/hero-slides?includeInactive=true'),
-  create: (data: any) => apiClient.post('/hero-slides', data),
-  update: (id: string, data: any) => apiClient.put(`/hero-slides/${id}`, data),
-  delete: (id: string) => apiClient.delete(`/hero-slides/${id}`),
+  getAdminAll: () => apiClient.get<{ success: boolean; data: HeroSlide[] }>('/hero-slides/admin'),
+  create: (data: any) => apiClient.post<{ success: boolean; message: string; data: HeroSlide }>('/hero-slides', data),
+  update: (id: string, data: any) => apiClient.put<{ success: boolean; message: string; data: HeroSlide }>(`/hero-slides/${id}`, data),
+  delete: (id: string) => apiClient.delete<{ success: boolean; message: string }>(`/hero-slides/${id}`),
+  reorder: (order: string[]) => apiClient.put<{ success: boolean; message: string; data: HeroSlide[] }>('/hero-slides/reorder', { order }),
+  toggleStatus: (id: string, status?: string) => apiClient.patch<{ success: boolean; message: string; data: HeroSlide }>(`/hero-slides/${id}/status`, { status }),
 };
 
 // Reviews API
@@ -358,3 +506,56 @@ export const uploadApi = {
   deleteHamperPhoto: (key: string) =>
     apiClient.delete<{ success: boolean; message: string }>(`/upload/hamper-photo/${encodeURIComponent(key)}`),
 };
+
+// WhatsApp Communication API
+export const whatsappApi = {
+  getConfig: () =>
+    apiClient.get<{ success: boolean; data: WhatsAppConfig }>('/whatsapp/config'),
+
+  uploadMedia: (files: File[]) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+    return apiClient.post<{
+      success: boolean;
+      message: string;
+      data: WhatsAppMediaItem[];
+    }>('/whatsapp/media', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  deleteMedia: (key: string) =>
+    apiClient.delete<{ success: boolean; message: string }>(
+      `/whatsapp/media/${encodeURIComponent(key)}`
+    ),
+
+  sendOrder: (data: { orderId?: string; payload?: any }) =>
+    apiClient.post<{
+      success: boolean;
+      mode: 'CLOUD_API' | 'CLICK_TO_CHAT_FALLBACK';
+      messageId?: string;
+      fallbackUrl?: string;
+      reason?: string;
+      error?: string;
+    }>('/whatsapp/send-order', data),
+
+  getClickToChatUrl: (payload: any) =>
+    apiClient.post<{ success: boolean; data: { url: string } }>('/whatsapp/click-to-chat', {
+      payload,
+    }),
+};
+
+// Admin QR Code Generator API
+export const qrCodeApi = {
+  getAll: () =>
+    apiClient.get<{ success: boolean; data: QrCodeItem[] }>('/admin/qr-codes'),
+
+  create: (data: { youtubeUrl: string; label?: string }) =>
+    apiClient.post<{ success: boolean; message: string; data: QrCodeItem }>('/admin/qr-codes', data),
+
+  delete: (id: string) =>
+    apiClient.delete<{ success: boolean; message: string; affected?: number }>(
+      `/admin/qr-codes/${encodeURIComponent(id)}`
+    ),
+};
+

@@ -11,7 +11,6 @@ import {
   AlertCircle,
   ExternalLink,
   Layers,
-  Sparkles,
   Info,
   X,
   ArrowUpDown,
@@ -22,7 +21,6 @@ import { Category, CategoryType } from '../../types';
 import { categoriesApi, uploadApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { INITIAL_CATEGORIES } from '@/constants';
 import {
   CategoryIcon,
   CategoryIconBadge,
@@ -119,13 +117,13 @@ export const AdminCategoriesPage: React.FC = () => {
           setCategoriesTree(res.data.data);
           setFlatCategories(flattenTree(res.data.data));
         } else {
-          setCategoriesTree(INITIAL_CATEGORIES as any);
-          setFlatCategories(flattenTree(INITIAL_CATEGORIES as any));
+          setCategoriesTree([]);
+          setFlatCategories([]);
         }
       })
       .catch(() => {
-        setCategoriesTree(INITIAL_CATEGORIES as any);
-        setFlatCategories(flattenTree(INITIAL_CATEGORIES as any));
+        setCategoriesTree([]);
+        setFlatCategories([]);
       })
       .finally(() => setIsLoading(false));
   };

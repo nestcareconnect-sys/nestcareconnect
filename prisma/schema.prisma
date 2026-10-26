@@ -102,12 +102,16 @@ model User {
   wishlist     WishlistItem[]
   cart         Cart?
   couponUsages CouponUsage[]
-  auditLogs    AuditLog[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  auditLogs              AuditLog[]
+  qrCodes                QrCode[]
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
 
   @@index([email])
   @@index([role])
+  @@index([passwordResetTokenHash])
 }
 
 model Address {
@@ -172,8 +176,15 @@ model Product {
   category               Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   brand                  String?
   unit                   String?                // e.g. "Pack of 50", "1 Device", "100g"
-  weight                 Float?                 // in grams or kg
-  dimensions             String?
+  weight                 Float?                 // in kg (standardized internal unit)
+  weightUnit             String?                @default("kg") // "kg" or "g"
+  dimensions             String?                // e.g. "20 x 15 x 10 cm"
+  length                 Float?                 // in cm (standardized internal unit)
+  width                  Float?                 // in cm (standardized internal unit)
+  height                 Float?                 // in cm (standardized internal unit)
+  dimensionUnit          String?                @default("cm") // "cm" or "in"
+  volumetricWeight       Float?                 // in kg, derived: (length * width * height) / divisor
+  chargeableWeight       Float?                 // in kg, derived: max(weight, volumetricWeight)
   packageSize            String?                // e.g. "Small", "Medium", "Large"
   packageLength          Float?                 // in cm
   packageWidth           Float?                 // in cm
@@ -185,6 +196,7 @@ model Product {
   isAddOn                Boolean                @default(false)
   addOnCategory          String?
   isCustomHamperEligible Boolean                @default(true)
+  productType            String?                @default("normal") // "normal" or "hamper"
   tags                   String[]               @default([])
   specifications         Json?                  // Key-value pairs or structured specs
   countryPrices          ProductCountryPrice[]
@@ -205,6 +217,7 @@ model Product {
   @@index([brand])
   @@index([isAddOn])
   @@index([isCustomHamperEligible])
+  @@index([productType])
 }
 
 model ProductCountryPrice {
@@ -414,7 +427,13 @@ model Order {
   billingAddress  Json?           // Snapshot of complete billing address
   couponCode      String?
   trackingNumber  String?
+  shippingMethod  String?         @default("PENDING_SELECTION") // PENDING_SELECTION, NIMBUSPOST_AUTOMATED, NIMBUSPOST_MANUAL, MANUAL
+  nimbusOrderId   String?
+  nimbusShipmentId String?
+  syncStatus      String?         @default("NOT_SYNCED")        // NOT_SYNCED, SYNCED, PENDING, ERROR
+  lastSyncAt      DateTime?
   notes           String?
+  packingChecklist Json?         // Packing checklist state { packedItems: Record<string, boolean>, updatedAt: string, ... }
   items           OrderItem[]
   payments        Payment[]
   shipment        Shipment?
@@ -506,30 +525,45 @@ model Payment {
 }
 
 model Shipment {
-  id                String   @id @default(uuid())
-  orderId           String   @unique
-  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  provider          String   @default("NIMBUSPOST")
-  providerOrderId   String?
-  awbNumber         String?
-  courierName       String?
-  courierId         Int?
-  shipmentStatus    String   @default("PENDING")
-  trackingUrl       String?
-  labelUrl          String?
-  manifestUrl       String?
-  estimatedDelivery String?
-  weightKg          Float?   @default(1.0)
-  pickupPincode     String?
-  deliveryPincode   String?
-  errorMessage      String?
-  rawResponse       Json?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                   String    @id @default(uuid())
+  orderId              String    @unique
+  order                Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider             String    @default("NIMBUSPOST")
+  providerOrderId      String?
+  nimbusPostShipmentId String?
+  awbNumber            String?
+  nimbusPostAwb        String?
+  courierName          String?
+  courierId            Int?
+  shippingMethod       String?   @default("PENDING_SELECTION") // PENDING_SELECTION, NIMBUSPOST, MANUAL
+  shipmentStatus       String    @default("NOT_SHIPPED")       // NOT_SHIPPED, PENDING, BOOKED, READY_TO_SHIP, SHIPPED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED, CANCELLED
+  trackingNumber       String?
+  trackingUrl          String?
+  labelUrl             String?
+  shippingLabelUrl     String?
+  manifestUrl          String?
+  estimatedDelivery    String?
+  estimatedDeliveryAt  DateTime?
+  dispatchedAt         DateTime?
+  shippingCharge       Float?
+  shippingNotes        String?
+  weightKg             Float?    @default(1.0)
+  pickupPincode        String?
+  deliveryPincode      String?
+  errorMessage         String?
+  rawResponse          Json?
+  syncStatus           String?   @default("NOT_SYNCED")
+  lastSyncAt           DateTime?
+  shipmentCreatedAt    DateTime? @default(now())
+  shippingUpdatedAt    DateTime? @updatedAt
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([orderId])
   @@index([awbNumber])
+  @@index([trackingNumber])
   @@index([shipmentStatus])
+  @@index([shippingMethod])
 }
 
 model Coupon {
@@ -602,18 +636,26 @@ model ShippingRule {
 }
 
 model HeroSlide {
-  id           String   @id @default(uuid())
-  title        String
-  subtitle     String
-  badge        String?
-  ctaText      String   @default("Shop Now")
-  ctaUrl       String   @default("/shop")
-  desktopImage String
-  mobileImage  String
-  displayOrder Int      @default(0)
-  status       Status   @default(ACTIVE)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid())
+  title            String?
+  subtitle         String?
+  description      String?
+  badge            String?
+  ctaText          String?  @default("Shop Now")
+  buttonText       String?
+  ctaUrl           String?  @default("/shop")
+  destinationUrl   String?
+  desktopImage     String
+  bannerImageUrl   String?
+  mobileImage      String?
+  mobileImageUrl   String?
+  linkType         String?  @default("CUSTOM")
+  linkedProductId  String?
+  linkedCategoryId String?
+  displayOrder     Int      @default(0)
+  status           Status   @default(ACTIVE)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([status])
   @@index([displayOrder])
@@ -672,4 +714,18 @@ model AuditLog {
 
   @@index([userId])
   @@index([entity])
+}
+
+model QrCode {
+  id          String   @id @default(uuid())
+  label       String?
+  youtubeUrl  String
+  qrDataUrl   String   @db.Text
+  adminId     String?
+  admin       User?    @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([adminId])
+  @@index([createdAt])
 }

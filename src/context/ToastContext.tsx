@@ -24,7 +24,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setToasts((prev) => [...prev, { id, type, message }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    }, 3500);
   };
 
   const removeToast = (id: string) => {
@@ -34,15 +34,32 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+      <div
+        className="toast-container pointer-events-none"
+        style={{
+          position: 'fixed',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px',
+          pointerEvents: 'none',
+        }}
+        role="region"
+        aria-live="polite"
+        aria-label="Notifications"
+      >
         <AnimatePresence>
           {toasts.map((toast) => (
             <motion.div
               key={toast.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm max-w-md ${
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm w-max max-w-[min(600px,calc(100vw-24px))] box-border ${
                 toast.type === 'success'
                   ? 'bg-[#F1FAF3] border-[#8BCF9B] text-[#237A3B]'
                   : toast.type === 'error'
@@ -53,10 +70,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-[#237A3B]" />}
               {toast.type === 'error' && <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-600" />}
               {toast.type === 'info' && <Info className="w-5 h-5 flex-shrink-0 text-blue-600" />}
-              <span className="font-medium flex-1">{toast.message}</span>
+              <span className="font-medium flex-1 min-w-0 break-words">{toast.message}</span>
               <button
+                type="button"
                 onClick={() => removeToast(toast.id)}
-                className="text-gray-400 hover:text-gray-600 p-1"
+                className="text-gray-400 hover:text-gray-600 p-1 flex-shrink-0 transition-colors rounded-lg hover:bg-black/5"
                 aria-label="Close notification"
               >
                 <X className="w-4 h-4" />

@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
   FolderTree,
   Gift,
-  Sparkles,
   ShoppingBag,
   Users,
   Tag,
@@ -20,9 +19,46 @@ import {
   ExternalLink,
   ShieldCheck,
   Box,
+  QrCode,
 } from 'lucide-react';
 import { Logo } from '../common/Logo';
 import { useAuth } from '../../context/AuthContext';
+
+// Background chunk prefetch on link hover for instantaneous tab navigation
+const prefetchAdminChunk: Record<string, () => Promise<any>> = {
+  '/admin': () => import('../../pages/admin/AdminDashboardPage'),
+  '/admin/products': () => import('../../pages/admin/AdminProductsPage'),
+  '/admin/categories': () => import('../../pages/admin/AdminCategoriesPage'),
+  '/admin/hampers': () => import('../../pages/admin/AdminHampersPage'),
+  '/admin/boxes': () => import('../../pages/admin/AdminBoxesPage'),
+  '/admin/qr-codes': () => import('../../pages/admin/AdminQrCodePage'),
+  '/admin/custom-hampers': () => import('../../pages/admin/AdminCustomHamperSettingsPage'),
+  '/admin/orders': () => import('../../pages/admin/AdminOrdersPage'),
+  '/admin/customers': () => import('../../pages/admin/AdminCustomersPage'),
+  '/admin/coupons': () => import('../../pages/admin/AdminCouponsPage'),
+  '/admin/currencies': () => import('../../pages/admin/AdminCurrenciesPage'),
+  '/admin/shipping': () => import('../../pages/admin/AdminShippingPage'),
+  '/admin/hero-slides': () => import('../../pages/admin/AdminHeroSlidesPage'),
+  '/admin/settings': () => import('../../pages/admin/AdminSettingsPage'),
+};
+
+const AdminSkeleton: React.FC = () => (
+  <div className="space-y-6 animate-pulse p-2">
+    <div className="flex items-center justify-between">
+      <div className="space-y-2">
+        <div className="h-7 w-56 bg-gray-200 rounded-xl" />
+        <div className="h-3.5 w-80 bg-gray-100 rounded-lg" />
+      </div>
+      <div className="h-9 w-32 bg-gray-200 rounded-xl" />
+    </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="h-28 bg-white rounded-2xl border border-gray-100 p-4 space-y-3" />
+      ))}
+    </div>
+    <div className="h-72 bg-white rounded-3xl border border-gray-100 p-6" />
+  </div>
+);
 
 export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -30,13 +66,14 @@ export const AdminLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const navItems = [
+  const navItems: Array<{ label: string; path: string; icon?: any; exact?: boolean }> = [
     { label: 'Dashboard', path: '/admin', icon: LayoutDashboard, exact: true },
     { label: 'Products', path: '/admin/products', icon: Package },
     { label: 'Categories', path: '/admin/categories', icon: FolderTree },
     { label: 'Hampers', path: '/admin/hampers', icon: Gift },
     { label: 'Hamper Boxes', path: '/admin/boxes', icon: Box },
-    { label: 'Custom Hamper Rules', path: '/admin/custom-hampers', icon: Sparkles },
+    { label: 'QR Code Generator', path: '/admin/qr-codes', icon: QrCode },
+    { label: 'Custom Hamper Rules', path: '/admin/custom-hampers' },
     { label: 'Orders', path: '/admin/orders', icon: ShoppingBag },
     { label: 'Customers', path: '/admin/customers', icon: Users },
     { label: 'Coupons & Discounts', path: '/admin/coupons', icon: Tag },
@@ -110,15 +147,33 @@ export const AdminLayout: React.FC = () => {
         </button>
       </div>
 
-      {/* Admin Sidebar (Desktop + Mobile Drawer) */}
+      {/* Mobile Drawer Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Admin Sidebar (Desktop Sticky + Mobile Drawer) */}
       <aside
-        className={`fixed md:sticky top-0 z-40 inset-y-0 left-0 w-64 md:h-screen md:min-h-screen bg-gray-900 text-gray-300 flex flex-col justify-between border-r border-gray-800 transition-transform duration-200 overflow-hidden ${
+        className={`fixed md:sticky top-0 z-50 md:z-40 inset-y-0 left-0 w-64 h-[100dvh] max-h-[100dvh] bg-gray-900 text-gray-300 flex flex-col border-r border-gray-800 transition-transform duration-200 overflow-hidden shrink-0 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
+        style={{ height: '100dvh' }}
       >
-        <div className="p-5 space-y-6">
-          <div className="hidden md:flex items-center justify-between">
+        {/* Section 1: Header (Fixed at top of sidebar) */}
+        <div className="shrink-0 p-5 pb-3 space-y-4 border-b border-gray-800/80 bg-gray-900">
+          <div className="flex items-center justify-between">
             <Logo variant="white" />
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="md:hidden p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors"
+              aria-label="Close sidebar"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           <div className="px-3 py-1.5 rounded-xl bg-gray-800/80 border border-gray-700/60 text-xs flex items-center justify-between">
@@ -128,41 +183,49 @@ export const AdminLayout: React.FC = () => {
             </div>
             <span className="text-[10px] text-[#8BCF9B] font-mono">v1.0.0</span>
           </div>
-
-          {/* Navigation Links */}
-          <nav className="space-y-1 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.exact}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                      isActive
-                        ? 'bg-[#237A3B] text-white font-bold shadow-xs'
-                        : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
-                    }`
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </NavLink>
-              );
-            })}
-          </nav>
         </div>
 
-        {/* Footer info in sidebar */}
-        <div className="p-4 border-t border-gray-800 space-y-3">
+        {/* Section 2: Navigation Links (Primary scrollable area) */}
+        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3 space-y-1 admin-sidebar-nav">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.exact}
+                onMouseEnter={() => prefetchAdminChunk[item.path]?.()}
+                onClick={() => setIsSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-[#237A3B] text-white font-bold shadow-xs'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
+                  }`
+                }
+              >
+                <div className="flex items-center gap-3">
+                  {Icon && <Icon className="w-4 h-4 shrink-0" />}
+                  <span>{item.label}</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 opacity-50 shrink-0" />
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Section 3: Footer (Pinned at bottom of sidebar, always visible and reachable) */}
+        <div className="shrink-0 p-4 border-t border-gray-800 space-y-3 bg-gray-900">
           <div className="text-xs">
-            <span className="text-gray-400 block text-[10px]">Logged in as:</span>
-            <span className="font-semibold text-white truncate block">{user?.name}</span>
+            <div className="flex items-center justify-between text-[10px] text-gray-400 mb-0.5">
+              <span>Logged in as:</span>
+              <span className="text-[9px] font-bold text-[#8BCF9B] uppercase tracking-wider bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700/60">
+                {user?.role || 'Admin'}
+              </span>
+            </div>
+            <span className="font-semibold text-white truncate block text-xs" title={user?.name || user?.email}>
+              {user?.name || 'Administrator'}
+            </span>
           </div>
 
           <div className="flex items-center justify-between pt-1">
@@ -178,9 +241,10 @@ export const AdminLayout: React.FC = () => {
             <button
               onClick={() => {
                 logout();
+                setIsSidebarOpen(false);
                 navigate('/login');
               }}
-              className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+              className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 font-medium hover:underline transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
@@ -191,7 +255,9 @@ export const AdminLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 p-4 sm:p-8 lg:p-10 overflow-y-auto">
-        <Outlet />
+        <Suspense fallback={<AdminSkeleton />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

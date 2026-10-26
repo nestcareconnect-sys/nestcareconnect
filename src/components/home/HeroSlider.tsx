@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { HeroSlide } from '../../types';
 import { useHeroSlides } from '../../hooks/useQueries';
-import { INITIAL_HERO_SLIDES } from '@/constants';
 
 export const HeroSlider: React.FC = () => {
-  const { data: slides = INITIAL_HERO_SLIDES as any } = useHeroSlides();
+  const navigate = useNavigate();
+  const { data: slides = [] } = useHeroSlides();
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -27,6 +28,13 @@ export const HeroSlider: React.FC = () => {
     autoplayRef.current = setInterval(nextSlide, 6000);
     return () => clearInterval(autoplayRef.current);
   }, [slides.length]);
+
+  // Keep currentIndex in bounds if slides change dynamically
+  useEffect(() => {
+    if (currentIndex >= slides.length) {
+      setCurrentIndex(0);
+    }
+  }, [slides.length, currentIndex]);
 
   // Touch Swipe for Mobile
   const minSwipeDistance = 50;
@@ -50,10 +58,38 @@ export const HeroSlider: React.FC = () => {
   };
 
   const currentSlide = slides[currentIndex] || slides[0];
+  if (!currentSlide) return null;
+
+  const title = currentSlide.title?.trim();
+  const description = (currentSlide.description || currentSlide.subtitle)?.trim();
+  const badge = currentSlide.badge?.trim();
+  const buttonText = (currentSlide.buttonText || currentSlide.ctaText)?.trim();
+  const destinationUrl = (currentSlide.destinationUrl || currentSlide.ctaUrl)?.trim();
+  const hasLink = currentSlide.linkType !== 'NONE' && Boolean(destinationUrl);
+  const isExternal = Boolean(destinationUrl && (destinationUrl.startsWith('http://') || destinationUrl.startsWith('https://')));
+
+  const desktopImg = currentSlide.desktopImage || currentSlide.bannerImageUrl || '';
+  const mobileImg = currentSlide.mobileImage || currentSlide.mobileImageUrl || desktopImg;
+
+  const handleBannerClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('a, button')) return;
+    if (!hasLink || !destinationUrl) return;
+
+    if (isExternal) {
+      window.open(destinationUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(destinationUrl);
+    }
+  };
+
+  const hasTextContent = Boolean(title || description || badge || buttonText);
 
   return (
     <div
-      className="relative w-full overflow-hidden bg-gray-950 select-none h-[80vh] min-h-[500px] max-h-[660px] md:h-[calc(100vh-68px)] md:min-h-[540px] md:max-h-none"
+      className={`relative w-full overflow-hidden bg-gray-950 select-none h-[80vh] min-h-[500px] max-h-[660px] md:h-[calc(100vh-68px)] md:min-h-[540px] md:max-h-none ${
+        hasLink ? 'cursor-pointer' : ''
+      }`}
+      onClick={handleBannerClick}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -76,12 +112,12 @@ export const HeroSlider: React.FC = () => {
             {/* Mobile Portrait Image */}
             <source
               media="(max-width: 767px)"
-              srcSet={currentSlide.mobileImage || currentSlide.desktopImage}
+              srcSet={mobileImg}
             />
             {/* Desktop Landscape Image */}
             <img
-              src={currentSlide.desktopImage}
-              alt={currentSlide.title}
+              src={desktopImg}
+              alt={title || 'Nest Care Connect'}
               style={{ objectPosition: (currentSlide as any).objectPosition || 'center' }}
               className="w-full h-full object-cover transform scale-102 transition-transform duration-7000 ease-out"
               loading={currentIndex === 0 ? 'eager' : 'lazy'}
@@ -89,52 +125,78 @@ export const HeroSlider: React.FC = () => {
           </picture>
 
           {/* Clean Gradient Overlay for Readability (Preserves photography) */}
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-950/85 via-gray-900/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-950/75 via-transparent to-transparent md:hidden" />
+          {hasTextContent && (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-950/85 via-gray-900/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-950/75 via-transparent to-transparent md:hidden" />
+            </>
+          )}
 
           {/* Slide Text Content Container */}
-          <div className="absolute inset-0 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex flex-col justify-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.5 }}
-              className="max-w-xl lg:max-w-2xl space-y-4 md:space-y-6"
-            >
-              {currentSlide.badge && (
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#8BCF9B]/20 border border-[#8BCF9B]/40 text-[#8BCF9B] text-xs font-semibold backdrop-blur-xs">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>{currentSlide.badge}</span>
+          {hasTextContent && (
+            <div className="absolute inset-0 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex flex-col justify-center">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.5 }}
+                className="max-w-xl lg:max-w-2xl space-y-4 md:space-y-6"
+              >
+                {badge && (
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#8BCF9B]/20 border border-[#8BCF9B]/40 text-[#8BCF9B] text-xs font-semibold backdrop-blur-xs">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{badge}</span>
+                  </div>
+                )}
+
+                {title && (
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight">
+                    {title}
+                  </h1>
+                )}
+
+                {description && (
+                  <p className="text-sm sm:text-base md:text-lg text-gray-200 font-normal leading-relaxed max-w-lg">
+                    {description}
+                  </p>
+                )}
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4">
+                  {buttonText && hasLink && destinationUrl && (
+                    isExternal ? (
+                      <a
+                        href={destinationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-[#8BCF9B] hover:bg-[#78be88] text-[#1F2937] font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-200 transform active:scale-98"
+                      >
+                        <span>{buttonText}</span>
+                        <ArrowRight className="w-4 h-4 text-[#237A3B]" />
+                      </a>
+                    ) : (
+                      <Link
+                        to={destinationUrl}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-[#8BCF9B] hover:bg-[#78be88] text-[#1F2937] font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-200 transform active:scale-98"
+                      >
+                        <span>{buttonText}</span>
+                        <ArrowRight className="w-4 h-4 text-[#237A3B]" />
+                      </Link>
+                    )
+                  )}
+
+                  <Link
+                    to="/custom-hamper"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm backdrop-blur-xs border border-white/25 transition-all duration-200 transform active:scale-98"
+                  >
+                    <span>Build Custom Hamper</span>
+                  </Link>
                 </div>
-              )}
-
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight">
-                {currentSlide.title}
-              </h1>
-
-              <p className="text-sm sm:text-base md:text-lg text-gray-200 font-normal leading-relaxed max-w-lg">
-                {currentSlide.subtitle}
-              </p>
-
-              {/* Action Buttons */}
-              <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4">
-                <Link
-                  to={currentSlide.ctaUrl || '/hampers'}
-                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-[#8BCF9B] hover:bg-[#78be88] text-[#1F2937] font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-200 transform active:scale-98"
-                >
-                  <span>{currentSlide.ctaText || 'Explore Hampers'}</span>
-                  <ArrowRight className="w-4 h-4 text-[#237A3B]" />
-                </Link>
-
-                <Link
-                  to="/custom-hamper"
-                  className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm backdrop-blur-xs border border-white/25 transition-all duration-200 transform active:scale-98"
-                >
-                  <Sparkles className="w-4 h-4 text-[#8BCF9B]" />
-                  <span>Build Custom Hamper</span>
-                </Link>
-              </div>
-            </motion.div>
-          </div>
+              </motion.div>
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -143,18 +205,24 @@ export const HeroSlider: React.FC = () => {
         <>
           <button
             type="button"
-            onClick={prevSlide}
+            onClick={(e) => {
+              e.stopPropagation();
+              prevSlide();
+            }}
             aria-label="Previous Hero Slide"
-            className="hidden md:flex absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/35 hover:bg-black/65 text-white items-center justify-center backdrop-blur-xs border border-white/15 transition-all shadow-md active:scale-95 z-20"
+            className="hidden md:flex absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/35 hover:bg-black/65 text-white items-center justify-center backdrop-blur-xs border border-white/15 transition-all shadow-md active:scale-95 z-20 cursor-pointer"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
 
           <button
             type="button"
-            onClick={nextSlide}
+            onClick={(e) => {
+              e.stopPropagation();
+              nextSlide();
+            }}
             aria-label="Next Hero Slide"
-            className="hidden md:flex absolute right-4 lg:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/35 hover:bg-black/65 text-white items-center justify-center backdrop-blur-xs border border-white/15 transition-all shadow-md active:scale-95 z-20"
+            className="hidden md:flex absolute right-4 lg:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/35 hover:bg-black/65 text-white items-center justify-center backdrop-blur-xs border border-white/15 transition-all shadow-md active:scale-95 z-20 cursor-pointer"
           >
             <ChevronRight className="w-6 h-6" />
           </button>
@@ -165,9 +233,12 @@ export const HeroSlider: React.FC = () => {
               <button
                 key={idx}
                 type="button"
-                onClick={() => setCurrentIndex(idx)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(idx);
+                }}
                 aria-label={`Go to hero slide ${idx + 1}`}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                   currentIndex === idx
                     ? 'w-8 bg-[#8BCF9B] shadow-xs'
                     : 'w-2 bg-white/40 hover:bg-white/70'

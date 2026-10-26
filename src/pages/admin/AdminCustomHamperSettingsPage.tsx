@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Save, CheckCircle2 } from 'lucide-react';
+import { Save, CheckCircle2 } from 'lucide-react';
 import { SEO } from '../../components/common/SEO';
 import { CustomHamperConfig } from '../../types';
 import { customHamperApi } from '../../services/api';

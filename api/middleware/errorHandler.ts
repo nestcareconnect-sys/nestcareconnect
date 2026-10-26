@@ -1,24 +1,43 @@
 import { Request, Response, NextFunction } from 'express';
+import { isDatabaseConnectionError, sanitizeErrorMessage } from '../utils/dbError.js';
 
 export function errorHandler(
   err: any,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
+  const isConnErr = isDatabaseConnectionError(err);
+  const safeMessage = sanitizeErrorMessage(err.message);
+
   console.error('API Error:', {
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    message: safeMessage,
     path: req.path,
     method: req.method,
+    isDbError: isConnErr,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'An unexpected error occurred. Please try again.';
+  if (isConnErr) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database service is temporarily unavailable. Please try again in a few moments.',
+      code: 'DATABASE_UNAVAILABLE',
+    });
+  }
+
+  const statusCode = err.statusCode || (err.status >= 400 && err.status < 600 ? err.status : 500);
+
+  // In production, mask internal 500 server errors so implementation details are never exposed to clients
+  const clientMessage =
+    process.env.NODE_ENV === 'production' && statusCode === 500
+      ? 'An unexpected error occurred. Please try again later.'
+      : safeMessage;
 
   res.status(statusCode).json({
     success: false,
-    message,
-    errors: err.errors || undefined,
+    message: clientMessage,
+    errors: process.env.NODE_ENV === 'production' && statusCode === 500 ? undefined : (err.errors || undefined),
   });
 }
+

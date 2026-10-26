@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma.js';
 import { CountryCode, DiscountType } from '@prisma/client';
+import { handleControllerError } from '../utils/dbError.js';
 
 export async function validateCoupon(req: Request, res: Response) {
   try {
@@ -41,7 +42,7 @@ export async function validateCoupon(req: Request, res: Response) {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to validate coupon.');
   }
 }
 
@@ -55,7 +56,7 @@ export async function getAdminCoupons(req: Request, res: Response) {
     });
     return res.json({ success: true, data: coupons });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to fetch coupons.');
   }
 }
 
@@ -84,7 +85,7 @@ export async function createCoupon(req: Request, res: Response) {
 
     return res.status(201).json({ success: true, message: 'Coupon created successfully.', data: coupon });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to create coupon.');
   }
 }
 
@@ -111,7 +112,7 @@ export async function updateCoupon(req: Request, res: Response) {
 
     return res.json({ success: true, message: 'Coupon updated.', data: coupon });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to update coupon.');
   }
 }
 
@@ -121,6 +122,6 @@ export async function deleteCoupon(req: Request, res: Response) {
     await prisma.coupon.delete({ where: { id } });
     return res.json({ success: true, message: 'Coupon deleted.' });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    return handleControllerError(res, error, 'Failed to delete coupon.');
   }
 }

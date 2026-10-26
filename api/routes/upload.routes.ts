@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
+import path from 'path';
 import { upload } from '../middleware/upload.js';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth.js';
 import { storageService } from '../services/storage.service.js';
+import { uploadLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
@@ -66,6 +68,7 @@ router.post(
  */
 router.post(
   '/hamper-photo',
+  uploadLimiter,
   upload.single('file'),
   async (req: Request, res: Response) => {
     try {
@@ -111,6 +114,7 @@ router.post(
  */
 router.post(
   '/hamper-photos',
+  uploadLimiter,
   upload.array('files', 5),
   async (req: Request, res: Response) => {
     try {
@@ -163,10 +167,16 @@ router.post(
 router.delete('/hamper-photo/:key', async (req: Request, res: Response) => {
   try {
     const { key } = req.params;
-    if (!key) {
+    if (!key || typeof key !== 'string') {
       return res.status(400).json({ success: false, message: 'Photo key is required.' });
     }
-    const success = await storageService.deleteFile(key);
+
+    const safeKey = path.basename(key.trim());
+    if (safeKey !== key.trim() || !safeKey.startsWith('ncc-')) {
+      return res.status(400).json({ success: false, message: 'Invalid photo key format.' });
+    }
+
+    const success = await storageService.deleteFile(safeKey);
     return res.json({ success, message: 'Photo deleted successfully.' });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
