@@ -60,5 +60,6 @@ coverage/
 # Vercel
 .vercel/
 
-# Generated files
-*.generated.*
+# Scratch / local test scripts
+scratch/
+

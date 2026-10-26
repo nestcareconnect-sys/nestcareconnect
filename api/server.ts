@@ -160,6 +160,7 @@ const healthHandler = async (_req: express.Request, res: express.Response) => {
       orderCount: dbStatus.orderCount ?? 0,
       userCount: dbStatus.userCount ?? 0,
       error: dbStatus.error,
+      diagnostics: dbStatus.diagnostics,
     },
     environment: process.env.NODE_ENV || 'development',
   });
