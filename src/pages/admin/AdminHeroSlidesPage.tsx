@@ -29,6 +29,8 @@ import { HeroSlide, Product, Hamper, Category, HeroSlideLinkType } from '../../t
 import { heroSlidesApi, productsApi, hampersApi, categoriesApi, uploadApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { getHeroSlideImageUrl } from '../../utils/imageUrl';
+
 
 interface SelectableItem {
   id: string;
@@ -621,8 +623,11 @@ export const AdminHeroSlidesPage: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {slides.map((slide, index) => {
-              const desktopImg = slide.desktopImage || slide.bannerImageUrl || '';
-              const mobileImg = slide.mobileImage || slide.mobileImageUrl;
+              const rawDesktop = slide.desktopImage || slide.bannerImageUrl || '';
+              const rawMobile = slide.mobileImage || slide.mobileImageUrl;
+              const desktopImg = getHeroSlideImageUrl(rawDesktop, slide.id, slide.updatedAt);
+              const mobileImg = rawMobile ? getHeroSlideImageUrl(rawMobile, slide.id, slide.updatedAt) : null;
+              const fallbackImg = getHeroSlideImageUrl('', slide.id);
               const hasLink = slide.linkType !== 'NONE' && (slide.destinationUrl || slide.ctaUrl);
               const destUrl = slide.destinationUrl || slide.ctaUrl || '';
 
@@ -648,7 +653,14 @@ export const AdminHeroSlidesPage: React.FC = () => {
                       src={desktopImg}
                       alt={slide.title || 'Banner'}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== fallbackImg) {
+                          target.src = fallbackImg;
+                        }
+                      }}
                     />
+
                     <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
                       <span className="px-2 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-bold backdrop-blur-xs">
                         #{slide.displayOrder}

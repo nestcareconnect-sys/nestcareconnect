@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, ArrowRight, ShieldCheck } from 'lucide-react
 import { Link, useNavigate } from 'react-router-dom';
 import { HeroSlide } from '../../types';
 import { useHeroSlides } from '../../hooks/useQueries';
+import { getHeroSlideImageUrl } from '../../utils/imageUrl';
 
 export const HeroSlider: React.FC = () => {
   const navigate = useNavigate();
@@ -68,8 +69,11 @@ export const HeroSlider: React.FC = () => {
   const hasLink = currentSlide.linkType !== 'NONE' && Boolean(destinationUrl);
   const isExternal = Boolean(destinationUrl && (destinationUrl.startsWith('http://') || destinationUrl.startsWith('https://')));
 
-  const desktopImg = currentSlide.desktopImage || currentSlide.bannerImageUrl || '';
-  const mobileImg = currentSlide.mobileImage || currentSlide.mobileImageUrl || desktopImg;
+  const rawDesktop = currentSlide.desktopImage || currentSlide.bannerImageUrl || '';
+  const rawMobile = currentSlide.mobileImage || currentSlide.mobileImageUrl || rawDesktop;
+  const desktopImg = getHeroSlideImageUrl(rawDesktop, currentSlide.id, currentSlide.updatedAt);
+  const mobileImg = getHeroSlideImageUrl(rawMobile, currentSlide.id, currentSlide.updatedAt);
+  const fallbackImg = getHeroSlideImageUrl('', currentSlide.id);
 
   const handleBannerClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('a, button')) return;
@@ -121,8 +125,15 @@ export const HeroSlider: React.FC = () => {
               style={{ objectPosition: (currentSlide as any).objectPosition || 'center' }}
               className="w-full h-full object-cover transform scale-102 transition-transform duration-7000 ease-out"
               loading={currentIndex === 0 ? 'eager' : 'lazy'}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== fallbackImg) {
+                  target.src = fallbackImg;
+                }
+              }}
             />
           </picture>
+
 
           {/* Clean Gradient Overlay for Readability (Preserves photography) */}
           {hasTextContent && (

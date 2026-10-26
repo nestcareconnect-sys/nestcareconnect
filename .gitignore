@@ -44,9 +44,12 @@ prisma/*.db
 prisma/*.db-journal
 
 # Uploads / temporary files
-uploads/
+/uploads/
 tmp/
 temp/
+!public/uploads/
+!public/uploads/**
+
 
 # Test / coverage
 coverage/

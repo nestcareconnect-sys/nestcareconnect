@@ -93,3 +93,42 @@ export function getBoxImageUrl(
   }
   return getProductImageUrl(url, updatedAt);
 }
+
+export const HERO_SLIDE_FALLBACKS: Record<string, string> = {
+  'slide-1':
+    'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1920&q=85',
+  'slide-2':
+    'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1920&q=85',
+  'slide-3':
+    'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1920&q=85',
+  'slide-4':
+    'https://images.unsplash.com/photo-1512909006721-3d6018887383?auto=format&fit=crop&w=1920&q=85',
+  default:
+    'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1920&q=85',
+};
+
+export function getHeroSlideImageUrl(
+  url?: string | null,
+  slideKey?: string | number | null,
+  updatedAt?: string | Date | number | null
+): string {
+  const key = String(slideKey || '').toLowerCase();
+  const fallback =
+    HERO_SLIDE_FALLBACKS[key] ||
+    (key.includes('1') || key.includes('love')
+      ? HERO_SLIDE_FALLBACKS['slide-1']
+      : key.includes('2') || key.includes('mum') || key.includes('dad')
+      ? HERO_SLIDE_FALLBACKS['slide-2']
+      : key.includes('3') || key.includes('celebrat')
+      ? HERO_SLIDE_FALLBACKS['slide-3']
+      : key.includes('4') || key.includes('build')
+      ? HERO_SLIDE_FALLBACKS['slide-4']
+      : HERO_SLIDE_FALLBACKS.default);
+
+  if (!url || typeof url !== 'string' || !url.trim()) {
+    return fallback;
+  }
+
+  return getProductImageUrl(url, updatedAt);
+}
+
