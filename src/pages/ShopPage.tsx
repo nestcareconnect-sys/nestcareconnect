@@ -217,17 +217,19 @@ export const ShopPage: React.FC = () => {
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Update URL Filters Handler
-  const handleUpdateFilter = useCallback(
-    (key: string, value: any) => {
+  // Atomic URL Filters Batch Update Handler
+  const handleUpdateFilters = useCallback(
+    (updates: Record<string, any>) => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
-          if (value === '' || value === false || value === undefined || value === null) {
-            next.delete(key);
-          } else {
-            next.set(key, String(value));
-          }
+          Object.entries(updates).forEach(([key, value]) => {
+            if (value === '' || value === false || value === undefined || value === null) {
+              next.delete(key);
+            } else {
+              next.set(key, String(value));
+            }
+          });
           return next;
         },
         { replace: true }
@@ -236,10 +238,19 @@ export const ShopPage: React.FC = () => {
     [setSearchParams]
   );
 
+  // Update single URL filter
+  const handleUpdateFilter = useCallback(
+    (key: string, value: any) => {
+      handleUpdateFilters({ [key]: value });
+    },
+    [handleUpdateFilters]
+  );
+
   const handleResetFilters = useCallback(() => {
     setSearchParams(new URLSearchParams(), { replace: true });
     setSearchInput('');
   }, [setSearchParams]);
+
 
   // Count active filters for badge
   const activeFiltersCount = useMemo(() => {
@@ -353,30 +364,30 @@ export const ShopPage: React.FC = () => {
                     ? currentType === 'addon'
                     : pill.tag
                     ? currentTag === pill.tag
-                    : currentCategory === pill.slug;
+                    : pill.slug
+                    ? currentCategory === pill.slug
+                    : !currentCategory && !currentTag && !currentType;
 
                 return (
                   <button
                     key={pill.label}
+                    type="button"
                     onClick={() => {
-                      if (pill.type === 'addon') {
-                        handleUpdateFilter('type', 'addon');
-                        handleUpdateFilter('category', '');
-                        handleUpdateFilter('tag', '');
+                      if (isSelected && pill.slug) {
+                        // Toggle off if already active -> Return to All Products
+                        handleUpdateFilters({ category: '', tag: '', type: '' });
+                      } else if (pill.type === 'addon') {
+                        handleUpdateFilters({ type: 'addon', category: '', tag: '' });
                       } else if (pill.tag) {
-                        handleUpdateFilter('tag', pill.tag);
-                        handleUpdateFilter('category', '');
-                        handleUpdateFilter('type', '');
+                        handleUpdateFilters({ tag: pill.tag, category: '', type: '' });
                       } else {
-                        handleUpdateFilter('category', pill.slug);
-                        handleUpdateFilter('tag', '');
-                        handleUpdateFilter('type', '');
+                        handleUpdateFilters({ category: pill.slug, tag: '', type: '' });
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 shadow-2xs ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 shadow-2xs cursor-pointer ${
                       isSelected
-                        ? 'bg-[#237A3B] text-white shadow-xs'
-                        : 'bg-gray-100 hover:bg-[#F1FAF3] text-gray-700 hover:text-[#237A3B] border border-transparent'
+                        ? 'bg-[#237A3B] text-white shadow-xs scale-102'
+                        : 'bg-gray-100 hover:bg-[#F1FAF3] text-gray-700 hover:text-[#237A3B] border border-transparent active:scale-98'
                     }`}
                   >
                     {pill.icon && <span>{pill.icon}</span>}
@@ -433,7 +444,13 @@ export const ShopPage: React.FC = () => {
                 maxPrice: currentMaxPrice,
                 sortBy: currentSort,
               }}
-              onFilterChange={(key, val) => handleUpdateFilter(key === 'categorySlug' ? 'category' : key, val)}
+              onFilterChange={(key, val) => {
+                if (key === 'categorySlug') {
+                  handleUpdateFilters({ category: val, tag: '', type: '' });
+                } else {
+                  handleUpdateFilter(key, val);
+                }
+              }}
               onReset={handleResetFilters}
               categories={categories}
               brands={brands}

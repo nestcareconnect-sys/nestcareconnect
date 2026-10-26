@@ -62,7 +62,7 @@ export const ProductFiltersDrawer: React.FC<ProductFiltersDrawerProps> = ({
         <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
           <button
             onClick={() => onFilterChange('categorySlug', '')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-all cursor-pointer ${
               filters.categorySlug === ''
                 ? 'bg-[#F1FAF3] text-[#237A3B] font-bold border border-[#8BCF9B]/40'
                 : 'text-gray-600 hover:bg-gray-50'
@@ -76,7 +76,7 @@ export const ProductFiltersDrawer: React.FC<ProductFiltersDrawerProps> = ({
             <button
               key={cat.id}
               onClick={() => onFilterChange('categorySlug', cat.slug)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-all cursor-pointer ${
                 filters.categorySlug === cat.slug
                   ? 'bg-[#F1FAF3] text-[#237A3B] font-bold border border-[#8BCF9B]/40'
                   : 'text-gray-600 hover:bg-gray-50'
