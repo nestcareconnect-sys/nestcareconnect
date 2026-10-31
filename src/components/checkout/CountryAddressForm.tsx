@@ -23,6 +23,13 @@ const US_STATES = [
   'Ohio', 'Georgia', 'North Carolina', 'Michigan', 'New Jersey', 'Virginia', 'Washington',
 ];
 
+const UK_COUNTIES = [
+  'Greater London', 'West Midlands', 'Greater Manchester', 'West Yorkshire',
+  'Hampshire', 'Essex', 'Kent', 'Surrey', 'Berkshire', 'Oxfordshire',
+  'Cambridgeshire', 'Lancashire', 'Merseyside', 'South Yorkshire',
+  'Tyne and Wear', 'Edinburgh & Lothians', 'Glasgow & Strathclyde', 'Cardiff & South Wales', 'Belfast & Co. Antrim',
+];
+
 export const CountryAddressForm: React.FC<CountryAddressFormProps> = ({
   country,
   address,
@@ -55,7 +62,7 @@ export const CountryAddressForm: React.FC<CountryAddressFormProps> = ({
             type="tel"
             value={address.phone || ''}
             onChange={(e) => onChange('phone', e.target.value)}
-            placeholder={country === 'IN' ? '+91  8921342411' : country === 'AE' ? '+971 50 123 4567' : '+1 234 567 8900'}
+            placeholder={country === 'IN' ? '+91  8921342411' : country === 'AE' ? '+971 50 123 4567' : country === 'UK' ? '+44 7911 123456' : '+1 234 567 8900'}
             className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:border-[#8BCF9B] outline-none"
           />
           {errors.phone && <p className="text-[11px] text-red-500 mt-1">{errors.phone}</p>}
@@ -102,7 +109,7 @@ export const CountryAddressForm: React.FC<CountryAddressFormProps> = ({
             type="text"
             value={address.city || ''}
             onChange={(e) => onChange('city', e.target.value)}
-            placeholder={country === 'IN' ? 'Bengaluru' : country === 'AE' ? 'Dubai' : 'New York'}
+            placeholder={country === 'IN' ? 'Bengaluru' : country === 'AE' ? 'Dubai' : country === 'UK' ? 'London' : 'New York'}
             className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:border-[#8BCF9B] outline-none"
           />
           {errors.city && <p className="text-[11px] text-red-500 mt-1">{errors.city}</p>}
@@ -146,6 +153,24 @@ export const CountryAddressForm: React.FC<CountryAddressFormProps> = ({
                 ))}
               </select>
             </>
+          ) : country === 'UK' ? (
+            <>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                County / Region *
+              </label>
+              <select
+                value={address.state || ''}
+                onChange={(e) => onChange('state', e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:border-[#8BCF9B] outline-none"
+              >
+                <option value="">Select County / Region</option>
+                {UK_COUNTIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </>
           ) : (
             <>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -173,13 +198,13 @@ export const CountryAddressForm: React.FC<CountryAddressFormProps> = ({
         {/* PIN / ZIP / Postal Code */}
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">
-            {country === 'IN' ? 'PIN Code *' : country === 'AE' ? 'Postal / Makani Code' : 'ZIP Code *'}
+            {country === 'IN' ? 'PIN Code *' : country === 'AE' ? 'Postal / Makani Code' : country === 'UK' ? 'Postcode *' : 'ZIP Code *'}
           </label>
           <input
             type="text"
             value={address.postalCode || ''}
             onChange={(e) => onChange('postalCode', e.target.value)}
-            placeholder={country === 'IN' ? '560038' : country === 'AE' ? '00000' : '10001'}
+            placeholder={country === 'IN' ? '560038' : country === 'AE' ? '00000' : country === 'UK' ? 'SW1A 1AA' : '10001'}
             className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:border-[#8BCF9B] outline-none"
           />
           {errors.postalCode && <p className="text-[11px] text-red-500 mt-1">{errors.postalCode}</p>}

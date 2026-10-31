@@ -26,6 +26,7 @@ export const CountryCurrencyProvider: React.FC<{ children: React.ReactNode }> = 
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (timeZone.includes('Dubai') || timeZone.includes('Muscat')) return 'AE';
       if (timeZone.includes('New_York') || timeZone.includes('Los_Angeles') || timeZone.includes('Chicago')) return 'US';
+      if (timeZone.includes('London') || timeZone.includes('Belfast')) return 'UK';
     } catch {
       // Default to IN
     }

@@ -17,6 +17,7 @@ export interface PaymentOrderResult {
   amount: number;
   currency: string;
   clientSecret?: string; // For Stripe
+  publishableKey?: string; // For Stripe
   keyId?: string; // For Razorpay
   metadata?: Record<string, any>;
 }

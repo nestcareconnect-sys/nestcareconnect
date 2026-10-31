@@ -72,6 +72,7 @@ export const AdminProductsPage: React.FC = () => {
     tags: '',
     countryPriceAE: '',
     countryPriceUS: '',
+    countryPriceUK: '',
   });
 
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'NORMAL' | 'HAMPER'>('ALL');
@@ -160,6 +161,7 @@ export const AdminProductsPage: React.FC = () => {
       tags: 'healthcare, testing',
       countryPriceAE: '',
       countryPriceUS: '',
+      countryPriceUK: '',
     });
     setIsModalOpen(true);
   };
@@ -168,6 +170,7 @@ export const AdminProductsPage: React.FC = () => {
     setEditingProductId(product.id);
     const aePrice = product.countryPrices?.find((cp) => cp.country === 'AE')?.fixedPrice?.toString() || '';
     const usPrice = product.countryPrices?.find((cp) => cp.country === 'US')?.fixedPrice?.toString() || '';
+    const ukPrice = product.countryPrices?.find((cp) => cp.country === 'UK')?.fixedPrice?.toString() || '';
 
     const pWeightUnit = (product.weightUnit || 'kg') as WeightUnit;
     const pDimUnit = (product.dimensionUnit || 'cm') as DimensionUnit;
@@ -211,6 +214,7 @@ export const AdminProductsPage: React.FC = () => {
       tags: product.tags?.join(', ') || '',
       countryPriceAE: aePrice,
       countryPriceUS: usPrice,
+      countryPriceUK: ukPrice,
     });
     setIsModalOpen(true);
   };
@@ -382,6 +386,7 @@ export const AdminProductsPage: React.FC = () => {
       countryPrices: [
         ...(formData.countryPriceAE ? [{ country: 'AE', currency: 'AED', fixedPrice: parseFloat(formData.countryPriceAE) }] : []),
         ...(formData.countryPriceUS ? [{ country: 'US', currency: 'USD', fixedPrice: parseFloat(formData.countryPriceUS) }] : []),
+        ...(formData.countryPriceUK ? [{ country: 'UK', currency: 'GBP', fixedPrice: parseFloat(formData.countryPriceUK) }] : []),
       ],
     };
 
@@ -620,6 +625,7 @@ export const AdminProductsPage: React.FC = () => {
                   filteredProducts.map((p) => {
                   const ae = p.countryPrices?.find((cp) => cp.country === 'AE')?.fixedPrice;
                   const us = p.countryPrices?.find((cp) => cp.country === 'US')?.fixedPrice;
+                  const uk = p.countryPrices?.find((cp) => cp.country === 'UK')?.fixedPrice;
 
                   return (
                     <tr key={p.id} className="hover:bg-gray-50/70 transition-colors">
@@ -659,6 +665,7 @@ export const AdminProductsPage: React.FC = () => {
                         <div className="space-y-0.5 text-[11px]">
                           {ae ? <span className="text-gray-700 block">🇦🇪 AED {ae}</span> : <span className="text-gray-400 block">🇦🇪 Auto-Converted</span>}
                           {us ? <span className="text-gray-700 block">🇺🇸 USD ${us}</span> : <span className="text-gray-400 block">🇺🇸 Auto-Converted</span>}
+                          {uk ? <span className="text-gray-700 block">🇬🇧 GBP £{uk}</span> : <span className="text-gray-400 block">🇬🇧 Auto-Converted</span>}
                         </div>
                       </td>
                       <td className="p-4">
@@ -845,7 +852,7 @@ export const AdminProductsPage: React.FC = () => {
                 <span className="font-bold text-gray-800 block text-xs">
                   Country Fixed Price Overrides (Optional - defaults to exchange rate if empty)
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-1">
                       🇦🇪 UAE Price Override (AED)

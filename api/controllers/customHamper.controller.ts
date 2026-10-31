@@ -20,7 +20,7 @@ export async function getCustomHamperConfig(req: Request, res: Response) {
           minItems: 2,
           maxItems: 12,
           minPriceINR: 500,
-          allowedCountries: [CountryCode.IN, CountryCode.AE, CountryCode.US],
+          allowedCountries: [CountryCode.IN, CountryCode.AE, CountryCode.US, CountryCode.UK],
           active: true,
         },
       });
@@ -129,7 +129,7 @@ export async function updateCustomHamperConfig(req: Request, res: Response) {
           maxItems: maxItems || 12,
           minPriceINR: minPriceINR || 500,
           maxPriceINR,
-          allowedCountries: allowedCountries || [CountryCode.IN, CountryCode.AE, CountryCode.US],
+          allowedCountries: allowedCountries || [CountryCode.IN, CountryCode.AE, CountryCode.US, CountryCode.UK],
           active: active !== undefined ? active : true,
         },
       });

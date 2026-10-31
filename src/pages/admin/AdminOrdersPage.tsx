@@ -38,10 +38,11 @@ import {
   ClipboardCheck,
   Sparkles,
   CreditCard,
+  Mail,
 } from 'lucide-react';
 import { SEO } from '../../components/common/SEO';
-import { Order, OrderStatus, PaymentStatus, VideoStatus, NimbusTrackingResult, ShippingInfo, OrderPackageDetails, isHamperItem } from '../../types';
-import { ordersApi, shippingApi } from '../../services/api';
+import { Order, OrderStatus, PaymentStatus, VideoStatus, NimbusTrackingResult, ShippingInfo, OrderPackageDetails, isHamperItem, EmailNotification } from '../../types';
+import { ordersApi, shippingApi, adminApi } from '../../services/api';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '../../context/ToastContext';
 import { useCountryCurrency } from '../../context/CountryCurrencyContext';
@@ -65,8 +66,18 @@ export const AdminOrdersPage: React.FC = () => {
   const [newOrderStatus, setNewOrderStatus] = useState<OrderStatus>('PENDING');
   const [newPaymentStatus, setNewPaymentStatus] = useState<PaymentStatus>('PENDING');
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [statusCourierName, setStatusCourierName] = useState('India Post (Speed Post)');
+  const [statusCustomCourier, setStatusCustomCourier] = useState('');
+  const [statusTrackingUrl, setStatusTrackingUrl] = useState('');
+  const [sendTrackingEmailOnSave, setSendTrackingEmailOnSave] = useState(true);
+  const [isSendingTrackingEmail, setIsSendingTrackingEmail] = useState(false);
   const [statusNote, setStatusNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // MSG91 Email Notifications state
+  const [orderEmails, setOrderEmails] = useState<EmailNotification[]>([]);
+  const [isLoadingEmails, setIsLoadingEmails] = useState(false);
+  const [retryingEmailId, setRetryingEmailId] = useState<string | null>(null);
 
   // Track open Shipping Action Menu in table
   const [shippingMenuOpenOrderId, setShippingMenuOpenOrderId] = useState<string | null>(null);
@@ -344,9 +355,66 @@ export const AdminOrdersPage: React.FC = () => {
     setSelectedOrder(ord);
     setNewOrderStatus(ord.orderStatus);
     setNewPaymentStatus(ord.paymentStatus);
-    setTrackingNumber(ord.trackingNumber || ord.shipment?.awbNumber || '');
+    const existingTracking = ord.trackingNumber || ord.shipment?.awbNumber || '';
+    setTrackingNumber(existingTracking);
+    const existingCourier = ord.shipment?.courierName || ord.courierName || '';
+    const match = POPULAR_COURIERS.find((c) => c.name.toLowerCase() === existingCourier.toLowerCase());
+    if (match) {
+      setStatusCourierName(match.name);
+      setStatusCustomCourier('');
+      setStatusTrackingUrl(ord.shipment?.trackingUrl || match.url || '');
+    } else if (existingCourier) {
+      setStatusCourierName('Other Courier');
+      setStatusCustomCourier(existingCourier);
+      setStatusTrackingUrl(ord.shipment?.trackingUrl || '');
+    } else {
+      setStatusCourierName('India Post (Speed Post)');
+      setStatusCustomCourier('');
+      setStatusTrackingUrl('https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx');
+    }
+    setSendTrackingEmailOnSave(true);
     setStatusNote('');
     setPackingState(ord.packingChecklist?.packedItems || {});
+  };
+
+  useEffect(() => {
+    if (selectedOrder?.id) {
+      setIsLoadingEmails(true);
+      adminApi
+        .getOrderEmails(selectedOrder.id)
+        .then((res) => {
+          if (res.data?.data) {
+            setOrderEmails(res.data.data);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load order emails:', err);
+        })
+        .finally(() => {
+          setIsLoadingEmails(false);
+        });
+    } else {
+      setOrderEmails([]);
+    }
+  }, [selectedOrder?.id]);
+
+  const handleRetryEmail = async (notificationId: string) => {
+    setRetryingEmailId(notificationId);
+    try {
+      const res = await adminApi.retryEmailNotification(notificationId);
+      showToast(res.data?.message || 'Email retried successfully', 'success');
+      if (selectedOrder?.id) {
+        const refreshed = await adminApi.getOrderEmails(selectedOrder.id);
+        if (refreshed.data?.data) {
+          setOrderEmails(refreshed.data.data);
+        }
+      }
+      refetchOrders();
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to retry email delivery', 'error');
+    } finally {
+      setRetryingEmailId(null);
+    }
   };
 
   const handleTogglePackingItem = async (itemId: string) => {
@@ -647,20 +715,80 @@ export const AdminOrdersPage: React.FC = () => {
 
     setIsUpdating(true);
     try {
+      const finalCourier = statusCourierName === 'Other Courier' ? statusCustomCourier.trim() : statusCourierName;
+
       await ordersApi.updateStatus(selectedOrder.id, {
         orderStatus: newOrderStatus,
         paymentStatus: newPaymentStatus,
         trackingNumber: trackingNumber.trim() || undefined,
+        courierName: finalCourier || undefined,
+        trackingUrl: statusTrackingUrl.trim() || undefined,
+        sendTrackingEmail: sendTrackingEmailOnSave,
         note: statusNote.trim() || undefined,
       });
 
-      showToast(`Order ${selectedOrder.orderNumber} status updated.`, 'success');
+      showToast(
+        `Order ${selectedOrder.orderNumber} status updated.${sendTrackingEmailOnSave && trackingNumber.trim() ? ' Tracking email sent to customer!' : ''}`,
+        'success'
+      );
       setSelectedOrder(null);
       loadOrders();
     } catch (err: any) {
       showToast(err.response?.data?.message || 'Failed to update order.', 'error');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleSendTrackingEmailDirect = async () => {
+    if (!selectedOrder) return;
+    const finalTracking = trackingNumber.trim();
+    if (!finalTracking) {
+      showToast('Please enter a Courier Tracking / AWB Number before sending email.', 'error');
+      return;
+    }
+
+    const finalCourier = statusCourierName === 'Other Courier' ? statusCustomCourier.trim() : statusCourierName;
+    if (!finalCourier) {
+      showToast('Please specify a courier partner name.', 'error');
+      return;
+    }
+
+    setIsSendingTrackingEmail(true);
+    try {
+      const res = await adminApi.sendOrderTrackingEmail(selectedOrder.id, {
+        trackingNumber: finalTracking,
+        courierName: finalCourier,
+        trackingUrl: statusTrackingUrl.trim() || undefined,
+        updateStatusToShipped: true,
+        note: statusNote.trim() || undefined,
+      });
+
+      if (res.data?.success) {
+        showToast(
+          res.data.message || `✓ Tracking details sent to customer for order #${selectedOrder.orderNumber}!`,
+          'success'
+        );
+        if (res.data.data?.order) {
+          const updated = res.data.data.order;
+          setSelectedOrder(updated);
+          setNewOrderStatus(updated.orderStatus);
+          setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+        }
+        // Refresh email audit logs
+        adminApi.getOrderEmails(selectedOrder.id).then((emailRes) => {
+          if (emailRes.data?.data) {
+            setOrderEmails(emailRes.data.data);
+          }
+        });
+        loadOrders();
+      } else {
+        showToast(res.data?.message || 'Failed to send tracking email.', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to send tracking email to customer.', 'error');
+    } finally {
+      setIsSendingTrackingEmail(false);
     }
   };
 
@@ -850,7 +978,7 @@ export const AdminOrdersPage: React.FC = () => {
               Order Fulfillment & NimbusPost Shipping Hub
             </h1>
             <p className="text-xs text-gray-500 mt-1">
-              Manage orders, Razorpay payments, book & track NimbusPost courier shipments (Blue Dart, Delhivery, Shadowfax), and fulfill family gift hampers.
+              Manage orders, Stripe payments, book & track NimbusPost courier shipments (Blue Dart, Delhivery, Shadowfax), and fulfill family gift hampers.
             </p>
           </div>
 
@@ -859,7 +987,7 @@ export const AdminOrdersPage: React.FC = () => {
             <button
               onClick={() => refetchOrders()}
               disabled={isOrdersFetching}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-2xl text-gray-700 text-xs font-bold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#E3F5E8] border border-[#E5E7EB] rounded-2xl text-gray-700 text-xs font-bold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
               title="Refresh order records from database"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-[#237A3B] ${isOrdersFetching ? 'animate-spin' : ''}`} />
@@ -867,7 +995,7 @@ export const AdminOrdersPage: React.FC = () => {
             </button>
 
             {/* NimbusPost Test Mode Indicator */}
-            <div className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-xs font-bold">
+            <div className="flex items-center gap-1.5 px-3.5 py-2 bg-[#F1FAF3] border border-[#E5E7EB] rounded-2xl text-[#1A5B2C] text-xs font-bold">
               <Truck className="w-4 h-4 text-[#237A3B]" />
               <span>NIMBUSPOST TEST MODE</span>
             </div>
@@ -875,8 +1003,8 @@ export const AdminOrdersPage: React.FC = () => {
         </div>
 
         {/* Search & Filters */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 w-full md:w-80 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+        <div className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 w-full md:w-80 bg-[#E3F5E8] px-3 py-2 rounded-xl border border-[#E5E7EB]">
             <Search className="w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -893,7 +1021,7 @@ export const AdminOrdersPage: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:border-[#8BCF9B] outline-none"
+                className="px-3 py-2 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl text-xs font-semibold text-gray-800 focus:border-[#8BCF9B] outline-none"
               >
                 <option value="">All Orders</option>
                 <option value="PENDING">Pending</option>
@@ -911,7 +1039,7 @@ export const AdminOrdersPage: React.FC = () => {
               <select
                 value={paymentFilter}
                 onChange={(e) => setPaymentFilter(e.target.value)}
-                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:border-[#8BCF9B] outline-none"
+                className="px-3 py-2 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl text-xs font-semibold text-gray-800 focus:border-[#8BCF9B] outline-none"
               >
                 <option value="">All Payments</option>
                 <option value="PAID">Paid</option>
@@ -925,7 +1053,7 @@ export const AdminOrdersPage: React.FC = () => {
               <select
                 value={videoFilter}
                 onChange={(e) => setVideoFilter(e.target.value)}
-                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:border-[#8BCF9B] outline-none"
+                className="px-3 py-2 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl text-xs font-semibold text-gray-800 focus:border-[#8BCF9B] outline-none"
               >
                 <option value="">All Video States</option>
                 <option value="VIDEO_REQUIRED">Video Required</option>
@@ -937,10 +1065,10 @@ export const AdminOrdersPage: React.FC = () => {
         </div>
 
         {/* Orders Table */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-3xl border border-[#E5E7EB] shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-100">
+              <thead className="bg-[#E3F5E8] text-gray-500 uppercase tracking-wider font-semibold border-b border-[#E5E7EB]">
                 <tr>
                   <th className="p-4">Order Number</th>
                   <th className="p-4">Buyer (Sender)</th>
@@ -948,6 +1076,7 @@ export const AdminOrdersPage: React.FC = () => {
                   <th className="p-4">Ordered Products</th>
                   <th className="p-4">Payment & Total</th>
                   <th className="p-4">Shipping & Fulfillment</th>
+                  <th className="p-4">Email Delivery</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
@@ -955,9 +1084,9 @@ export const AdminOrdersPage: React.FC = () => {
               <tbody className="divide-y divide-gray-100 text-gray-700">
                 {isOrdersLoading || (isLoading && orders.length === 0) ? (
                   <tr>
-                    <td colSpan={8} className="py-20 px-4 text-center">
+                    <td colSpan={9} className="py-20 px-4 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#237A3B] flex items-center justify-center shadow-2xs">
+                        <div className="w-12 h-12 rounded-2xl bg-[#F1FAF3] text-[#237A3B] flex items-center justify-center shadow-2xs">
                           <Loader2 className="w-6 h-6 animate-spin text-[#237A3B]" />
                         </div>
                         <div>
@@ -969,7 +1098,7 @@ export const AdminOrdersPage: React.FC = () => {
                   </tr>
                 ) : isOrdersError ? (
                   <tr>
-                    <td colSpan={8} className="py-16 px-4 text-center">
+                    <td colSpan={9} className="py-16 px-4 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shadow-2xs">
                           <AlertCircle className="w-6 h-6" />
@@ -984,7 +1113,7 @@ export const AdminOrdersPage: React.FC = () => {
                         </div>
                         <button
                           onClick={() => refetchOrders()}
-                          className="mt-1 px-4 py-2 bg-[#237A3B] hover:bg-[#1c6330] text-white text-xs font-bold rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                          className="mt-1 px-4 py-2 bg-[#237A3B] hover:bg-[#1C6330] text-white text-xs font-bold rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                           <span>Retry</span>
@@ -994,9 +1123,9 @@ export const AdminOrdersPage: React.FC = () => {
                   </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-16 px-4 text-center">
+                    <td colSpan={9} className="py-16 px-4 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center shadow-2xs">
+                        <div className="w-12 h-12 rounded-2xl bg-[#E3F5E8] text-gray-400 flex items-center justify-center shadow-2xs">
                           <ShoppingBag className="w-6 h-6" />
                         </div>
                         <div>
@@ -1051,7 +1180,7 @@ export const AdminOrdersPage: React.FC = () => {
                     const isNimbusLiveBooked = isShipped && isNimbus;
 
                     return (
-                      <tr key={ord.id} className="hover:bg-gray-50/70 transition-colors">
+                      <tr key={ord.id} className="hover:bg-[#E3F5E8]/70 transition-colors">
                         <td className="p-4 font-mono font-bold text-gray-900">
                           {ord.orderNumber}
                           <span className="block text-[10px] text-gray-400 font-normal">
@@ -1074,7 +1203,7 @@ export const AdminOrdersPage: React.FC = () => {
                         {/* Recipient */}
                         <td className="p-4">
                           <div>
-                            <span className="font-bold text-emerald-800 flex items-center gap-1">
+                            <span className="font-bold text-[#1A5B2C] flex items-center gap-1">
                               <Heart className="w-3 h-3 text-red-500 fill-red-500 shrink-0" />
                               {ord.recipient?.name || ord.shippingAddress?.name || 'Loved One'}
                             </span>
@@ -1113,7 +1242,7 @@ export const AdminOrdersPage: React.FC = () => {
                                   <button
                                     type="button"
                                     onClick={() => handleOpenStatusModal(ord)}
-                                    className="text-[10px] font-bold text-[#237A3B] hover:text-[#1c6330] hover:underline flex items-center gap-1 pt-0.5 cursor-pointer"
+                                    className="text-[10px] font-bold text-[#237A3B] hover:text-[#1C6330] hover:underline flex items-center gap-1 pt-0.5 cursor-pointer"
                                   >
                                     <span>
                                       {totalCount} Products · View Details
@@ -1144,14 +1273,14 @@ export const AdminOrdersPage: React.FC = () => {
                             <span
                               className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${
                                 ord.paymentStatus === 'PAID'
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  ? 'bg-[#F1FAF3] text-[#237A3B] border border-[#E5E7EB]'
                                   : ord.paymentStatus === 'FAILED'
                                   ? 'bg-red-50 text-red-700 border border-red-200'
                                   : 'bg-amber-50 text-amber-700 border border-amber-200'
                               }`}
                             >
                               {ord.paymentStatus === 'PAID'
-                                ? '✓ Razorpay Paid'
+                                ? `✓ ${ord.paymentProvider === 'RAZORPAY' ? 'Razorpay' : 'Stripe'} Paid`
                                 : ord.paymentStatus === 'FAILED'
                                 ? 'Payment Failed'
                                 : 'Pending Payment'}
@@ -1180,7 +1309,7 @@ export const AdminOrdersPage: React.FC = () => {
                                 <span className={`font-mono text-[10px] px-2 py-0.5 rounded-md inline-block font-semibold border ${
                                   isManual
                                     ? 'text-indigo-950 bg-indigo-50 border-indigo-200'
-                                    : 'text-emerald-950 bg-emerald-50 border-emerald-200'
+                                    : 'text-[#1A5B2C] bg-[#F1FAF3] border-[#E5E7EB]'
                                 }`}>
                                   {awb}
                                 </span>
@@ -1195,7 +1324,7 @@ export const AdminOrdersPage: React.FC = () => {
                                 <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase ${
                                   isManual
                                     ? 'bg-indigo-100 text-indigo-800'
-                                    : 'bg-emerald-100 text-[#237A3B]'
+                                    : 'bg-[#F1FAF3] text-[#237A3B]'
                                 }`}>
                                   {isManual ? 'MANUAL' : 'NIMBUSPOST'}
                                 </span>
@@ -1217,7 +1346,7 @@ export const AdminOrdersPage: React.FC = () => {
                                     href={`https://nimbuspost.com/track/${awb}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-[#237A3B] text-[10px] font-bold rounded flex items-center gap-1"
+                                    className="px-2 py-0.5 bg-[#F1FAF3] hover:bg-[#F1FAF3] text-[#237A3B] text-[10px] font-bold rounded flex items-center gap-1"
                                   >
                                     <span>Nimbus Track</span>
                                     <ExternalLink className="w-2.5 h-2.5" />
@@ -1232,7 +1361,7 @@ export const AdminOrdersPage: React.FC = () => {
                                       'Customer tracking link copied!'
                                     )
                                   }
-                                  className="px-2 py-0.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-[10px] font-semibold rounded flex items-center gap-1 transition-colors"
+                                  className="px-2 py-0.5 bg-[#E3F5E8] hover:bg-gray-100 text-gray-700 text-[10px] font-semibold rounded flex items-center gap-1 transition-colors"
                                   title="Copy customer tracking portal link"
                                 >
                                   <Globe className="w-2.5 h-2.5" />
@@ -1249,6 +1378,16 @@ export const AdminOrdersPage: React.FC = () => {
                                   title="Edit tracking ID or notes"
                                 >
                                   Edit
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenStatusModal(ord)}
+                                  className="px-2 py-0.5 bg-[#F1FAF3] hover:bg-[#E3F5E8] text-[#237A3B] border border-[#8BCF9B]/50 text-[10px] font-bold rounded flex items-center gap-1 transition-colors"
+                                  title="Open status modal to send tracking email to customer"
+                                >
+                                  <Send className="w-2.5 h-2.5" />
+                                  <span>Send Email</span>
                                 </button>
 
                                 <button
@@ -1280,7 +1419,7 @@ export const AdminOrdersPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleOpenNimbusAutoShipModal(ord)}
-                                  className="px-2 py-0.5 bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-bold rounded flex items-center gap-1 transition-colors cursor-pointer"
+                                  className="px-2 py-0.5 bg-[#237A3B] hover:bg-[#1C6330] text-white text-[10px] font-bold rounded flex items-center gap-1 transition-colors cursor-pointer"
                                   title="Retry NimbusPost booking"
                                 >
                                   <Zap className="w-2.5 h-2.5" />
@@ -1320,7 +1459,7 @@ export const AdminOrdersPage: React.FC = () => {
                               ) : (
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-100 text-gray-600 border border-[#E5E7EB]">
                                       NOT_IMPORTED
                                     </span>
                                   </div>
@@ -1332,7 +1471,7 @@ export const AdminOrdersPage: React.FC = () => {
                                           shippingMenuOpenOrderId === ord.id ? null : ord.id
                                         )
                                       }
-                                      className="w-full px-2.5 py-1.5 bg-[#237A3B] hover:bg-[#1c6330] text-white text-[11px] font-bold rounded-xl shadow-xs flex items-center justify-between gap-1.5 transition-all"
+                                      className="w-full px-2.5 py-1.5 bg-[#237A3B] hover:bg-[#1C6330] text-white text-[11px] font-bold rounded-xl shadow-xs flex items-center justify-between gap-1.5 transition-all"
                                       title="Select shipping method"
                                     >
                                       <div className="flex items-center gap-1 truncate">
@@ -1347,7 +1486,7 @@ export const AdminOrdersPage: React.FC = () => {
                                     </button>
 
                                   {shippingMenuOpenOrderId === ord.id && (
-                                    <div className="absolute left-0 mt-1.5 w-64 z-50 bg-white rounded-2xl shadow-xl border border-gray-200 py-1.5 text-xs divide-y divide-gray-100">
+                                    <div className="absolute left-0 mt-1.5 w-64 z-50 bg-white rounded-2xl shadow-xl border border-[#E5E7EB] py-1.5 text-xs divide-y divide-gray-100">
                                       {/* Option A */}
                                       <button
                                         type="button"
@@ -1377,9 +1516,9 @@ export const AdminOrdersPage: React.FC = () => {
                                           setShippingMenuOpenOrderId(null);
                                           handleOpenNimbusAutoShipModal(ord);
                                         }}
-                                        className="w-full text-left px-3 py-2.5 hover:bg-emerald-50/80 flex items-start gap-2.5 transition-colors group cursor-pointer"
+                                        className="w-full text-left px-3 py-2.5 hover:bg-[#F1FAF3]/80 flex items-start gap-2.5 transition-colors group cursor-pointer"
                                       >
-                                        <span className="p-1 rounded-lg bg-emerald-100 text-[#237A3B] mt-0.5 group-hover:bg-emerald-200 shrink-0">
+                                        <span className="p-1 rounded-lg bg-[#F1FAF3] text-[#237A3B] mt-0.5 group-hover:bg-[#E5E7EB] shrink-0">
                                           <Zap className="w-3.5 h-3.5" />
                                         </span>
                                         <div>
@@ -1400,13 +1539,80 @@ export const AdminOrdersPage: React.FC = () => {
                         )}
                       </td>
 
+                        {/* MSG91 Email Delivery Column */}
+                        <td className="p-4 min-w-[150px]">
+                          <div className="space-y-1">
+                            {ord.emailStatusSummary ? (
+                              <>
+                                <div className="flex items-center justify-between gap-1 text-[10px]">
+                                  <span className="text-gray-500 font-medium">Admin:</span>
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded font-bold text-[9px] ${
+                                      ord.emailStatusSummary.adminNotificationStatus === 'DELIVERED'
+                                        ? 'bg-[#F1FAF3] text-[#237A3B] border border-[#E5E7EB]'
+                                        : ord.emailStatusSummary.adminNotificationStatus === 'SENT_TO_PROVIDER' ||
+                                          ord.emailStatusSummary.adminNotificationStatus === 'ACCEPTED'
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                        : ord.emailStatusSummary.adminNotificationStatus === 'FAILED'
+                                        ? 'bg-red-50 text-red-700 border border-red-200'
+                                        : 'bg-gray-100 text-gray-500'
+                                    }`}
+                                  >
+                                    {ord.emailStatusSummary.adminNotificationStatus}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between gap-1 text-[10px]">
+                                  <span className="text-gray-500 font-medium">Customer:</span>
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded font-bold text-[9px] ${
+                                      ord.emailStatusSummary.customerConfirmationStatus === 'DELIVERED'
+                                        ? 'bg-[#F1FAF3] text-[#237A3B] border border-[#E5E7EB]'
+                                        : ord.emailStatusSummary.customerConfirmationStatus === 'SENT_TO_PROVIDER' ||
+                                          ord.emailStatusSummary.customerConfirmationStatus === 'ACCEPTED'
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                        : ord.emailStatusSummary.customerConfirmationStatus === 'FAILED'
+                                        ? 'bg-red-50 text-red-700 border border-red-200'
+                                        : 'bg-gray-100 text-gray-500'
+                                    }`}
+                                  >
+                                    {ord.emailStatusSummary.customerConfirmationStatus}
+                                  </span>
+                                </div>
+                                {ord.emailStatusSummary.shippingNotificationStatus &&
+                                  ord.emailStatusSummary.shippingNotificationStatus !== 'PENDING' &&
+                                  ord.emailStatusSummary.shippingNotificationStatus !== 'NOT_APPLICABLE' && (
+                                    <div className="flex items-center justify-between gap-1 text-[10px]">
+                                      <span className="text-gray-500 font-medium">Shipping:</span>
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded font-bold text-[9px] ${
+                                          ord.emailStatusSummary.shippingNotificationStatus === 'DELIVERED'
+                                            ? 'bg-[#F1FAF3] text-[#237A3B] border border-[#E5E7EB]'
+                                            : ord.emailStatusSummary.shippingNotificationStatus === 'SENT_TO_PROVIDER' ||
+                                              ord.emailStatusSummary.shippingNotificationStatus === 'ACCEPTED'
+                                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                            : ord.emailStatusSummary.shippingNotificationStatus === 'FAILED'
+                                            ? 'bg-red-50 text-red-700 border border-red-200'
+                                            : 'bg-gray-100 text-gray-500'
+                                        }`}
+                                      >
+                                        {ord.emailStatusSummary.shippingNotificationStatus}
+                                      </span>
+                                    </div>
+                                  )}
+                              </>
+                            ) : (
+                              <span className="text-gray-400 text-[10px] italic">No records</span>
+                            )}
+                          </div>
+                        </td>
+
                         {/* Order Status */}
                         <td className="p-4">
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                               ord.orderStatus === 'SHIPPED' || ord.orderStatus === 'DELIVERED'
                                 ? 'bg-[#F1FAF3] text-[#237A3B] border-[#8BCF9B]/40'
-                                : 'bg-gray-50 text-gray-700 border-gray-200'
+                                : 'bg-[#E3F5E8] text-gray-700 border-[#E5E7EB]'
                             }`}
                           >
                             {ord.orderStatus}
@@ -1431,10 +1637,10 @@ export const AdminOrdersPage: React.FC = () => {
                                     customerName: ord.recipient?.name || ord.buyer?.name,
                                   })
                                 }
-                                className="px-2 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-bold text-[11px] transition-colors flex items-center gap-1"
+                                className="px-2 py-1.5 bg-[#F1FAF3] hover:bg-[#F1FAF3] text-[#237A3B] rounded-lg font-bold text-[11px] transition-colors flex items-center gap-1"
                                 title="Share Tracking via WhatsApp"
                               >
-                                <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                                <MessageCircle className="w-3.5 h-3.5 text-[#237A3B]" />
                                 <span className="hidden sm:inline">WhatsApp</span>
                               </button>
                             )}
@@ -1493,8 +1699,8 @@ export const AdminOrdersPage: React.FC = () => {
       {/* Test Shipment Success Dialog Modal */}
       {createdTestShipment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-5 bg-gradient-to-r from-[#237A3B] to-[#1c6330] text-white flex items-center justify-between">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-[#E5E7EB] overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-5 bg-gradient-to-r from-[#237A3B] to-[#1C6330] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-[#8BCF9B]" />
                 <h3 className="font-bold text-sm">✓ Test Shipment Created</h3>
@@ -1505,7 +1711,7 @@ export const AdminOrdersPage: React.FC = () => {
             </div>
 
             <div className="p-6 space-y-4 text-xs">
-              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-950 space-y-1">
+              <div className="p-3 bg-[#F1FAF3] rounded-2xl border border-[#E5E7EB] text-[#1A5B2C] space-y-1">
                 <span className="text-[10px] uppercase font-bold text-[#237A3B] tracking-wider block">
                   NimbusPost Test Mode Confirmation
                 </span>
@@ -1514,16 +1720,16 @@ export const AdminOrdersPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="space-y-2.5 bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                <div className="flex justify-between py-1 border-b border-gray-200/60">
+              <div className="space-y-2.5 bg-[#E3F5E8] p-4 rounded-2xl border border-[#E5E7EB]">
+                <div className="flex justify-between py-1 border-b border-[#E5E7EB]/60">
                   <span className="text-gray-500 font-medium">Order Number:</span>
                   <span className="font-bold text-gray-900 font-mono">{createdTestShipment.orderNumber}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-gray-200/60">
+                <div className="flex justify-between py-1 border-b border-[#E5E7EB]/60">
                   <span className="text-gray-500 font-medium">Shipment ID:</span>
                   <span className="font-bold text-gray-900 font-mono">{createdTestShipment.shipmentId}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-gray-200/60">
+                <div className="flex justify-between py-1 border-b border-[#E5E7EB]/60">
                   <span className="text-gray-500 font-medium">AWB Number:</span>
                   <span className="font-bold text-[#237A3B] font-mono">{createdTestShipment.awbNumber}</span>
                 </div>
@@ -1533,7 +1739,7 @@ export const AdminOrdersPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#E5E7EB]">
                 {createdTestShipment.labelUrl && (
                   <button
                     onClick={() => handlePrintShippingLabel(createdTestShipment.labelUrl)}
@@ -1558,8 +1764,8 @@ export const AdminOrdersPage: React.FC = () => {
       {/* OPTION B: NimbusPost Automated Shipment Modal */}
       {nimbusAutoShipOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden my-6">
-            <div className="p-5 bg-gradient-to-r from-[#237A3B] to-[#1c6330] text-white flex items-center justify-between">
+          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-[#E5E7EB] overflow-hidden my-6">
+            <div className="p-5 bg-gradient-to-r from-[#237A3B] to-[#1C6330] text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-[#8BCF9B] font-bold flex items-center gap-1">
                   <Zap className="w-3.5 h-3.5" /> Option B: Ship via NimbusPost (Automated)
@@ -1576,7 +1782,7 @@ export const AdminOrdersPage: React.FC = () => {
             </div>
 
             <div className="p-6 space-y-5 text-xs max-h-[80vh] overflow-y-auto">
-              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-950">
+              <div className="p-3 bg-[#F1FAF3] rounded-2xl border border-[#E5E7EB] text-[#1A5B2C]">
                 <p className="font-medium text-[11px] leading-relaxed">
                   Review calculated package dimensions, customer shipping details, and chargeable weight before confirming automated dispatch with the NimbusPost API.
                 </p>
@@ -1593,7 +1799,7 @@ export const AdminOrdersPage: React.FC = () => {
               )}
 
               {/* Delivery Address */}
-              <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-1">
+              <div className="p-3.5 bg-[#E3F5E8] rounded-2xl border border-[#E5E7EB] space-y-1">
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
                   Delivery Destination
                 </span>
@@ -1618,14 +1824,14 @@ export const AdminOrdersPage: React.FC = () => {
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
                   Package Contents ({nimbusAutoShipOrder.items?.length || 0} items)
                 </span>
-                <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-gray-50/50">
+                <div className="divide-y divide-gray-100 border border-[#E5E7EB] rounded-2xl overflow-hidden bg-[#E3F5E8]/50">
                   {nimbusAutoShipOrder.items?.map((item, idx) => (
                     <div key={idx} className="p-2.5 flex items-center justify-between text-[11px]">
                       <div>
                         <span className="font-bold text-gray-900">{item.name}</span>
                         {item.sku && <span className="font-mono text-[9px] text-gray-400 block">{item.sku}</span>}
                       </div>
-                      <span className="font-semibold text-gray-700 bg-white px-2 py-0.5 rounded-md border border-gray-200">
+                      <span className="font-semibold text-gray-700 bg-white px-2 py-0.5 rounded-md border border-[#E5E7EB]">
                         Qty: {item.quantity}
                       </span>
                     </div>
@@ -1639,30 +1845,30 @@ export const AdminOrdersPage: React.FC = () => {
                   Authoritative Package & Weight Metrics
                 </span>
                 {isLoadingPackageDetails ? (
-                  <div className="p-6 text-center text-gray-400 space-y-2 bg-gray-50 rounded-2xl border border-gray-200">
+                  <div className="p-6 text-center text-gray-400 space-y-2 bg-[#E3F5E8] rounded-2xl border border-[#E5E7EB]">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#237A3B]" />
                     <p className="text-[11px]">Calculating real weights & volumetric dimensions...</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div className="p-3 bg-white rounded-2xl border border-gray-200 shadow-2xs">
+                    <div className="p-3 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Actual Weight</span>
                       <span className="text-base font-extrabold text-gray-900 font-mono">
                         {nimbusPackageDetails?.packageWeightKg ?? 1.0} <span className="text-xs font-sans text-gray-500">kg</span>
                       </span>
                     </div>
 
-                    <div className="p-3 bg-white rounded-2xl border border-gray-200 shadow-2xs">
+                    <div className="p-3 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Dimensions (L×W×H)</span>
                       <span className="text-xs font-bold text-gray-900 font-mono block truncate" title={nimbusPackageDetails?.dimensionsString || '30 × 20 × 10 cm'}>
                         {nimbusPackageDetails?.dimensionsString || '30 × 20 × 10 cm'}
                       </span>
                     </div>
 
-                    <div className="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200 shadow-2xs">
+                    <div className="p-3 bg-[#F1FAF3]/70 rounded-2xl border border-[#E5E7EB] shadow-2xs">
                       <span className="text-[10px] text-[#237A3B] font-bold uppercase block">Chargeable Weight</span>
                       <span className="text-base font-extrabold text-[#237A3B] font-mono">
-                        {nimbusPackageDetails?.chargeableWeightKg ?? 1.0} <span className="text-xs font-sans text-emerald-700">kg</span>
+                        {nimbusPackageDetails?.chargeableWeightKg ?? 1.0} <span className="text-xs font-sans text-[#237A3B]">kg</span>
                       </span>
                     </div>
                   </div>
@@ -1670,14 +1876,14 @@ export const AdminOrdersPage: React.FC = () => {
               </div>
 
               {/* Pickup Hub Details */}
-              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex justify-between items-center text-[11px]">
+              <div className="p-3 bg-[#E3F5E8] rounded-2xl border border-[#E5E7EB] flex justify-between items-center text-[11px]">
                 <div>
                   <span className="text-[10px] text-gray-400 font-bold uppercase block">Pickup Origin Hub</span>
                   <span className="font-bold text-gray-900">
                     {nimbusPackageDetails?.pickupHub.hubName || shippingInfo?.pickupLocation || 'Dhanyasree 1'}
                   </span>
                 </div>
-                <span className="font-mono text-[10px] bg-white px-2 py-0.5 rounded border border-gray-200 text-gray-600">
+                <span className="font-mono text-[10px] bg-white px-2 py-0.5 rounded border border-[#E5E7EB] text-gray-600">
                   PIN: {nimbusPackageDetails?.pickupHub.pincode || shippingInfo?.pickupPincode || '560001'}
                 </span>
               </div>
@@ -1690,7 +1896,7 @@ export const AdminOrdersPage: React.FC = () => {
                   <select
                     value={selectedAutoCourier}
                     onChange={(e) => setSelectedAutoCourier(e.target.value)}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-semibold text-gray-800 focus:border-[#237A3B]"
+                    className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none font-semibold text-gray-800 focus:border-[#237A3B]"
                   >
                     <option value="Delhivery Surface Express">Delhivery Surface Express (Fast & Economical - ~2 days)</option>
                     <option value="Blue Dart Express Air">Blue Dart Express Air (Priority Air Care - ~1-2 days)</option>
@@ -1699,19 +1905,19 @@ export const AdminOrdersPage: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <div className="flex justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
                   <button
                     type="button"
                     onClick={() => setNimbusAutoShipOrder(null)}
                     disabled={isBookingAutoShipment}
-                    className="px-4 py-2 border border-gray-200 rounded-xl text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-[#E5E7EB] rounded-xl text-gray-600 font-semibold hover:bg-[#E3F5E8] transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isBookingAutoShipment}
-                    className="px-5 py-2.5 bg-[#237A3B] hover:bg-[#1c6330] disabled:bg-gray-300 text-white font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-colors"
+                    className="px-5 py-2.5 bg-[#237A3B] hover:bg-[#1C6330] disabled:bg-gray-300 text-white font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-colors"
                   >
                     {isBookingAutoShipment ? (
                       <>
@@ -1738,7 +1944,7 @@ export const AdminOrdersPage: React.FC = () => {
       {/* Manual Courier Dispatch Modal */}
       {manualShipOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden my-6 animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[#E5E7EB] overflow-hidden my-6 animate-in fade-in zoom-in duration-200">
             <div className="p-5 bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-600 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-indigo-200 font-bold flex items-center gap-1">
@@ -1757,7 +1963,7 @@ export const AdminOrdersPage: React.FC = () => {
 
             <form onSubmit={handleSaveManualShipment} className="p-6 space-y-4 text-xs">
               {/* Recipient Destination Card */}
-              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-1">
+              <div className="p-3 bg-[#E3F5E8] rounded-2xl border border-[#E5E7EB] space-y-1">
                 <span className="text-[10px] text-gray-400 font-bold uppercase block">Delivery Destination</span>
                 <p className="font-bold text-gray-900">
                   {manualShipOrder.recipient?.name || manualShipOrder.shippingAddress?.name} •{' '}
@@ -1786,7 +1992,7 @@ export const AdminOrdersPage: React.FC = () => {
                       className={`p-2 rounded-xl border text-left flex items-center gap-1.5 transition-all text-[11px] font-semibold ${
                         manualCourierName === c.name
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-xs'
-                          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                          : 'bg-white border-[#E5E7EB] text-gray-700 hover:bg-[#E3F5E8]'
                       }`}
                     >
                       <span>{c.icon}</span>
@@ -1801,7 +2007,7 @@ export const AdminOrdersPage: React.FC = () => {
                     value={manualCustomCourier}
                     onChange={(e) => setManualCustomCourier(e.target.value)}
                     placeholder="Enter Custom Courier Name (e.g. Navata Road Transport)"
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-semibold text-gray-800"
+                    className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none font-semibold text-gray-800"
                     required
                   />
                 )}
@@ -1817,7 +2023,7 @@ export const AdminOrdersPage: React.FC = () => {
                   value={manualTrackingNumber}
                   onChange={(e) => setManualTrackingNumber(e.target.value)}
                   placeholder="e.g. EP123456789IN or DTDC892348"
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-mono uppercase font-bold text-gray-900"
+                  className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none font-mono uppercase font-bold text-gray-900"
                   required
                 />
                 <span className="text-[10px] text-gray-400 mt-0.5 block">
@@ -1835,7 +2041,7 @@ export const AdminOrdersPage: React.FC = () => {
                   value={manualTrackingUrl}
                   onChange={(e) => setManualTrackingUrl(e.target.value)}
                   placeholder="https://www.indiapost.gov.in/..."
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none text-gray-700 text-xs"
+                  className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none text-gray-700 text-xs"
                 />
               </div>
 
@@ -1848,7 +2054,7 @@ export const AdminOrdersPage: React.FC = () => {
                     type="date"
                     value={manualDispatchDate}
                     onChange={(e) => setManualDispatchDate(e.target.value)}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-semibold text-gray-800 text-xs"
+                    className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none font-semibold text-gray-800 text-xs"
                     required
                   />
                 </div>
@@ -1859,7 +2065,7 @@ export const AdminOrdersPage: React.FC = () => {
                     value={manualEstimatedDelivery}
                     onChange={(e) => setManualEstimatedDelivery(e.target.value)}
                     placeholder="e.g. 3-5 business days"
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none text-xs"
+                    className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none text-xs"
                   />
                 </div>
               </div>
@@ -1871,7 +2077,7 @@ export const AdminOrdersPage: React.FC = () => {
                   value={manualShippingNotes}
                   onChange={(e) => setManualShippingNotes(e.target.value)}
                   placeholder="e.g. Dispatched from Bangalore Healthcare Hub"
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none text-xs"
+                  className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none text-xs"
                 />
               </div>
 
@@ -1886,28 +2092,28 @@ export const AdminOrdersPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
                 <button
                   type="button"
                   onClick={() => setManualShipOrder(null)}
-                  className="px-4 py-2 border border-gray-200 rounded-xl text-gray-600 font-semibold"
+                  className="px-4 py-2 border border-[#E5E7EB] rounded-xl text-gray-600 font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingManualShipment}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-colors"
+                  className="px-5 py-2 bg-[#237A3B] hover:bg-[#1C6330] text-white font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   {isSavingManualShipment ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Publishing to Web...</span>
+                      <span>Sending Email & Saving...</span>
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
-                      <span>Save & Publish Tracking to Web</span>
+                      <span>Save & Send Tracking Email to Customer</span>
                     </>
                   )}
                 </button>
@@ -1920,7 +2126,7 @@ export const AdminOrdersPage: React.FC = () => {
       {/* Manual Shipment Success Confirmation Dialog Modal */}
       {createdManualShipment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-[#E5E7EB] overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-5 bg-gradient-to-r from-indigo-700 to-purple-600 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-indigo-200" />
@@ -1946,10 +2152,10 @@ export const AdminOrdersPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
+              <div className="p-3.5 bg-[#E3F5E8] rounded-2xl border border-[#E5E7EB] space-y-2">
                 <div className="flex justify-between items-center text-[11px]">
                   <span className="text-gray-500 font-sans">Tracking ID:</span>
-                  <span className="font-mono font-bold text-indigo-900 bg-white px-2.5 py-0.5 rounded border border-gray-200">
+                  <span className="font-mono font-bold text-indigo-900 bg-white px-2.5 py-0.5 rounded border border-[#E5E7EB]">
                     {createdManualShipment.trackingNumber}
                   </span>
                 </div>
@@ -1977,7 +2183,7 @@ export const AdminOrdersPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => shareViaWhatsApp(createdManualShipment)}
-                  className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors"
+                  className="w-full py-2.5 px-3 bg-[#237A3B] hover:bg-[#237A3B] text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>Send Tracking via WhatsApp Web</span>
@@ -2001,7 +2207,7 @@ export const AdminOrdersPage: React.FC = () => {
       {/* NimbusPost Live Tracking Modal */}
       {trackingOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[#E5E7EB] overflow-hidden">
             <div className="p-5 bg-[#237A3B] text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-[#8BCF9B] font-bold">
@@ -2022,7 +2228,7 @@ export const AdminOrdersPage: React.FC = () => {
                 </div>
               ) : trackingData ? (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-200">
+                  <div className="flex items-center justify-between p-3.5 bg-[#E3F5E8] rounded-2xl border border-[#E5E7EB]">
                     <div>
                       <span className="text-[10px] text-gray-400 uppercase font-bold block">Courier Partner</span>
                       <span className="font-bold text-gray-900">{trackingData.courierName}</span>
@@ -2061,10 +2267,10 @@ export const AdminOrdersPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100 flex justify-end gap-2">
+                  <div className="pt-3 border-t border-[#E5E7EB] flex justify-end gap-2">
                     <button
                       onClick={() => handlePrintShippingLabel(trackingOrder.shipment?.labelUrl || undefined)}
-                      className="px-4 py-2 bg-[#237A3B] hover:bg-[#1c6330] text-white font-semibold rounded-xl flex items-center gap-1.5 shadow-xs"
+                      className="px-4 py-2 bg-[#237A3B] hover:bg-[#1C6330] text-white font-semibold rounded-xl flex items-center gap-1.5 shadow-xs"
                     >
                       <Download className="w-4 h-4" />
                       <span>Download / Print Label</span>
@@ -2090,7 +2296,7 @@ export const AdminOrdersPage: React.FC = () => {
       {/* Video & QR Management Modal */}
       {videoOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden my-6">
+          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#E5E7EB] overflow-hidden my-6">
             <div className="p-5 bg-[#237A3B] text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-[#8BCF9B] font-bold">
@@ -2114,7 +2320,7 @@ export const AdminOrdersPage: React.FC = () => {
                     value={videoUrlInput}
                     onChange={(e) => setVideoUrlInput(e.target.value)}
                     placeholder="https://youtu.be/xxx or https://res.cloudinary.com/..."
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none"
+                    className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none"
                   />
                 </div>
 
@@ -2123,7 +2329,7 @@ export const AdminOrdersPage: React.FC = () => {
                   <select
                     value={videoStatusInput}
                     onChange={(e) => setVideoStatusInput(e.target.value as VideoStatus)}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none"
+                    className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none"
                   >
                     <option value="VIDEO_REQUIRED">Video Required (Awaiting Customer)</option>
                     <option value="VIDEO_PROCESSING">Video Processing</option>
@@ -2143,7 +2349,7 @@ export const AdminOrdersPage: React.FC = () => {
               </form>
 
               {qrCodeData && (
-                <div className="border-t border-gray-100 pt-6 space-y-4">
+                <div className="border-t border-[#E5E7EB] pt-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-gray-900 text-sm">Printable Hamper Greeting QR Card</h4>
                     <button
@@ -2156,11 +2362,11 @@ export const AdminOrdersPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="p-6 bg-gradient-to-br from-emerald-50 to-white rounded-2xl border-2 border-dashed border-[#8BCF9B] flex flex-col sm:flex-row items-center gap-6">
+                  <div className="p-6 bg-gradient-to-br from-[#F1FAF3] to-white rounded-2xl border-2 border-dashed border-[#8BCF9B] flex flex-col sm:flex-row items-center gap-6">
                     <img
                       src={qrCodeData.qrDataUrl}
                       alt="Personalized Video QR"
-                      className="w-36 h-36 rounded-xl border border-gray-200 shadow-sm bg-white p-2"
+                      className="w-36 h-36 rounded-xl border border-[#E5E7EB] shadow-sm bg-white p-2"
                     />
                     <div className="space-y-1.5 text-center sm:text-left flex-1">
                       <span className="text-[10px] text-[#237A3B] uppercase font-bold tracking-wider">
@@ -2229,9 +2435,9 @@ export const AdminOrdersPage: React.FC = () => {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-            <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden my-6 max-h-[92vh] flex flex-col">
+            <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-[#E5E7EB] overflow-hidden my-6 max-h-[92vh] flex flex-col">
               {/* Modal Header */}
-              <div className="p-5 bg-gradient-to-r from-[#237A3B] to-[#1c6330] text-white flex items-center justify-between shrink-0 shadow-sm">
+              <div className="p-5 bg-gradient-to-r from-[#237A3B] to-[#1C6330] text-white flex items-center justify-between shrink-0 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white">
                     <ClipboardCheck className="w-5 h-5 text-[#8BCF9B]" />
@@ -2253,10 +2459,10 @@ export const AdminOrdersPage: React.FC = () => {
                 </button>
               </div>
 
-              <div className="p-5 sm:p-6 overflow-y-auto space-y-6 text-xs flex-1 bg-gray-50/40">
+              <div className="p-5 sm:p-6 overflow-y-auto space-y-6 text-xs flex-1 bg-[#E3F5E8]/40">
                 {/* Section A: Order Summary Bar */}
-                <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                <div className="p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-2.5">
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold text-gray-900 text-sm">#{selectedOrder.orderNumber}</span>
                       <span className="text-gray-400">•</span>
@@ -2278,12 +2484,12 @@ export const AdminOrdersPage: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Payment Status</span>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
                           selectedOrder.paymentStatus === 'PAID'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            ? 'bg-[#F1FAF3] text-[#237A3B] border border-[#E5E7EB]'
                             : selectedOrder.paymentStatus === 'FAILED'
                             ? 'bg-red-50 text-red-700 border border-red-200'
                             : 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -2291,30 +2497,30 @@ export const AdminOrdersPage: React.FC = () => {
                           {selectedOrder.paymentStatus}
                         </span>
                         <span className="text-gray-500 text-[10px] font-semibold">
-                          ({selectedOrder.paymentProvider || 'RAZORPAY'})
+                          ({selectedOrder.paymentProvider || 'STRIPE'})
                         </span>
                       </div>
                     </div>
 
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Order Status</span>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border inline-block mt-0.5 ${
                         selectedOrder.orderStatus === 'SHIPPED' || selectedOrder.orderStatus === 'DELIVERED'
                           ? 'bg-[#F1FAF3] text-[#237A3B] border-[#8BCF9B]/40'
-                          : 'bg-gray-100 text-gray-700 border-gray-200'
+                          : 'bg-gray-100 text-gray-700 border-[#E5E7EB]'
                       }`}>
                         {selectedOrder.orderStatus}
                       </span>
                     </div>
 
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Total Amount</span>
                       <span className="font-extrabold text-gray-900 text-sm block mt-0.5">
                         {selectedOrder.currency} {selectedOrder.total.toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Shipping Method / AWB</span>
                       <div className="mt-0.5">
                         <span className="font-bold text-gray-800 block text-[11px] truncate">
@@ -2328,16 +2534,16 @@ export const AdminOrdersPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Section B: Razorpay Live Gateway Transaction Information */}
-                <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                {/* Section B: Gateway Transaction Information */}
+                <div className="p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#237A3B] flex items-center justify-center font-bold">
+                      <div className="w-7 h-7 rounded-lg bg-[#F1FAF3] text-[#237A3B] flex items-center justify-center font-bold">
                         <CreditCard className="w-4 h-4" />
                       </div>
                       <div>
                         <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wide">
-                          Razorpay Payment Information
+                          Stripe & Gateway Payment Information
                         </h4>
                         <span className="text-[10px] text-gray-400">
                           Gateway Verification & Transaction Audit
@@ -2347,14 +2553,14 @@ export const AdminOrdersPage: React.FC = () => {
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                         selectedOrder.paymentStatus === 'PAID'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          ? 'bg-[#F1FAF3] text-[#237A3B] border-[#E5E7EB]'
                           : selectedOrder.paymentStatus === 'FAILED'
                           ? 'bg-red-50 text-red-700 border-red-200'
                           : 'bg-amber-50 text-amber-700 border-amber-200'
                       }`}
                     >
                       {selectedOrder.paymentStatus === 'PAID'
-                        ? '✓ Razorpay Verified'
+                        ? `✓ ${selectedOrder.paymentProvider === 'RAZORPAY' ? 'Razorpay' : 'Stripe'} Verified`
                         : selectedOrder.paymentStatus === 'FAILED'
                         ? 'Payment Failed'
                         : 'Awaiting Payment'}
@@ -2362,8 +2568,8 @@ export const AdminOrdersPage: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Razorpay Payment ID</span>
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Payment Intent / Transaction ID</span>
                       <span
                         className="font-mono font-bold text-gray-900 text-xs block select-all truncate mt-0.5"
                         title={selectedOrder.transactionId || selectedOrder.paymentId || selectedOrder.payments?.[0]?.providerPaymentId || 'N/A'}
@@ -2372,8 +2578,8 @@ export const AdminOrdersPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Razorpay Order ID</span>
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Gateway Order / Session ID</span>
                       <span
                         className="font-mono font-bold text-gray-900 text-xs block select-all truncate mt-0.5"
                         title={selectedOrder.payments?.[0]?.providerOrderId || 'N/A'}
@@ -2382,21 +2588,21 @@ export const AdminOrdersPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Payment Method</span>
                       <span className="font-bold text-gray-800 text-xs block mt-0.5 uppercase">
-                        {(selectedOrder.payments?.[0]?.rawResponse as any)?.method || (selectedOrder.paymentStatus === 'PAID' ? 'Razorpay Standard' : 'Pending Selection')}
+                        {(selectedOrder.payments?.[0]?.rawResponse as any)?.method || (selectedOrder.paymentStatus === 'PAID' ? 'Stripe Elements / Card' : 'Pending Selection')}
                       </span>
                     </div>
 
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Captured Amount</span>
                       <span className="font-extrabold text-[#237A3B] text-xs block mt-0.5">
                         {selectedOrder.currency} {selectedOrder.total.toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Payment Timestamp</span>
                       <span className="font-medium text-gray-700 text-xs block mt-0.5">
                         {selectedOrder.payments?.[0]?.createdAt
@@ -2405,11 +2611,11 @@ export const AdminOrdersPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="p-2.5 bg-[#E3F5E8] rounded-xl border border-[#E5E7EB]">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">HMAC Signature</span>
                       <span className="font-bold text-xs block mt-0.5">
                         {selectedOrder.payments?.[0]?.signatureVerified || selectedOrder.paymentStatus === 'PAID' ? (
-                          <span className="text-emerald-700 flex items-center gap-1">
+                          <span className="text-[#237A3B] flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Cryptographically Verified
                           </span>
                         ) : (
@@ -2434,11 +2640,158 @@ export const AdminOrdersPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Section D: Packing Checklist */}
-                <div className="p-4 sm:p-5 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 gap-2">
+                {/* Section C: MSG91 Transactional Email Delivery & Status */}
+                <div className="p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#237A3B] flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wide">
+                          MSG91 Transactional Email Delivery
+                        </h4>
+                        <span className="text-[10px] text-gray-400">
+                          Audit logs, delivery receipts & manual retry
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedOrder?.id) {
+                          setIsLoadingEmails(true);
+                          adminApi
+                            .getOrderEmails(selectedOrder.id)
+                            .then((res) => setOrderEmails(res.data?.data || []))
+                            .finally(() => setIsLoadingEmails(false));
+                        }
+                      }}
+                      disabled={isLoadingEmails}
+                      className="px-2.5 py-1 bg-[#E3F5E8] hover:bg-gray-100 text-gray-600 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 transition-colors border border-[#E5E7EB] cursor-pointer"
+                      title="Refresh MSG91 email logs"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isLoadingEmails ? 'animate-spin' : ''}`} />
+                      <span>Refresh</span>
+                    </button>
+                  </div>
+
+                  {isLoadingEmails ? (
+                    <div className="py-6 flex items-center justify-center gap-2 text-gray-500 text-xs">
+                      <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                      <span>Loading email delivery records...</span>
+                    </div>
+                  ) : orderEmails.length === 0 ? (
+                    <div className="py-4 text-center bg-[#E3F5E8]/60 rounded-xl border border-dashed border-[#E5E7EB]">
+                      <p className="text-xs text-gray-500">No email notifications recorded for this order yet.</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Emails are triggered upon order creation, payment verification, and shipment dispatch.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {orderEmails.map((email) => {
+                        const eventLabels: Record<string, string> = {
+                          NEW_ORDER_ADMIN: 'Admin Notification',
+                          ORDER_CONFIRMATION_CUSTOMER: 'Customer Confirmation',
+                          ORDER_STATUS_UPDATE: 'Status Update',
+                          SHIPMENT_TRACKING: 'Shipment Tracking',
+                          DELIVERY_CONFIRMATION: 'Delivery Confirmation',
+                        };
+
+                        const isPendingOrFailed = email.status === 'FAILED' || email.status === 'PENDING';
+
+                        return (
+                          <div
+                            key={email.id}
+                            className={`p-3 rounded-xl border transition-colors ${
+                              email.status === 'FAILED'
+                                ? 'bg-red-50/40 border-red-200'
+                                : email.status === 'DELIVERED'
+                                ? 'bg-[#F1FAF3]/30 border-[#E5E7EB]'
+                                : 'bg-[#E3F5E8]/70 border-[#E5E7EB]'
+                            }`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-bold text-gray-900 text-xs">
+                                    {eventLabels[email.eventType] || email.eventType}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                                      email.status === 'DELIVERED'
+                                        ? 'bg-[#F1FAF3] text-[#237A3B] border-[#E5E7EB]'
+                                        : email.status === 'SENT_TO_PROVIDER' || email.status === 'ACCEPTED'
+                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                        : email.status === 'FAILED'
+                                        ? 'bg-red-50 text-red-700 border-red-200'
+                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                    }`}
+                                  >
+                                    {email.status}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 font-mono">
+                                    Attempts: {email.attempts}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-gray-600 truncate max-w-md">
+                                  To: <span className="font-medium text-gray-800">{email.recipientEmail}</span>
+                                  {email.recipientName ? ` (${email.recipientName})` : ''}
+                                </p>
+                                <p className="text-[10px] text-gray-500 font-medium truncate max-w-md">
+                                  Subject: "{email.subject}"
+                                </p>
+                              </div>
+
+                              <div className="flex sm:flex-col sm:items-end justify-between items-center gap-1.5 shrink-0">
+                                <span className="text-[10px] text-gray-400">
+                                  {new Date(email.createdAt).toLocaleString()}
+                                </span>
+                                {isPendingOrFailed && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRetryEmail(email.id)}
+                                    disabled={retryingEmailId === email.id}
+                                    className="px-2.5 py-1 bg-[#237A3B] hover:bg-[#1C6330] text-white text-[10px] font-bold rounded-lg shadow-2xs flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                                  >
+                                    <RefreshCw className={`w-2.5 h-2.5 ${retryingEmailId === email.id ? 'animate-spin' : ''}`} />
+                                    <span>{retryingEmailId === email.id ? 'Retrying...' : 'Retry Email'}</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Message ID or Error Alert */}
+                            <div className="mt-2 pt-2 border-t border-[#E5E7EB]/60 flex items-center justify-between text-[10px] text-gray-400">
+                              <span className="font-mono truncate max-w-xs">
+                                Provider ID: {email.providerMessageId || 'Pending Callback'}
+                              </span>
+                              {email.deliveredAt && (
+                                <span className="text-[#237A3B] font-medium">
+                                  Delivered: {new Date(email.deliveredAt).toLocaleTimeString()}
+                                </span>
+                              )}
+                            </div>
+
+                            {email.errorMessage && (
+                              <div className="mt-1.5 p-2 bg-red-100/60 text-red-700 rounded-lg text-[10px] font-medium flex items-start gap-1">
+                                <AlertCircle className="w-3 h-3 text-red-600 shrink-0 mt-0.5" />
+                                <span>{email.errorMessage}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Section D: Packing Checklist */}
+                <div className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#E5E7EB] gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-[#F1FAF3] text-[#237A3B] flex items-center justify-center">
                         <ClipboardList className="w-4 h-4" />
                       </div>
                       <div>
@@ -2454,10 +2807,10 @@ export const AdminOrdersPage: React.FC = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 ${
                         isAllPacked
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                          ? 'bg-[#F1FAF3] text-[#1A5B2C] border-[#E5E7EB]'
                           : 'bg-amber-50 text-amber-800 border-amber-200'
                       }`}>
-                        {isAllPacked ? <Check className="w-3 h-3 text-emerald-600" /> : <Package className="w-3 h-3 text-amber-600" />}
+                        {isAllPacked ? <Check className="w-3 h-3 text-[#237A3B]" /> : <Package className="w-3 h-3 text-amber-600" />}
                         <span>
                           {packedCount} of {totalItemsToPack} items packed ({progressPercent}%)
                         </span>
@@ -2481,7 +2834,7 @@ export const AdminOrdersPage: React.FC = () => {
                   <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-300 ${
-                        isAllPacked ? 'bg-emerald-600' : 'bg-[#237A3B]'
+                        isAllPacked ? 'bg-[#237A3B]' : 'bg-[#237A3B]'
                       }`}
                       style={{ width: `${progressPercent}%` }}
                     />
@@ -2490,8 +2843,8 @@ export const AdminOrdersPage: React.FC = () => {
                   {/* Checklist Groups */}
                   <div className="space-y-4">
                     {Object.entries(checklistGroups).map(([groupTitle, items]) => (
-                      <div key={groupTitle} className="p-3.5 bg-gray-50/70 rounded-2xl border border-gray-200/80 space-y-2">
-                        <div className="flex items-center justify-between pb-1.5 border-b border-gray-200/50">
+                      <div key={groupTitle} className="p-3.5 bg-[#E3F5E8]/70 rounded-2xl border border-[#E5E7EB]/80 space-y-2">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-[#E5E7EB]/50">
                           <span className="font-extrabold text-gray-900 text-xs flex items-center gap-1.5">
                             {groupTitle.includes('Hamper') ? (
                               <Gift className="w-3.5 h-3.5 text-purple-600" />
@@ -2513,8 +2866,8 @@ export const AdminOrdersPage: React.FC = () => {
                                 key={item.id}
                                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none ${
                                   isPacked
-                                    ? 'bg-emerald-50/80 border-emerald-300 shadow-2xs'
-                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+                                    ? 'bg-[#F1FAF3]/80 border-[#E5E7EB] shadow-2xs'
+                                    : 'bg-white border-[#E5E7EB] hover:border-gray-300 hover:bg-[#E3F5E8]/50'
                                 }`}
                               >
                                 <input
@@ -2528,7 +2881,7 @@ export const AdminOrdersPage: React.FC = () => {
                                   <img
                                     src={item.image}
                                     alt={item.name}
-                                    className="w-9 h-9 rounded-lg object-cover border border-gray-200 shrink-0"
+                                    className="w-9 h-9 rounded-lg object-cover border border-[#E5E7EB] shrink-0"
                                   />
                                 ) : (
                                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
@@ -2568,8 +2921,8 @@ export const AdminOrdersPage: React.FC = () => {
                 </div>
 
                 {/* Section B & C: Complete Ordered Products & Hamper Configuration Breakdown */}
-                <div className="p-4 sm:p-5 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-4">
-                  <div className="pb-2 border-b border-gray-100 flex items-center justify-between">
+                <div className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-4">
+                  <div className="pb-2 border-b border-[#E5E7EB] flex items-center justify-between">
                     <div>
                       <h4 className="font-extrabold text-gray-900 text-xs sm:text-sm uppercase tracking-wide">
                         Ordered Products & Specifications
@@ -2667,14 +3020,14 @@ export const AdminOrdersPage: React.FC = () => {
                               </span>
 
                               {breakdown.length === 0 ? (
-                                <p className="text-gray-400 italic text-[11px] p-3 bg-white rounded-xl border border-gray-100">
+                                <p className="text-gray-400 italic text-[11px] p-3 bg-white rounded-xl border border-[#E5E7EB]">
                                   Individual hamper constituents included per catalog definition.
                                 </p>
                               ) : (
-                                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-2xs">
+                                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden shadow-2xs">
                                   <div className="overflow-x-auto">
                                     <table className="w-full text-left text-xs">
-                                      <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-100 text-[10px] uppercase tracking-wider">
+                                      <thead className="bg-[#E3F5E8] text-gray-500 font-semibold border-b border-[#E5E7EB] text-[10px] uppercase tracking-wider">
                                         <tr>
                                           <th className="p-2.5">Item</th>
                                           <th className="p-2.5">Variant / Size</th>
@@ -2688,14 +3041,14 @@ export const AdminOrdersPage: React.FC = () => {
                                           const bImg = b.image || b.images?.[0];
                                           const bVar = b.variant || b.unit || 'Standard';
                                           return (
-                                            <tr key={bIdx} className="hover:bg-gray-50/50">
+                                            <tr key={bIdx} className="hover:bg-[#E3F5E8]/50">
                                               <td className="p-2.5">
                                                 <div className="flex items-center gap-2.5">
                                                   {bImg ? (
                                                     <img
                                                       src={bImg}
                                                       alt={b.name}
-                                                      className="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0 bg-white"
+                                                      className="w-10 h-10 rounded-lg object-cover border border-[#E5E7EB] shrink-0 bg-white"
                                                     />
                                                   ) : (
                                                     <div className="w-10 h-10 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center shrink-0">
@@ -2714,7 +3067,7 @@ export const AdminOrdersPage: React.FC = () => {
                                                 {b.sku || '—'}
                                               </td>
                                               <td className="p-2.5 text-center">
-                                                <span className="font-extrabold text-[#237A3B] font-mono text-xs bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full inline-block">
+                                                <span className="font-extrabold text-[#237A3B] font-mono text-xs bg-[#F1FAF3] border border-[#E5E7EB] px-2.5 py-0.5 rounded-full inline-block">
                                                   {b.quantity || 1}
                                                 </span>
                                               </td>
@@ -2738,14 +3091,14 @@ export const AdminOrdersPage: React.FC = () => {
                       return (
                         <div
                           key={itm.id || itmIdx}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-white border border-gray-200 shadow-2xs gap-4"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-white border border-[#E5E7EB] shadow-2xs gap-4"
                         >
                           <div className="flex items-start gap-3.5">
                             {itmImg ? (
                               <img
                                 src={itmImg}
                                 alt={itm.name}
-                                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border border-gray-200 shadow-xs shrink-0 bg-white"
+                                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border border-[#E5E7EB] shadow-xs shrink-0 bg-white"
                               />
                             ) : (
                               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center shrink-0">
@@ -2788,7 +3141,7 @@ export const AdminOrdersPage: React.FC = () => {
 
                 {/* Section E: Customer Customization Details (Hamper Orders Only) */}
                 {isHamperOrder && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#F1FAF3] to-emerald-50/60 border-2 border-[#8BCF9B] space-y-4 shadow-2xs">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#F1FAF3] to-[#E3F5E8]/60 border-2 border-[#8BCF9B] space-y-4 shadow-2xs">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-[#8BCF9B]/40 gap-2">
                       <div className="flex items-center gap-2 text-[#237A3B]">
                         <Heart className="w-4 h-4 fill-current" />
@@ -2800,7 +3153,7 @@ export const AdminOrdersPage: React.FC = () => {
                         {selectedOrder.whatsappStatus && (selectedOrder.whatsappStatus as string) !== 'NOT_APPLICABLE' && selectedOrder.whatsappStatus !== 'NOT_SENT' && (
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 ${
                             selectedOrder.whatsappStatus === 'SENT'
-                              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                              ? 'bg-[#F1FAF3] text-[#1A5B2C] border-[#E5E7EB]'
                               : 'bg-amber-50 text-amber-800 border-amber-200'
                           }`}>
                             <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
@@ -2815,7 +3168,7 @@ export const AdminOrdersPage: React.FC = () => {
 
                     {/* Personal Greeting Card Message */}
                     {finalMessage && (
-                      <div className="p-4 bg-white rounded-2xl border border-emerald-200 shadow-2xs space-y-2">
+                      <div className="p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-bold text-[#237A3B] uppercase tracking-wider flex items-center gap-1">
                             <Sparkles className="w-3.5 h-3.5" />
@@ -2824,14 +3177,14 @@ export const AdminOrdersPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handlePrintGreetingCard(selectedOrder.orderNumber, selectedOrder.recipient?.name || selectedOrder.shippingAddress?.name || 'Loved One', finalMessage)}
-                            className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#237A3B] font-bold rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors text-[10px] cursor-pointer"
+                            className="px-3 py-1 bg-[#F1FAF3] hover:bg-[#F1FAF3] text-[#237A3B] font-bold rounded-lg border border-[#E5E7EB] flex items-center gap-1 transition-colors text-[10px] cursor-pointer"
                             title="Print physical greeting card"
                           >
                             <Printer className="w-3 h-3" />
                             <span>Print Greeting Card</span>
                           </button>
                         </div>
-                        <div className="p-3.5 bg-emerald-50/30 rounded-xl border border-emerald-100 text-gray-800 font-serif italic text-xs sm:text-sm leading-relaxed shadow-2xs">
+                        <div className="p-3.5 bg-[#F1FAF3]/30 rounded-xl border border-[#E5E7EB] text-gray-800 font-serif italic text-xs sm:text-sm leading-relaxed shadow-2xs">
                           "{finalMessage}"
                         </div>
                       </div>
@@ -2847,7 +3200,7 @@ export const AdminOrdersPage: React.FC = () => {
                           {itemPhotos.map((photo, pIdx) => (
                             <div
                               key={pIdx}
-                              className="relative group aspect-square rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-xs flex flex-col justify-between"
+                              className="relative group aspect-square rounded-2xl overflow-hidden bg-white border border-[#E5E7EB] shadow-xs flex flex-col justify-between"
                             >
                               <img
                                 src={photo.url}
@@ -2868,7 +3221,7 @@ export const AdminOrdersPage: React.FC = () => {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   download
-                                  className="p-2 rounded-xl bg-[#237A3B] text-white hover:bg-[#1c6330] shadow-md transition-colors"
+                                  className="p-2 rounded-xl bg-[#237A3B] text-white hover:bg-[#1C6330] shadow-md transition-colors"
                                   title="Open / Download full resolution"
                                 >
                                   <Download className="w-4 h-4" />
@@ -2885,7 +3238,7 @@ export const AdminOrdersPage: React.FC = () => {
 
                     {/* Customer Videos */}
                     {whatsappVideos.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-emerald-200">
+                      <div className="space-y-2 pt-2 border-t border-[#E5E7EB]">
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
                           Customer Uploaded Keepsake Videos ({whatsappVideos.length} videos):
                         </span>
@@ -2893,7 +3246,7 @@ export const AdminOrdersPage: React.FC = () => {
                           {whatsappVideos.map((vid: any, vIdx: number) => (
                             <div
                               key={vIdx}
-                              className="p-3 bg-white border border-gray-200 rounded-2xl shadow-xs space-y-2"
+                              className="p-3 bg-white border border-[#E5E7EB] rounded-2xl shadow-xs space-y-2"
                             >
                               <video
                                 src={vid.url}
@@ -2925,7 +3278,7 @@ export const AdminOrdersPage: React.FC = () => {
                 {/* Customer Details & Delivery Destination Address */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   {/* Customer / Buyer Details */}
-                  <div className="p-3.5 bg-white rounded-2xl border border-gray-200 space-y-1">
+                  <div className="p-3.5 bg-white rounded-2xl border border-[#E5E7EB] space-y-1">
                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
                       {isHamperOrder ? 'Buyer / Overseas Sender' : 'Customer Details'}
                     </span>
@@ -2939,21 +3292,21 @@ export const AdminOrdersPage: React.FC = () => {
                       Phone: {selectedOrder.buyer?.phone || selectedOrder.guestPhone || 'Not provided'}
                     </p>
                     {isHamperOrder && (
-                      <span className="inline-block text-[10px] font-semibold text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200 mt-1">
+                      <span className="inline-block text-[10px] font-semibold text-gray-500 bg-[#E3F5E8] px-2 py-0.5 rounded border border-[#E5E7EB] mt-1">
                         Sender Country: {selectedOrder.buyer?.country || selectedOrder.buyerCountry || selectedOrder.country || 'US'}
                       </span>
                     )}
                   </div>
 
                   {/* Delivery Address */}
-                  <div className="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-200/80 space-y-1">
+                  <div className="p-3.5 bg-[#F1FAF3]/60 rounded-2xl border border-[#E5E7EB]/80 space-y-1">
                     <span className="text-[10px] text-[#237A3B] font-bold uppercase tracking-wider block">
                       {isHamperOrder ? 'Recipient (India Delivery)' : 'Shipping / Delivery Address'}
                     </span>
                     <p className="font-bold text-gray-900 text-sm">
                       {selectedOrder.recipient?.name || selectedOrder.shippingAddress?.name || 'Customer'}
                     </p>
-                    <p className="font-mono text-emerald-900 font-bold">
+                    <p className="font-mono text-[#1A5B2C] font-bold">
                       Phone: {selectedOrder.recipient?.phone || selectedOrder.shippingAddress?.phone || 'No phone'}
                     </p>
                     <p className="text-gray-600 text-[11px] leading-relaxed">
@@ -2969,7 +3322,7 @@ export const AdminOrdersPage: React.FC = () => {
                 </div>
 
                 {/* Fulfillment Status & Tracking Form */}
-                <form onSubmit={handleUpdateStatus} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-4">
+                <form onSubmit={handleUpdateStatus} className="p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-4">
                   <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider">
                     Update Order Fulfillment Status
                   </h4>
@@ -2980,7 +3333,7 @@ export const AdminOrdersPage: React.FC = () => {
                       <select
                         value={newOrderStatus}
                         onChange={(e) => setNewOrderStatus(e.target.value as OrderStatus)}
-                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-semibold text-gray-800"
+                        className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none font-semibold text-gray-800"
                       >
                         <option value="PENDING">Pending</option>
                         <option value="CONFIRMED">Confirmed</option>
@@ -2998,7 +3351,7 @@ export const AdminOrdersPage: React.FC = () => {
                       <select
                         value={newPaymentStatus}
                         onChange={(e) => setNewPaymentStatus(e.target.value as PaymentStatus)}
-                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-semibold text-gray-800"
+                        className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none font-semibold text-gray-800"
                       >
                         <option value="PENDING">Pending</option>
                         <option value="PAID">Paid</option>
@@ -3008,15 +3361,139 @@ export const AdminOrdersPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block font-semibold text-gray-700 mb-1">Courier Tracking / AWB Number</label>
-                    <input
-                      type="text"
-                      value={trackingNumber}
-                      onChange={(e) => setTrackingNumber(e.target.value)}
-                      placeholder="e.g. NP-DLH-892348123"
-                      className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-mono font-bold text-gray-900"
-                    />
+                  {/* Courier Partner & Tracking Dispatch Card */}
+                  <div className="p-4 bg-[#F1FAF3] rounded-2xl border border-[#8BCF9B]/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Truck className="w-4 h-4 text-[#237A3B]" />
+                        <span className="font-bold text-gray-900 text-xs uppercase tracking-wide">
+                          Courier Tracking & Customer Email Dispatch
+                        </span>
+                      </div>
+                      {trackingNumber.trim() ? (
+                        <span className="px-2 py-0.5 rounded-full bg-[#E3F5E8] text-[#237A3B] text-[10px] font-bold border border-[#8BCF9B]/50 flex items-center gap-1">
+                          <Check className="w-3 h-3" />
+                          <span>Tracking Entered</span>
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-medium">
+                          Awaiting Tracking ID
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-gray-700 text-[11px] mb-1">
+                          Courier Partner / Carrier
+                        </label>
+                        <select
+                          value={statusCourierName}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setStatusCourierName(val);
+                            const match = POPULAR_COURIERS.find((c) => c.name === val);
+                            if (match && match.url) {
+                              setStatusTrackingUrl(match.url);
+                            }
+                          }}
+                          className="w-full p-2 bg-white border border-[#E5E7EB] rounded-xl outline-none text-xs font-semibold text-gray-800"
+                        >
+                          {POPULAR_COURIERS.map((c) => (
+                            <option key={c.name} value={c.name}>
+                              {c.icon} {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {statusCourierName === 'Other Courier' && (
+                        <div>
+                          <label className="block font-semibold text-gray-700 text-[11px] mb-1">
+                            Custom Carrier Name
+                          </label>
+                          <input
+                            type="text"
+                            value={statusCustomCourier}
+                            onChange={(e) => setStatusCustomCourier(e.target.value)}
+                            placeholder="e.g. Navata Road Transport"
+                            className="w-full p-2 bg-white border border-[#E5E7EB] rounded-xl outline-none text-xs font-semibold text-gray-800"
+                          />
+                        </div>
+                      )}
+
+                      <div className={statusCourierName === 'Other Courier' ? 'sm:col-span-2' : ''}>
+                        <label className="block font-semibold text-gray-700 text-[11px] mb-1">
+                          Tracking ID / Consignment / AWB Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={trackingNumber}
+                          onChange={(e) => setTrackingNumber(e.target.value)}
+                          placeholder="e.g. EP123456789IN or BD892348123"
+                          className="w-full p-2 bg-white border border-[#E5E7EB] focus:border-[#237A3B] rounded-xl outline-none font-mono uppercase font-bold text-gray-900 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-gray-700 text-[11px] mb-1">
+                        Courier Tracking Portal URL <span className="text-gray-400 font-normal">(Optional)</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={statusTrackingUrl}
+                        onChange={(e) => setStatusTrackingUrl(e.target.value)}
+                        placeholder="https://www.indiapost.gov.in/..."
+                        className="w-full p-2 bg-white border border-[#E5E7EB] rounded-xl outline-none text-xs text-gray-700"
+                      />
+                    </div>
+
+                    {/* Customer Recipient & One-Click "Send Tracking to Customer" Button */}
+                    <div className="pt-2.5 border-t border-[#8BCF9B]/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 rounded-xl border border-[#8BCF9B]/30">
+                      <div className="text-[11px] text-[#1A5B2C] min-w-0">
+                        <span className="text-[10px] uppercase font-bold text-[#237A3B] block">
+                          Customer Email Recipient:
+                        </span>
+                        <span className="font-semibold text-gray-800 truncate block">
+                          {(selectedOrder.shippingAddress as any)?.buyer?.email ||
+                            selectedOrder.guestEmail ||
+                            (selectedOrder.shippingAddress as any)?.email ||
+                            selectedOrder.buyer?.email ||
+                            'Customer email address on order'}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSendTrackingEmailDirect}
+                        disabled={isSendingTrackingEmail || !trackingNumber.trim()}
+                        className="px-4 py-2 bg-[#237A3B] hover:bg-[#1C6330] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                        title="Dispatch tracking email to the customer with MSG91 template"
+                      >
+                        {isSendingTrackingEmail ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Sending Email...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Send Tracking Info to Customer</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <label className="flex items-center gap-2 pt-1 cursor-pointer select-none text-[11px] text-gray-700 font-medium">
+                      <input
+                        type="checkbox"
+                        checked={sendTrackingEmailOnSave}
+                        onChange={(e) => setSendTrackingEmailOnSave(e.target.checked)}
+                        className="w-4 h-4 text-[#237A3B] accent-[#237A3B] rounded cursor-pointer"
+                      />
+                      <span>Also send tracking email to customer when clicking "Update Order Status" below</span>
+                    </label>
                   </div>
 
                   <div>
@@ -3026,22 +3503,22 @@ export const AdminOrdersPage: React.FC = () => {
                       value={statusNote}
                       onChange={(e) => setStatusNote(e.target.value)}
                       placeholder="e.g. Dispatched from Bengaluru Central Medical Hub"
-                      className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none"
+                      className="w-full p-2.5 bg-[#E3F5E8] border border-[#E5E7EB] rounded-xl outline-none"
                     />
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                  <div className="flex justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
                     <button
                       type="button"
                       onClick={() => setSelectedOrder(null)}
-                      className="px-4 py-2 border border-gray-200 rounded-xl text-gray-600 font-semibold"
+                      className="px-4 py-2 border border-[#E5E7EB] rounded-xl text-gray-600 font-semibold"
                     >
                       Close
                     </button>
                     <button
                       type="submit"
                       disabled={isUpdating}
-                      className="px-5 py-2 bg-[#237A3B] text-white font-bold rounded-xl shadow-md hover:bg-[#1c6330] transition-colors"
+                      className="px-5 py-2 bg-[#237A3B] text-white font-bold rounded-xl shadow-md hover:bg-[#1C6330] transition-colors"
                     >
                       {isUpdating ? 'Updating...' : 'Update Order Status'}
                     </button>
@@ -3079,7 +3556,7 @@ export const AdminOrdersPage: React.FC = () => {
               />
             </div>
 
-            <div className="p-4 bg-white border-t border-gray-100 flex items-center justify-between text-xs">
+            <div className="p-4 bg-white border-t border-[#E5E7EB] flex items-center justify-between text-xs">
               <span className="text-gray-500">Inspect print resolution before greeting card generation.</span>
               <div className="flex gap-2">
                 <a

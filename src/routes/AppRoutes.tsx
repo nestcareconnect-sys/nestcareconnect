@@ -18,6 +18,8 @@ import { OrderTrackingPage } from '../pages/OrderTrackingPage';
 import { SpecialMessagePage } from '../pages/SpecialMessagePage';
 import { AccountPage } from '../pages/AccountPage';
 import { LoginPage, RegisterPage } from '../pages/AuthPages';
+import { ForgotPasswordPage } from '../pages/ForgotPasswordPage';
+import { VerifyEmailPage } from '../pages/VerifyEmailPage';
 import {
   AboutPage,
   ContactPage,
@@ -95,6 +97,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/create-account" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ForgotPasswordPage />} />
+        <Route path="/verify-otp" element={<ForgotPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/shipping-policy" element={<ShippingPolicyPage />} />

@@ -78,7 +78,7 @@ export async function createCoupon(req: Request, res: Response) {
         expiryDate: expiryDate ? new Date(expiryDate) : null,
         usageLimit: usageLimit ? parseInt(usageLimit, 10) : null,
         perUserLimit: perUserLimit ? parseInt(perUserLimit, 10) : 1,
-        applicableCountries: applicableCountries || [CountryCode.IN, CountryCode.AE, CountryCode.US],
+        applicableCountries: applicableCountries || [CountryCode.IN, CountryCode.AE, CountryCode.US, CountryCode.UK],
         active: active !== undefined ? active : true,
       },
     });

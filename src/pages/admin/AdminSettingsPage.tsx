@@ -12,8 +12,8 @@ export const AdminSettingsPage: React.FC = () => {
     contactPhone: '+91 800 123 4567',
     whatsappNumber: '+91 89213 42411',
     officeAddress: 'Nest Healthcare Hub, Level 4, Tech Enclave, Indiranagar, Bengaluru, 560038, India',
-    supportedCountries: ['IN', 'AE', 'US'],
-    supportedCurrencies: ['INR', 'AED', 'USD'],
+    supportedCountries: ['IN', 'AE', 'US', 'UK'],
+    supportedCurrencies: ['INR', 'AED', 'USD', 'GBP'],
     defaultCurrency: 'INR',
     freeShippingEnabled: true,
   });

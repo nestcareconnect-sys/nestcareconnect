@@ -6,6 +6,7 @@ import { NimbusPostShippingProvider } from '../services/shipping/nimbuspost.prov
 import { handleControllerError } from '../utils/dbError.js';
 import { enrichOrderForResponse } from './order.controller.js';
 import { cacheService } from '../services/cache.service.js';
+import { emailService } from '../services/email.service.js';
 
 export async function getShippingRules(req: Request, res: Response) {
   try {
@@ -41,9 +42,9 @@ export async function getShippingRuleByCountry(req: Request, res: Response) {
     if (!rule) {
       const defaultRule = {
         country,
-        shippingFee: country === 'IN' ? 99 : country === 'AE' ? 25 : 9.99,
-        freeShippingThreshold: country === 'IN' ? 999 : country === 'AE' ? 200 : 75,
-        estimatedDays: '3-5 business days',
+        shippingFee: country === 'IN' ? 99 : country === 'AE' ? 25 : (country === 'UK' || country === 'GB') ? 7.99 : 9.99,
+        freeShippingThreshold: country === 'IN' ? 999 : country === 'AE' ? 200 : (country === 'UK' || country === 'GB') ? 60 : 75,
+        estimatedDays: (country === 'UK' || country === 'GB') ? '3-5 business days across UK' : '3-5 business days',
         active: true,
       };
       cacheService.set(cacheKey, defaultRule, 3600);
@@ -275,6 +276,16 @@ export async function createNimbusShipment(req: Request, res: Response) {
         dispatchedAt: new Date(),
       },
     });
+
+    if (shipment.awbNumber) {
+      emailService.sendShipmentTrackingEmail({
+        order: updatedOrder,
+        courierName: shipment.courierName || 'NimbusPost Courier Partner',
+        trackingNumber: shipment.awbNumber,
+        trackingUrl: shipment.trackingUrl || `https://nimbuspost.com/track/${shipment.awbNumber}`,
+        estimatedDelivery: shipment.estimatedDelivery || undefined,
+      }).catch((eErr) => console.warn('[createNimbusShipment] Tracking email dispatch warning:', eErr.message));
+    }
 
     const message = isSimulated
       ? `Sandbox simulation generated with ${shipment.courierName}. Reference: ${shipment.awbNumber} (Note: Not booked with live courier)`
@@ -644,6 +655,15 @@ export async function createManualShipment(req: Request, res: Response) {
       },
     });
 
+    // Send shipment tracking email to customer via MSG91
+    emailService.sendShipmentTrackingEmail({
+      order: updatedOrder,
+      courierName: cleanCourier,
+      trackingNumber: cleanTracking,
+      trackingUrl: cleanTrackingUrl || undefined,
+      estimatedDelivery: cleanEstimatedDelivery || undefined,
+    }).catch((eErr) => console.warn('[createManualShipment] Shipment tracking email warning:', eErr.message));
+
     return res.json({
       success: true,
       message: `Order #${order.orderNumber} successfully shipped via ${cleanCourier}! Tracking ID (${cleanTracking}) is now published to the web.`,
@@ -865,6 +885,16 @@ export async function recordNimbusManualShipment(req: Request, res: Response) {
         }${cleanTrackingUrl ? ` Tracking: ${cleanTrackingUrl}` : ''}${cleanNotes ? ` Note: ${cleanNotes}` : ''}`,
       },
     });
+
+    // Send shipment tracking notification via MSG91
+    emailService.sendShipmentTrackingEmail({
+      order: updatedOrder,
+      courierName: cleanCourier,
+      trackingNumber: cleanAwb,
+      trackingUrl: cleanTrackingUrl,
+      estimatedDelivery: cleanEstimatedDelivery || undefined,
+      isUpdate: Boolean(order.trackingNumber && order.trackingNumber !== cleanAwb),
+    }).catch((eErr) => console.warn('[recordNimbusManualShipment] Shipment email warning:', eErr.message));
 
     return res.json({
       success: true,

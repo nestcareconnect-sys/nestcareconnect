@@ -28,14 +28,14 @@ export const Logo: React.FC<LogoProps> = ({ className = '', variant = 'full' }) 
               isWhite ? 'text-white' : 'text-[#1F2937]'
             }`}
           >
-            NEST CARE
+            Nest Care
           </span>
           <span
             className={`text-[10px] tracking-widest uppercase font-semibold -mt-0.5 ${
               isWhite ? 'text-[#8BCF9B]' : 'text-[#237A3B]'
             }`}
           >
-            CONNECT
+            Connect
           </span>
         </div>
       )}

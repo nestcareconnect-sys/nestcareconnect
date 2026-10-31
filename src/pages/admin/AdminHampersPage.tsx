@@ -42,6 +42,7 @@ export const AdminHampersPage: React.FC = () => {
     occasions: ['ANNIVERSARY'] as OccasionType[],
     countryPriceAE: '',
     countryPriceUS: '',
+    countryPriceUK: '',
   });
 
   const loadData = () => {
@@ -97,6 +98,7 @@ export const AdminHampersPage: React.FC = () => {
       occasions: ['ANNIVERSARY'],
       countryPriceAE: '',
       countryPriceUS: '',
+      countryPriceUK: '',
     });
     setIsModalOpen(true);
   };
@@ -105,6 +107,7 @@ export const AdminHampersPage: React.FC = () => {
     setEditingHamperId(hamper.id);
     const ae = hamper.countryPrices?.find((cp) => cp.country === 'AE')?.fixedPrice?.toString() || '';
     const us = hamper.countryPrices?.find((cp) => cp.country === 'US')?.fixedPrice?.toString() || '';
+    const uk = hamper.countryPrices?.find((cp) => cp.country === 'UK')?.fixedPrice?.toString() || '';
 
     const allowUpload = hamper.allowPhotoUpload ?? hamper.allowPhotos ?? true;
 
@@ -132,6 +135,7 @@ export const AdminHampersPage: React.FC = () => {
       occasions: hamper.occasions || ['ANNIVERSARY'],
       countryPriceAE: ae,
       countryPriceUS: us,
+      countryPriceUK: uk,
     });
     setIsModalOpen(true);
   };
@@ -179,6 +183,7 @@ export const AdminHampersPage: React.FC = () => {
       countryPrices: [
         ...(formData.countryPriceAE ? [{ country: 'AE', currency: 'AED', fixedPrice: parseFloat(formData.countryPriceAE) }] : []),
         ...(formData.countryPriceUS ? [{ country: 'US', currency: 'USD', fixedPrice: parseFloat(formData.countryPriceUS) }] : []),
+        ...(formData.countryPriceUK ? [{ country: 'UK', currency: 'GBP', fixedPrice: parseFloat(formData.countryPriceUK) }] : []),
       ],
     };
 

@@ -98,12 +98,21 @@ apiClient.interceptors.response.use(
 // Auth API
 export const authApi = {
   login: (data: any) => apiClient.post<{ success: boolean; data: { user: User; token: string } }>('/auth/login', data),
-  register: (data: any) => apiClient.post<{ success: boolean; data: { user: User; token: string } }>('/auth/register', data),
+  initiateRegister: (data: { name: string; email: string; phone: string; password: string }) =>
+    apiClient.post<{ success: boolean; requiresOtp: boolean; email: string; message: string }>('/auth/initiate-register', data),
+  completeRegister: (data: { email: string; otp: string }) =>
+    apiClient.post<{ success: boolean; data: { user: User; token: string }; message: string }>('/auth/complete-register', data),
+  register: (data: any) => apiClient.post<{ success: boolean; data?: { user: User; token: string }; requiresOtp?: boolean; message: string }>('/auth/register', data),
   getMe: () => apiClient.get<{ success: boolean; data: User & { addresses: any[] } }>('/auth/me'),
   updateProfile: (data: any) => apiClient.put('/auth/profile', data),
   changePassword: (data: any) => apiClient.post('/auth/change-password', data),
-  forgotPassword: (data: { email: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/forgot-password', data),
-  resetPassword: (data: { token: string; newPassword: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/reset-password', data),
+  forgotPassword: (data: { email: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/forgot-password-otp', data),
+  sendForgotPasswordOtp: (data: { email: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/forgot-password-otp', data),
+  verifyResetOtp: (data: { email: string; otp: string }) => apiClient.post<{ success: boolean; message: string; resetToken: string }>('/auth/verify-reset-otp', data),
+  resetPassword: (data: { resetToken?: string; token?: string; newPassword: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/reset-password', data),
+  completePasswordReset: (data: { resetToken: string; newPassword: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/complete-password-reset', data),
+  verifyEmail: (data: { email: string; otp?: string; token?: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/verify-email', data),
+  resendVerificationEmail: (data: { email: string }) => apiClient.post<{ success: boolean; message: string }>('/auth/resend-verification-email', data),
   getAddresses: () => apiClient.get<{ success: boolean; data: any[] }>('/auth/addresses'),
   createAddress: (data: any) => apiClient.post('/auth/addresses', data),
   deleteAddress: (id: string) => apiClient.delete(`/auth/addresses/${id}`),
@@ -221,7 +230,13 @@ export const paymentsApi = {
   getConfig: () =>
     apiClient.get<{
       success: boolean;
-      data: { keyId: string; isLive: boolean; mode: 'live' | 'test' };
+      data: {
+        publishableKey?: string;
+        keyId?: string;
+        isLive: boolean;
+        mode: 'live' | 'test';
+        provider?: string;
+      };
     }>('/payments/config'),
   createSession: (data: { orderId: string; providerName?: string }) =>
     apiClient.post<{
@@ -229,15 +244,19 @@ export const paymentsApi = {
       data: {
         orderId: string;
         orderNumber: string;
-        razorpayOrderId?: string;
+        clientSecret?: string;
+        publishableKey?: string;
+        paymentIntentId?: string;
         providerOrderId?: string;
+        razorpayOrderId?: string;
         amount: number;
-        amountPaise: number;
+        amountPaise?: number;
         currency: string;
-        keyId: string;
+        keyId?: string;
+        provider?: string;
         customer: { name: string; email: string; phone: string };
       };
-    }>('/payments/razorpay/create-order', data),
+    }>('/payments/create-session', data),
   createRazorpayOrder: (data: { orderId: string; providerName?: string }) =>
     apiClient.post<{
       success: boolean;
@@ -252,17 +271,20 @@ export const paymentsApi = {
         keyId: string;
         customer: { name: string; email: string; phone: string };
       };
-    }>('/payments/razorpay/create-order', data),
+    }>('/payments/create-session', data),
   createPaymentSession: (data: { orderId: string; providerName?: string }) =>
     apiClient.post<{
       success: boolean;
       data: {
         orderId: string;
         orderNumber: string;
-        razorpayOrderId?: string;
+        clientSecret?: string;
+        publishableKey?: string;
+        paymentIntentId?: string;
         providerOrderId: string;
+        razorpayOrderId?: string;
         amount: number;
-        amountPaise: number;
+        amountPaise?: number;
         currency: string;
         keyId?: string;
         provider: string;
@@ -286,6 +308,7 @@ export const paymentsApi = {
     }>('/payments/demo/process', data),
   verify: (data: {
     orderId: string;
+    paymentIntentId?: string;
     razorpayOrderId?: string;
     razorpayPaymentId?: string;
     razorpaySignature?: string;
@@ -294,6 +317,11 @@ export const paymentsApi = {
     signature?: string;
     providerName?: string;
   }) => apiClient.post<{ success: boolean; message: string; data: any }>('/payments/verify', data),
+  verifyStripePayment: (data: { orderId: string; paymentIntentId: string }) =>
+    apiClient.post<{ success: boolean; message: string; data: any }>('/payments/verify', {
+      ...data,
+      providerName: 'STRIPE',
+    }),
   verifyRazorpayPayment: (data: {
     orderId: string;
     razorpayOrderId: string;
@@ -508,6 +536,25 @@ export const searchApi = {
 export const adminApi = {
   getStats: () => apiClient.get<{ success: boolean; data: any }>('/admin/dashboard'),
   getCustomers: (params?: any) => apiClient.get<{ success: boolean; data: any }>('/admin/customers', { params }),
+  getOrderEmails: (orderId: string) => apiClient.get<{ success: boolean; data: any[] }>(`/admin/orders/${orderId}/emails`),
+  retryEmailNotification: (notificationId: string) => apiClient.post<{ success: boolean; message: string }>(`/admin/emails/${notificationId}/retry`),
+  getEmailStatus: () => apiClient.get<{ success: boolean; data: any }>('/admin/email-status'),
+  sendOrderTrackingEmail: (
+    orderId: string,
+    data: {
+      trackingNumber: string;
+      courierName?: string;
+      trackingUrl?: string;
+      estimatedDelivery?: string;
+      updateStatusToShipped?: boolean;
+      note?: string;
+    }
+  ) =>
+    apiClient.post<{
+      success: boolean;
+      message: string;
+      data: { order: Order; emailResult: any };
+    }>(`/admin/orders/${orderId}/send-tracking`, data),
 };
 
 // Upload API

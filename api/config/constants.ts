@@ -1194,7 +1194,8 @@ export const INITIAL_HAMPERS = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1269,7 +1270,8 @@ export const INITIAL_HAMPERS = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1351,7 +1353,8 @@ export const INITIAL_HAMPERS = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1418,7 +1421,8 @@ export const INITIAL_HAMPERS = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1488,7 +1492,8 @@ export const INITIAL_HAMPERS = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1576,7 +1581,8 @@ export const INITIAL_HAMPER_BOXES = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1619,7 +1625,8 @@ export const INITIAL_HAMPER_BOXES = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1662,7 +1669,8 @@ export const INITIAL_HAMPER_BOXES = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1705,7 +1713,8 @@ export const INITIAL_HAMPER_BOXES = [
     "countryAvailability": [
       "IN",
       "AE",
-      "US"
+      "US",
+      "UK"
     ],
     "countryPrices": [
       {
@@ -1750,6 +1759,15 @@ export const INITIAL_SHIPPING_RULES = [
     estimatedDays: '4-7 business days across USA',
     active: true,
   },
+  {
+    id: 'ship-uk',
+    country: 'UK',
+    minOrderAmount: 0,
+    shippingFee: 7.99,
+    freeShippingThreshold: 60,
+    estimatedDays: '3-5 business days across UK',
+    active: true,
+  },
 ];
 
 export const INITIAL_COUPONS = [
@@ -1764,7 +1782,7 @@ export const INITIAL_COUPONS = [
     usageLimit: 1000,
     usageCount: 0,
     perUserLimit: 1,
-    applicableCountries: ['IN', 'AE', 'US'],
+    applicableCountries: ['IN', 'AE', 'US', 'UK'],
     active: true,
   },
   {

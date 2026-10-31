@@ -21,7 +21,7 @@ export const TrustSection: React.FC = () => {
     {
       icon: CreditCard,
       title: 'Country-Specific Secure Payments',
-      description: 'Pay smoothly in INR (Razorpay), AED, or USD (Stripe) with server-verified order reconciliation.',
+      description: 'Pay smoothly in INR, AED, or USD via Stripe with 256-bit encryption and server-verified order reconciliation.',
     },
   ];
 

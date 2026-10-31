@@ -8,8 +8,12 @@ const KNOWN_PLACEHOLDERS = [
   'rzp_secret_placeholder',
   'rzp_test_nestcare',
   'rzp_secret_nestcare',
+  'sk_test_placeholder',
+  'pk_test_placeholder',
+  'whsec_placeholder',
   'your_key_here',
   'your_razorpay_key',
+  'your_stripe_key',
   'rzp_test_actual_key_here',
   'actual_test_secret_here',
 ];
@@ -38,45 +42,42 @@ export function validateServerEnvironment(): void {
     console.log(`✅ [DATABASE] Neon connection string configured (${isPooler ? 'Pooled PgBouncer' : 'Direct'}${hasSsl ? ', SSL enabled' : ''})`);
   }
 
-  const paymentProvider = (process.env.PAYMENT_PROVIDER || 'razorpay').trim().toLowerCase();
+  const paymentProvider = (process.env.PAYMENT_PROVIDER || 'stripe').trim().toLowerCase();
   const isProduction = process.env.NODE_ENV === 'production';
-  const razorpayKeyId = process.env.RAZORPAY_KEY_ID?.trim() || '';
-  const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET?.trim() || '';
-  const razorpayWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET?.trim() || '';
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim() || '';
+  const stripePublishableKey = (process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY)?.trim() || '';
+  const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim() || '';
 
   if (paymentProvider === 'demo') {
-    console.warn('⚠️  [PAYMENT] PAYMENT_PROVIDER="demo" is permanently disabled. Enforcing official Razorpay Payment Gateway.');
+    console.warn('⚠️  [PAYMENT] PAYMENT_PROVIDER="demo" is permanently disabled. Enforcing Stripe Payment Gateway.');
   }
 
-  if (!razorpayKeyId || isPlaceholderKey(razorpayKeyId)) {
+  // Stripe Validation
+  if (!stripeSecretKey || isPlaceholderKey(stripeSecretKey)) {
     if (isProduction) {
-      console.error('❌ [RAZORPAY] PRODUCTION CRITICAL: RAZORPAY_KEY_ID is missing or placeholder! Live customer transactions will fail.');
+      console.error('❌ [STRIPE] PRODUCTION CRITICAL: STRIPE_SECRET_KEY is missing or placeholder! Live customer transactions will fail.');
     } else {
-      console.warn('⚠️  [RAZORPAY] RAZORPAY_KEY_ID is missing or set to a placeholder.');
-      console.warn('👉 Please set RAZORPAY_KEY_ID and VITE_RAZORPAY_KEY_ID in .env.');
+      console.warn('⚠️  [STRIPE] STRIPE_SECRET_KEY is missing or set to a placeholder.');
+      console.warn('👉 Please set STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY in .env.');
     }
-  } else if (razorpayKeyId.startsWith('rzp_live_')) {
-    console.log(`✅ [RAZORPAY] Live Mode Active! Live Key ID: ${razorpayKeyId.slice(0, 12)}...`);
-  } else if (razorpayKeyId.startsWith('rzp_test_')) {
+  } else if (stripeSecretKey.startsWith('sk_live_')) {
+    console.log(`✅ [STRIPE] Live Mode Active! Live Secret Key: ${stripeSecretKey.slice(0, 12)}...`);
+  } else if (stripeSecretKey.startsWith('sk_test_')) {
     if (isProduction) {
-      console.error('❌ [RAZORPAY] PRODUCTION CONFIG ERROR: Detected Test Key (rzp_test_...) in production! Production requires Live credentials (rzp_live_...).');
+      console.error('❌ [STRIPE] PRODUCTION CONFIG ERROR: Detected Test Key (sk_test_...) in production! Production requires Live credentials (sk_live_...).');
     } else {
-      console.log(`ℹ️  [RAZORPAY] Test Mode Active: ${razorpayKeyId.slice(0, 12)}... (Development sandbox)`);
+      console.log(`ℹ️  [STRIPE] Test Mode Active: ${stripeSecretKey.slice(0, 12)}... (Development sandbox)`);
     }
   }
 
-  if (!razorpayKeySecret || isPlaceholderKey(razorpayKeySecret)) {
-    if (isProduction) {
-      console.error('❌ [RAZORPAY] PRODUCTION CRITICAL: RAZORPAY_KEY_SECRET is missing! Signature verification will fail.');
-    } else {
-      console.warn('⚠️  [RAZORPAY] RAZORPAY_KEY_SECRET is missing or set to a placeholder.');
-    }
+  if (stripePublishableKey && !isPlaceholderKey(stripePublishableKey)) {
+    console.log(`✅ [STRIPE] Publishable Key configured (${stripePublishableKey.startsWith('pk_live_') ? 'Live' : 'Test'}).`);
   } else {
-    console.log('✅ [RAZORPAY] Key Secret configured (secure server-side storage only).');
+    console.warn('⚠️  [STRIPE] STRIPE_PUBLISHABLE_KEY is not configured or set to placeholder.');
   }
 
-  if (razorpayWebhookSecret && !isPlaceholderKey(razorpayWebhookSecret)) {
-    console.log('✅ [RAZORPAY] Webhook Secret configured for automated event processing.');
+  if (stripeWebhookSecret && !isPlaceholderKey(stripeWebhookSecret)) {
+    console.log('✅ [STRIPE] Webhook Secret configured for automated event processing.');
   }
 
   // Shipping Provider Validation (NimbusPost)
@@ -118,6 +119,19 @@ export function validateServerEnvironment(): void {
     console.warn('⚠️  [AUTH] JWT_SECRET is using default value.');
   } else {
     console.log('✅ [AUTH] JWT authentication initialized.');
+  }
+
+  // MSG91 Transactional Email Delivery Configuration Validation
+  const msg91AuthKey = process.env.MSG91_AUTH_KEY?.trim();
+  const msg91Sender = process.env.MSG91_SENDER_EMAIL?.trim() || 'support@nestcareconnect.com';
+  if (!msg91AuthKey || isPlaceholderKey(msg91AuthKey)) {
+    if (isProduction) {
+      console.warn('⚠️  [MSG91] Production Notice: MSG91_AUTH_KEY is not configured or placeholder. Transactional emails will run in safe simulated test mode.');
+    } else {
+      console.log('ℹ️  [MSG91] MSG91_AUTH_KEY not set or placeholder. Operating in safe simulated transactional email mode.');
+    }
+  } else {
+    console.log(`✅ [MSG91] Live Email Delivery active! Sender: ${msg91Sender}`);
   }
 
   console.log('========================================\n');

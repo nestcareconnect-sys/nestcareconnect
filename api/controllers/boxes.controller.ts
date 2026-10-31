@@ -135,7 +135,7 @@ export async function createBox(req: Request, res: Response) {
       sortOrder = 0,
       isRecommended = false,
       images = [],
-      countryAvailability = ['IN', 'AE', 'US'],
+      countryAvailability = ['IN', 'AE', 'US', 'UK'],
       countryPrices = [],
     } = req.body;
 

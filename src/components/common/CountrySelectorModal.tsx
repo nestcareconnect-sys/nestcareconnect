@@ -49,6 +49,14 @@ export const CountrySelectorModal: React.FC<CountrySelectorModalProps> = ({ isOp
       flag: '🇦🇪',
       subtext: 'Seamless payments in AED for Gulf & Dubai residents',
     },
+    {
+      code: 'UK',
+      name: 'United Kingdom',
+      currency: 'GBP',
+      symbol: '£',
+      flag: '🇬🇧',
+      subtext: 'Convenient checkout in British Pounds (£ GBP) for UK residents',
+    },
   ];
 
   return (

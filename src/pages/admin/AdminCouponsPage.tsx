@@ -20,7 +20,7 @@ export const AdminCouponsPage: React.FC = () => {
     minOrderValueINR: '1000',
     maxDiscountINR: '500',
     usageLimit: '1000',
-    applicableCountries: ['IN', 'AE', 'US'] as CountryCode[],
+    applicableCountries: ['IN', 'AE', 'US', 'UK'] as CountryCode[],
     active: true,
   });
 
@@ -54,7 +54,7 @@ export const AdminCouponsPage: React.FC = () => {
       minOrderValueINR: '1000',
       maxDiscountINR: '500',
       usageLimit: '1000',
-      applicableCountries: ['IN', 'AE', 'US'],
+      applicableCountries: ['IN', 'AE', 'US', 'UK'],
       active: true,
     });
     setIsModalOpen(true);

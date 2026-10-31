@@ -2,12 +2,13 @@ import rateLimit from 'express-rate-limit';
 
 /**
  * Authentication Rate Limiter
- * Restricts sensitive auth operations (login, registration, forgot password, reset password)
- * to 10 requests per 15 minutes per IP to block credential stuffing and brute force attacks.
+ * Restricts sensitive auth operations (login, registration)
+ * In development, allows unrestricted local testing.
+ * In production, restricts to 50 requests per 15 minutes per IP.
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: process.env.NODE_ENV === 'production' ? 50 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -16,8 +17,8 @@ export const authLimiter = rateLimit({
     code: 'RATE_LIMIT_EXCEEDED',
   },
   skip: (req) => {
-    // In local automated test runs, allow skipping with an internal header if explicitly configured
-    if (process.env.NODE_ENV === 'test' && req.headers['x-bypass-test-rate-limit'] === 'true') {
+    // In local development or testing, do not lock out developers
+    if (process.env.NODE_ENV !== 'production') {
       return true;
     }
     return false;
@@ -26,17 +27,25 @@ export const authLimiter = rateLimit({
 
 /**
  * Password Reset Rate Limiter
- * Stricter limit for password reset requests: 5 requests per hour
+ * In development, skipped so testing the multi-step OTP reset flow is unrestricted.
+ * In production, 20 requests per 15 minutes per IP (allowing complete OTP validation & reset cycles).
  */
 export const passwordResetLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 20 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Too many password reset requests. Please wait an hour before requesting again.',
+    message: 'Too many password reset requests. Please wait a few minutes before requesting again.',
     code: 'RATE_LIMIT_EXCEEDED',
+  },
+  skip: () => {
+    // In local development, allow unrestricted testing of forgot password and OTP
+    if (process.env.NODE_ENV !== 'production') {
+      return true;
+    }
+    return false;
   },
 });
 

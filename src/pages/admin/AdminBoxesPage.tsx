@@ -52,6 +52,7 @@ export const AdminBoxesPage: React.FC = () => {
     images: ['https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80'],
     countryPriceAE: '20',
     countryPriceUS: '5',
+    countryPriceUK: '4',
   });
 
   const loadData = () => {
@@ -99,6 +100,7 @@ export const AdminBoxesPage: React.FC = () => {
       images: ['https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80'],
       countryPriceAE: '20',
       countryPriceUS: '5',
+      countryPriceUK: '4',
     });
     setIsModalOpen(true);
   };
@@ -107,6 +109,7 @@ export const AdminBoxesPage: React.FC = () => {
     setEditingBoxId(box.id);
     const aePrice = box.countryPrices?.find((cp) => cp.country === 'AE')?.fixedPrice?.toString() || '';
     const usPrice = box.countryPrices?.find((cp) => cp.country === 'US')?.fixedPrice?.toString() || '';
+    const ukPrice = box.countryPrices?.find((cp) => cp.country === 'UK')?.fixedPrice?.toString() || '';
 
     setFormData({
       name: box.name,
@@ -130,6 +133,7 @@ export const AdminBoxesPage: React.FC = () => {
       images: box.images && box.images.length > 0 ? box.images : [''],
       countryPriceAE: aePrice,
       countryPriceUS: usPrice,
+      countryPriceUK: ukPrice,
     });
     setIsModalOpen(true);
   };
@@ -177,6 +181,7 @@ export const AdminBoxesPage: React.FC = () => {
       countryPrices: [
         ...(formData.countryPriceAE ? [{ country: 'AE', currency: 'AED', fixedPrice: parseFloat(formData.countryPriceAE) }] : []),
         ...(formData.countryPriceUS ? [{ country: 'US', currency: 'USD', fixedPrice: parseFloat(formData.countryPriceUS) }] : []),
+        ...(formData.countryPriceUK ? [{ country: 'UK', currency: 'GBP', fixedPrice: parseFloat(formData.countryPriceUK) }] : []),
       ],
     };
 
@@ -254,6 +259,7 @@ export const AdminBoxesPage: React.FC = () => {
                 {boxes.map((b) => {
                   const ae = b.countryPrices?.find((cp) => cp.country === 'AE')?.fixedPrice;
                   const us = b.countryPrices?.find((cp) => cp.country === 'US')?.fixedPrice;
+                          const uk = b.countryPrices?.find((cp) => cp.country === 'UK')?.fixedPrice;
 
                   return (
                     <tr key={b.id} className="hover:bg-gray-50/70 transition-colors">
@@ -315,6 +321,7 @@ export const AdminBoxesPage: React.FC = () => {
                         <div className="space-y-0.5 text-[11px]">
                           {ae ? <span className="text-gray-700 block font-medium">🇦🇪 AED {ae}</span> : <span className="text-gray-400 block">🇦🇪 Auto-Converted</span>}
                           {us ? <span className="text-gray-700 block font-medium">🇺🇸 USD ${us}</span> : <span className="text-gray-400 block">🇺🇸 Auto-Converted</span>}
+                          {uk ? <span className="text-gray-700 block font-medium">🇬🇧 GBP £{uk}</span> : <span className="text-gray-400 block">🇬🇧 Auto-Converted</span>}
                         </div>
                       </td>
 
@@ -391,7 +398,7 @@ export const AdminBoxesPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmitForm} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">Box Name *</label>
                   <input

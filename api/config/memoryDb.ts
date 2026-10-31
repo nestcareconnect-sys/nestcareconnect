@@ -55,11 +55,13 @@ class MemoryDatabase {
       { id: 'curr-inr', code: 'INR', name: 'Indian Rupee', symbol: '₹', isBase: true, createdAt: new Date(), updatedAt: new Date() },
       { id: 'curr-aed', code: 'AED', name: 'UAE Dirham', symbol: 'AED', isBase: false, createdAt: new Date(), updatedAt: new Date() },
       { id: 'curr-usd', code: 'USD', name: 'US Dollar', symbol: '$', isBase: false, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'curr-gbp', code: 'GBP', name: 'British Pound', symbol: '£', isBase: false, createdAt: new Date(), updatedAt: new Date() },
     ];
 
     this.exchangeRates = [
       { id: 'ex-inr-aed', fromCurrency: 'INR', toCurrency: 'AED', rate: 0.044, updatedAt: new Date() },
       { id: 'ex-inr-usd', fromCurrency: 'INR', toCurrency: 'USD', rate: 0.012, updatedAt: new Date() },
+      { id: 'ex-inr-gbp', fromCurrency: 'INR', toCurrency: 'GBP', rate: 0.0093, updatedAt: new Date() },
     ];
 
     // 2. Users
@@ -270,8 +272,8 @@ class MemoryDatabase {
           contactPhone: '+91 800 123 4567',
           whatsappNumber: '+91 89213 42411',
           officeAddress: 'Nest Healthcare Hub, Level 4, Tech Enclave, Indiranagar, Bengaluru, 560038, India',
-          supportedCountries: ['IN', 'AE', 'US'],
-          supportedCurrencies: ['INR', 'AED', 'USD'],
+          supportedCountries: ['IN', 'AE', 'US', 'UK'],
+          supportedCurrencies: ['INR', 'AED', 'USD', 'GBP'],
           defaultCurrency: 'INR',
           freeShippingEnabled: true,
         },

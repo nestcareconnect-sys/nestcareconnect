@@ -11,6 +11,7 @@ import { sanitizeAndValidateEmail, validatePhoneNumber } from '../utils/validati
 import { handleControllerError } from '../utils/dbError.js';
 import { whatsappService } from '../services/whatsapp.service.js';
 import { cacheService } from '../services/cache.service.js';
+import { emailService } from '../services/email.service.js';
 
 
 /**
@@ -244,6 +245,15 @@ export function enrichOrderForResponse(order: any) {
               syncStatus: order.syncStatus,
             }
           : null),
+    emailNotifications: order.emailNotifications || [],
+    emailStatusSummary: {
+      adminNotificationStatus: order.emailNotifications?.find((e: any) => e.eventType === 'ADMIN_NEW_ORDER')?.status || 'PENDING',
+      customerConfirmationStatus: order.emailNotifications?.find((e: any) => e.eventType === 'CUSTOMER_ORDER_CONFIRMATION')?.status || (order.paymentStatus === 'PAID' ? 'PENDING' : 'NOT_APPLICABLE'),
+      shippingNotificationStatus: order.emailNotifications?.find((e: any) => e.eventType === 'SHIPMENT_TRACKING' || e.eventType === 'TRACKING_DETAILS_UPDATED')?.status || (order.orderStatus === 'SHIPPED' ? 'PENDING' : 'NOT_APPLICABLE'),
+      lastSentAt: order.emailNotifications?.filter((e: any) => e.sentAt)?.sort((a: any, b: any) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())[0]?.sentAt || null,
+      hasFailures: order.emailNotifications?.some((e: any) => e.status === 'FAILED') || false,
+      totalEmailsSent: order.emailNotifications?.filter((e: any) => e.status === 'ACCEPTED' || e.status === 'DELIVERED').length || 0,
+    },
   };
 }
 
@@ -546,6 +556,16 @@ export async function createOrder(req: AuthRequest, res: Response) {
       console.warn('[ORDER_WHATSAPP_AUTO_SEND_WARN]', waErr);
     }
 
+    // Automatically send Admin New Order notification via MSG91
+    emailService.sendAdminNewOrderNotification(order).catch((emailErr) => {
+      console.warn('[ORDER_ADMIN_EMAIL_SEND_WARN]', emailErr.message);
+    });
+
+    // Automatically send Customer Order Confirmation email via MSG91
+    emailService.sendCustomerOrderConfirmation(order).catch((emailErr) => {
+      console.warn('[ORDER_CUSTOMER_EMAIL_SEND_WARN]', emailErr.message);
+    });
+
     const enriched = enrichOrderForResponse(order);
 
     return res.status(201).json({
@@ -607,6 +627,7 @@ export async function getOrderById(req: AuthRequest, res: Response) {
         timeline: { orderBy: { createdAt: 'asc' } },
         payments: true,
         shipment: true,
+        emailNotifications: { orderBy: { createdAt: 'desc' } },
       },
     });
 
@@ -914,6 +935,9 @@ export async function getAdminOrders(req: Request, res: Response) {
             orderBy: { createdAt: 'desc' },
           },
           shipment: true,
+          emailNotifications: {
+            orderBy: { createdAt: 'desc' },
+          },
         },
       }),
       prisma.order.count({ where }),
@@ -943,9 +967,22 @@ export async function getAdminOrders(req: Request, res: Response) {
 export async function updateOrderStatus(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { orderStatus, paymentStatus, videoStatus, videoUrl, trackingNumber, note } = req.body;
+    const {
+      orderStatus,
+      paymentStatus,
+      videoStatus,
+      videoUrl,
+      trackingNumber,
+      note,
+      courierName,
+      trackingUrl,
+      sendTrackingEmail,
+    } = req.body;
 
-    const existingOrder = await prisma.order.findUnique({ where: { id } });
+    const existingOrder = await prisma.order.findUnique({
+      where: { id },
+      include: { items: true, timeline: true, shipment: true, payments: true, user: true },
+    });
     if (!existingOrder) {
       return res.status(404).json({ success: false, message: 'Order not found.' });
     }
@@ -955,15 +992,49 @@ export async function updateOrderStatus(req: Request, res: Response) {
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
     if (videoStatus) updateData.videoStatus = videoStatus;
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
-    if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber;
+
+    const cleanTracking = trackingNumber !== undefined ? (trackingNumber ? trackingNumber.trim() : null) : undefined;
+    if (cleanTracking !== undefined) {
+      updateData.trackingNumber = cleanTracking;
+    }
 
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: updateData,
-      include: { items: true, timeline: true, shipment: true, payments: true },
+      include: { items: true, timeline: true, shipment: true, payments: true, user: true },
     });
 
-    // Add timeline record
+    const finalTracking = cleanTracking !== undefined ? cleanTracking : (updatedOrder.trackingNumber || updatedOrder.shipment?.awbNumber || null);
+    const finalCourier = (courierName || updatedOrder.shipment?.courierName || 'Standard Express Courier').trim();
+    const finalTrackingUrl = (trackingUrl || updatedOrder.shipment?.trackingUrl || '').trim();
+
+    // Upsert Shipment record whenever trackingNumber is provided or updated
+    if (finalTracking) {
+      await prisma.shipment.upsert({
+        where: { orderId: id },
+        update: {
+          courierName: finalCourier,
+          trackingNumber: finalTracking,
+          awbNumber: finalTracking,
+          trackingUrl: finalTrackingUrl || undefined,
+          shipmentStatus: updatedOrder.orderStatus === 'DELIVERED' ? 'DELIVERED' : 'SHIPPED',
+          dispatchedAt: existingOrder.shipment?.dispatchedAt || new Date(),
+        },
+        create: {
+          orderId: id,
+          provider: 'MANUAL',
+          shippingMethod: 'MANUAL',
+          courierName: finalCourier,
+          trackingNumber: finalTracking,
+          awbNumber: finalTracking,
+          trackingUrl: finalTrackingUrl || undefined,
+          shipmentStatus: updatedOrder.orderStatus === 'DELIVERED' ? 'DELIVERED' : 'SHIPPED',
+          dispatchedAt: new Date(),
+        },
+      });
+    }
+
+    // Add timeline record if status changed
     if (orderStatus && orderStatus !== existingOrder.orderStatus) {
       await prisma.orderTimeline.create({
         data: {
@@ -977,10 +1048,58 @@ export async function updateOrderStatus(req: Request, res: Response) {
       if (orderStatus === 'CANCELLED' || orderStatus === 'REFUNDED') {
         await inventoryService.restoreOrderInventory(id);
       }
+
+      // Automatically dispatch customer email notifications on status change
+      if (orderStatus === 'DELIVERED') {
+        emailService.sendDeliveryConfirmation(updatedOrder).catch((eErr) =>
+          console.warn('[updateOrderStatus] Delivery email dispatch warning:', eErr.message)
+        );
+      } else if (orderStatus === 'SHIPPED' && finalTracking && sendTrackingEmail !== false) {
+        // Send tracking email with template nestcareconnect_transactional3
+        emailService.sendShipmentTrackingEmail({
+          order: updatedOrder,
+          courierName: finalCourier,
+          trackingNumber: finalTracking,
+          trackingUrl: finalTrackingUrl || undefined,
+          isUpdate: Boolean(existingOrder.trackingNumber && existingOrder.trackingNumber !== finalTracking),
+        }).catch((eErr) =>
+          console.warn('[updateOrderStatus] Shipment tracking email dispatch warning:', eErr.message)
+        );
+      } else {
+        emailService.sendOrderStatusUpdate(updatedOrder, orderStatus, note).catch((eErr) =>
+          console.warn('[updateOrderStatus] Status update email dispatch warning:', eErr.message)
+        );
+      }
+    } else if (
+      finalTracking &&
+      (sendTrackingEmail === true || (cleanTracking && cleanTracking !== existingOrder.trackingNumber && sendTrackingEmail !== false))
+    ) {
+      // Tracking was updated or email explicitly requested without overall status change
+      await prisma.orderTimeline.create({
+        data: {
+          orderId: id,
+          status: updatedOrder.orderStatus,
+          title: `Tracking Information Sent (${finalCourier})`,
+          description: `Tracking number (${finalTracking}) sent to customer via email.`,
+        },
+      });
+
+      emailService.sendShipmentTrackingEmail({
+        order: updatedOrder,
+        courierName: finalCourier,
+        trackingNumber: finalTracking,
+        trackingUrl: finalTrackingUrl || undefined,
+        isUpdate: Boolean(existingOrder.trackingNumber && existingOrder.trackingNumber !== finalTracking),
+      }).catch((eErr) =>
+        console.warn('[updateOrderStatus] Tracking email dispatch warning:', eErr.message)
+      );
     }
 
     if (paymentStatus === 'PAID' && existingOrder.paymentStatus !== 'PAID') {
       await inventoryService.deductOrderInventory(id);
+      emailService.sendCustomerOrderConfirmation(updatedOrder).catch((eErr) =>
+        console.warn('[updateOrderStatus] Confirmation email dispatch warning:', eErr.message)
+      );
     }
 
     return res.json({ success: true, message: 'Order updated.', data: enrichOrderForResponse(updatedOrder) });

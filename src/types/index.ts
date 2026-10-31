@@ -1,5 +1,5 @@
-export type CountryCode = 'IN' | 'AE' | 'US';
-export type CurrencyCode = 'INR' | 'AED' | 'USD';
+export type CountryCode = 'IN' | 'AE' | 'US' | 'UK';
+export type CurrencyCode = 'INR' | 'AED' | 'USD' | 'GBP';
 
 export interface CountryConfig {
   code: CountryCode;
@@ -39,6 +39,15 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     phoneCode: '+1',
     currencyFormat: 'USD',
   },
+  UK: {
+    code: 'UK',
+    name: 'United Kingdom',
+    currency: 'GBP',
+    symbol: '£',
+    flag: '🇬🇧',
+    phoneCode: '+44',
+    currencyFormat: 'GBP',
+  },
 };
 
 export type Role = 'CUSTOMER' | 'ADMIN';
@@ -75,7 +84,32 @@ export interface User {
   phone?: string | null;
   role: Role;
   status: Status;
+  emailVerified?: boolean;
+  emailVerifiedAt?: string | null;
   createdAt: string;
+}
+
+export type EmailNotificationStatus = 'PENDING' | 'SENT' | 'SENT_TO_PROVIDER' | 'ACCEPTED' | 'DELIVERED' | 'FAILED';
+
+export interface EmailNotification {
+  id: string;
+  eventType: string;
+  orderId?: string | null;
+  recipientEmail: string;
+  recipientName?: string | null;
+  subject: string;
+  status: EmailNotificationStatus;
+  provider: string;
+  providerMessageId?: string | null;
+  attempts: number;
+  lastAttemptAt?: string | null;
+  sentAt?: string | null;
+  deliveredAt?: string | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  metadata?: any;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Address {
@@ -493,6 +527,15 @@ export interface Order {
   payments?: Payment[];
   shipment?: Shipment | null;
   nimbusTracking?: NimbusTrackingResult | null;
+  emailNotifications?: EmailNotification[];
+  emailStatusSummary?: {
+    adminNotificationStatus: EmailNotificationStatus;
+    customerConfirmationStatus: EmailNotificationStatus;
+    shippingNotificationStatus: EmailNotificationStatus | 'NOT_APPLICABLE';
+    lastSentAt?: string | null;
+    hasFailures?: boolean;
+    totalEmailsSent?: number;
+  };
   createdAt: string;
   updatedAt: string;
 }

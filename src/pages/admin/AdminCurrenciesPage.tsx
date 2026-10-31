@@ -10,6 +10,7 @@ export const AdminCurrenciesPage: React.FC = () => {
   const [rates, setRates] = useState({
     INR_TO_AED: DEFAULT_EXCHANGE_RATES.AED.toString(),
     INR_TO_USD: DEFAULT_EXCHANGE_RATES.USD.toString(),
+    INR_TO_GBP: DEFAULT_EXCHANGE_RATES.GBP.toString(),
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -21,9 +22,11 @@ export const AdminCurrenciesPage: React.FC = () => {
           const fetchedRates = res.data.data.exchangeRates;
           const aed = fetchedRates.find((r: any) => r.toCurrency === 'AED')?.rate;
           const usd = fetchedRates.find((r: any) => r.toCurrency === 'USD')?.rate;
+          const gbp = fetchedRates.find((r: any) => r.toCurrency === 'GBP')?.rate;
           setRates({
             INR_TO_AED: (aed || DEFAULT_EXCHANGE_RATES.AED).toString(),
             INR_TO_USD: (usd || DEFAULT_EXCHANGE_RATES.USD).toString(),
+            INR_TO_GBP: (gbp || DEFAULT_EXCHANGE_RATES.GBP).toString(),
           });
         }
       })
@@ -37,6 +40,7 @@ export const AdminCurrenciesPage: React.FC = () => {
       await settingsApi.updateExchangeRates([
         { fromCurrency: 'INR', toCurrency: 'AED', rate: parseFloat(rates.INR_TO_AED) },
         { fromCurrency: 'INR', toCurrency: 'USD', rate: parseFloat(rates.INR_TO_USD) },
+        { fromCurrency: 'INR', toCurrency: 'GBP', rate: parseFloat(rates.INR_TO_GBP) },
       ]);
       showToast('Live currency exchange rates updated successfully.', 'success');
     } catch (err: any) {
@@ -56,7 +60,7 @@ export const AdminCurrenciesPage: React.FC = () => {
             Currencies & Exchange Rates
           </h1>
           <p className="text-xs text-gray-500 mt-1">
-            Maintain base INR currency conversions for UAE (AED) and USA (USD) storefronts.
+            Maintain base INR currency conversions for UAE (AED), USA (USD), and UK (GBP) storefronts.
           </p>
         </div>
 

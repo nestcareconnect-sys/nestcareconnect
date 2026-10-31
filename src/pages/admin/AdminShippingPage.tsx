@@ -438,7 +438,7 @@ export const AdminShippingPage: React.FC = () => {
 
         {/* TAB 2: Country Shipping Rules */}
         {activeTab === 'RULES' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {rules.map((rule) => (
               <div
                 key={rule.country}
@@ -446,13 +446,13 @@ export const AdminShippingPage: React.FC = () => {
               >
                 <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">{rule.country === 'IN' ? '🇮🇳' : rule.country === 'AE' ? '🇦🇪' : '🇺🇸'}</span>
+                    <span className="text-xl">{rule.country === 'IN' ? '🇮🇳' : rule.country === 'AE' ? '🇦🇪' : rule.country === 'US' ? '🇺🇸' : '🇬🇧'}</span>
                     <h3 className="font-bold text-sm text-gray-900">
-                      {rule.country === 'IN' ? 'India' : rule.country === 'AE' ? 'UAE' : 'United States'}
+                      {rule.country === 'IN' ? 'India' : rule.country === 'AE' ? 'UAE' : rule.country === 'US' ? 'United States' : 'United Kingdom'}
                     </h3>
                   </div>
                   <span className="font-bold text-xs text-[#237A3B]">
-                    {rule.country === 'IN' ? 'INR (₹)' : rule.country === 'AE' ? 'AED' : 'USD ($)'}
+                    {rule.country === 'IN' ? 'INR (₹)' : rule.country === 'AE' ? 'AED' : rule.country === 'US' ? 'USD ($)' : 'GBP (£)'}
                   </span>
                 </div>
 

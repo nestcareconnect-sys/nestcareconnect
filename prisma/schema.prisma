@@ -25,12 +25,15 @@ enum CountryCode {
   IN
   AE
   US
+  UK
+  GB
 }
 
 enum CurrencyCode {
   INR
   AED
   USD
+  GBP
 }
 
 enum HamperType {
@@ -89,6 +92,19 @@ enum ReviewStatus {
   REJECTED
 }
 
+enum OtpPurpose {
+  PASSWORD_RESET
+  EMAIL_VERIFICATION
+}
+
+enum EmailNotificationStatus {
+  PENDING
+  SENT
+  ACCEPTED
+  DELIVERED
+  FAILED
+}
+
 model User {
   id           String        @id @default(uuid())
   email        String        @unique
@@ -105,6 +121,9 @@ model User {
   couponUsages CouponUsage[]
   auditLogs              AuditLog[]
   qrCodes                QrCode[]
+  otpVerifications       OtpVerification[]
+  emailVerified          Boolean       @default(false)
+  emailVerifiedAt        DateTime?
   passwordResetTokenHash String?
   passwordResetExpiresAt DateTime?
   createdAt              DateTime      @default(now())
@@ -112,6 +131,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([emailVerified])
   @@index([passwordResetTokenHash])
 }
 
@@ -261,7 +281,7 @@ model Hamper {
   photoInstructions   String?                      @default("Add a special photo of your family to make your gift even more meaningful.")
   photoCardEnabled    Boolean                      @default(true)
   allowVideoQR        Boolean                      @default(false)
-  countryAvailability CountryCode[]                @default([IN, AE, US])
+  countryAvailability CountryCode[]                @default([IN, AE, US, UK])
   items               HamperItem[]
   countryPrices       HamperCountryPrice[]
   orderItems          OrderItem[]
@@ -329,7 +349,7 @@ model HamperBox {
   sortOrder           Int                     @default(0)
   isRecommended       Boolean                 @default(false)
   images              String[]                @default([])
-  countryAvailability CountryCode[]           @default([IN, AE, US])
+  countryAvailability CountryCode[]           @default([IN, AE, US, UK])
   countryPrices       HamperBoxCountryPrice[]
   createdAt           DateTime                @default(now())
   updatedAt           DateTime                @updatedAt
@@ -364,7 +384,7 @@ model CustomHamperConfig {
   maxPriceINR        Float?
   allowedCategoryIds String[]      @default([])
   allowedProductIds  String[]      @default([])
-  allowedCountries   CountryCode[] @default([IN, AE, US])
+  allowedCountries   CountryCode[] @default([IN, AE, US, UK])
   active             Boolean       @default(true)
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -439,6 +459,7 @@ model Order {
   payments        Payment[]
   shipment        Shipment?
   timeline        OrderTimeline[]
+  emailNotifications EmailNotification[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -579,7 +600,7 @@ model Coupon {
   usageLimit          Int?
   usageCount          Int           @default(0)
   perUserLimit        Int           @default(1)
-  applicableCountries CountryCode[] @default([IN, AE, US])
+  applicableCountries CountryCode[] @default([IN, AE, US, UK])
   active              Boolean       @default(true)
   usages              CouponUsage[]
   createdAt           DateTime      @default(now())
@@ -730,3 +751,52 @@ model QrCode {
   @@index([adminId])
   @@index([createdAt])
 }
+
+model OtpVerification {
+  id          String      @id @default(uuid())
+  email       String
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otpHash     String
+  purpose     OtpPurpose
+  expiresAt   DateTime
+  attempts    Int         @default(0)
+  maxAttempts Int         @default(5)
+  consumedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([email, purpose])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailNotification {
+  id                String                  @id @default(uuid())
+  eventType         String                  // ADMIN_NEW_ORDER, CUSTOMER_ORDER_CONFIRMATION, ORDER_STATUS_UPDATE, SHIPMENT_TRACKING, PASSWORD_RESET_OTP, EMAIL_VERIFICATION
+  orderId           String?
+  order             Order?                  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  recipientEmail    String
+  recipientName     String?
+  subject           String
+  status            EmailNotificationStatus @default(PENDING)
+  provider          String                  @default("MSG91")
+  providerMessageId String?
+  attempts          Int                     @default(0)
+  lastAttemptAt     DateTime?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  errorCode         String?
+  errorMessage      String?
+  metadata          Json?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@index([orderId])
+  @@index([recipientEmail])
+  @@index([status])
+  @@index([eventType])
+  @@index([createdAt])
+}
+

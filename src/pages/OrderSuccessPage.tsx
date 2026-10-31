@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import {
   CheckCircle2,
   Package,
@@ -19,11 +19,12 @@ import {
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Order } from '../types';
-import { ordersApi } from '../services/api';
+import { ordersApi, paymentsApi } from '../services/api';
 import { useCountryCurrency } from '../context/CountryCurrencyContext';
 
 export const OrderSuccessPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
+  const [searchParams] = useSearchParams();
   const { formatPrice } = useCountryCurrency();
   const [order, setOrder] = useState<Order | null>(null);
   const [fetchStatus, setFetchStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -40,6 +41,19 @@ export const OrderSuccessPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
+      // Check if redirected from Stripe redirect flow with payment_intent
+      const paymentIntentId = searchParams.get('payment_intent');
+      if (paymentIntentId) {
+        try {
+          await paymentsApi.verifyStripePayment({
+            orderId,
+            paymentIntentId,
+          });
+        } catch (verifyErr) {
+          console.warn('[OrderSuccessPage] Stripe redirect verification notice:', verifyErr);
+        }
+      }
+
       const res = await ordersApi.getById(orderId);
       if (res.data?.success && res.data.data) {
         setOrder(res.data.data);
@@ -242,7 +256,7 @@ export const OrderSuccessPage: React.FC = () => {
                         <strong className="text-emerald-700">
                           {order.paymentProvider === 'DEMO' || order.transactionId?.startsWith('demo_')
                             ? 'DEMO — Successful'
-                            : `${order.paymentStatus} (Razorpay)`}
+                            : `${order.paymentStatus} (${order.paymentProvider === 'RAZORPAY' ? 'Razorpay' : 'Stripe'})`}
                         </strong>
                       </span>
                     </div>

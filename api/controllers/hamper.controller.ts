@@ -255,7 +255,7 @@ export async function createHamper(req: Request, res: Response) {
           allowVideoQR: allowVideoQR !== undefined ? Boolean(allowVideoQR) : false,
           countryAvailability: Array.isArray(countryAvailability) && countryAvailability.length > 0
             ? countryAvailability
-            : [CountryCode.IN, CountryCode.AE, CountryCode.US],
+            : [CountryCode.IN, CountryCode.AE, CountryCode.US, CountryCode.UK],
           seoTitle: seoTitle || null,
           seoDescription: seoDescription || null,
         },

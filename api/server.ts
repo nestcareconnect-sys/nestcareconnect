@@ -30,6 +30,7 @@ import adminRoutes from './routes/admin.routes.js';
 import qrCodeRoutes from './routes/qrCode.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import whatsappRoutes from './routes/whatsapp.routes.js';
+import webhookRoutes from './routes/webhooks.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { validateServerEnvironment } from './config/envValidation.js';
 import { verifyDatabaseConnection } from './config/prisma.js';
@@ -189,6 +190,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin/qr-codes', qrCodeRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Static client build serving (for production and unified preview)
 const distDir = path.resolve(process.cwd(), 'dist');

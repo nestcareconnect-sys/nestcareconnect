@@ -48,6 +48,7 @@ export class PricingService {
         INR: 1,
         AED: DEFAULT_EXCHANGE_RATES.AED,
         USD: DEFAULT_EXCHANGE_RATES.USD,
+        GBP: DEFAULT_EXCHANGE_RATES.GBP,
       };
 
       for (const r of rates) {

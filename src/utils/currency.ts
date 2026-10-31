@@ -4,6 +4,7 @@ export const DEFAULT_EXCHANGE_RATES: Record<CurrencyCode, number> = {
   INR: 1,
   AED: 0.044, // 1 INR = 0.044 AED (approx ₹1000 = ~44 AED)
   USD: 0.012, // 1 INR = 0.012 USD (approx ₹1000 = ~12 USD)
+  GBP: 0.0093, // 1 INR = 0.0093 GBP (approx ₹1000 = ~9.30 GBP)
 };
 
 /**
@@ -30,6 +31,14 @@ export function formatCurrency(
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount);
+
+    case 'GBP':
+      return new Intl.NumberFormat('en-GB', {
+        style: 'currency',
+        currency: 'GBP',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(amount);
